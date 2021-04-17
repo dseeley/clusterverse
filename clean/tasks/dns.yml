@@ -43,7 +43,8 @@
           register: r__route53_zone
 
         # Note: route53_info currently does not honour the 'max_items' or 'type' fields, (and if 'start_record_name' is not found, it just returns all records), so we need to filter the responses to match 'hosts_to_clean' when doing the delete
-        - name: clean/dns/route53 | Get A records asynchronously
+        # Note: cannot run route53_info asynchronously as it makes too many concurrent requests and blows the AWS Route53 API limit.
+        - name: clean/dns/route53 | Get A records
           route53_info:
             aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
             aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
@@ -53,17 +54,9 @@
             hosted_zone_id: "{{ r__route53_zone.zone_id }}"
             start_record_name: "{{item.name}}.{{cluster_vars.dns_user_domain}}"
           register: r__route53_info
+          until: r__route53_info is success
+          retries: 10
           with_items: "{{ hosts_to_clean }}"
-          async: 7200
-          poll: 0
-
-        - name: clean/dns/route53 | Wait for A records to be fetched
-          async_status: { jid: "{{ item.ansible_job_id }}" }
-          register: r__async_status__route53_info
-          until: r__async_status__route53_info.finished
-          delay: 1
-          retries: 300
-          with_items: "{{r__route53_info.results}}"
 
         - name: clean/dns/route53 | Delete A records
           route53:
@@ -79,10 +72,11 @@
           with_items: "{{ records_to_clean }}"
           vars:
             _hostnames_to_clean: "{{ hosts_to_clean | json_query(\"[].name\") | map('regex_replace', '^(.*)$', '\\1.' + cluster_vars.dns_user_domain + '.') }}"
-            records_to_clean: "{{ r__async_status__route53_info.results | json_query(\"[].ResourceRecordSets[?Type=='A' && contains(\"+ _hostnames_to_clean | string +\", Name)][]\") | unique }}"
+            records_to_clean: "{{ r__route53_info.results | json_query(\"[].ResourceRecordSets[?Type=='A' && contains(\"+ _hostnames_to_clean | string +\", Name)][]\") | unique }}"
 
         # Note: route53_info currently does not honour the 'max_items' or 'type' fields, (and if 'start_record_name' is not found, it just returns all records), so we need to filter the responses to match 'hosts_to_clean' when doing the delete
-        - name: clean/dns/route53 | Get CNAME records asynchronously
+        # Note: cannot run route53_info asynchronously as it makes too many concurrent requests and blows the AWS Route53 API limit.
+        - name: clean/dns/route53 | Get CNAME records
           route53_info:
             aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
             aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
@@ -93,16 +87,8 @@
             start_record_name: "{{item.name | regex_replace('-(?!.*-).*')}}.{{cluster_vars.dns_user_domain}}"
           register: r__route53_info
           with_items: "{{ hosts_to_clean }}"
-          async: 7200
-          poll: 0
-
-        - name: clean/dns/route53 | Wait for CNAME records to be fetched
-          async_status: { jid: "{{ item.ansible_job_id }}" }
-          register: r__async_status__route53_info
-          until: r__async_status__route53_info.finished
-          delay: 1
-          retries: 300
-          with_items: "{{r__route53_info.results}}"
+          until: r__route53_info is success
+          retries: 10
 
         - name: clean/dns/route53 | Delete CNAME records
           route53:
@@ -117,7 +103,7 @@
             private_zone: "{{cluster_vars.route53_private_zone | default(true)}}"
           vars:
             _cnames_to_clean: "{{ hosts_to_clean | json_query(\"[].name\") | map('regex_replace', '^(.*)-(?!.*-).*$', '\\1.' + cluster_vars.dns_user_domain + '.') }}"   #Remove the last '-.*' (cluster_suffix)
-            records_to_clean: "{{ r__async_status__route53_info.results | json_query(\"[].ResourceRecordSets[?Type=='CNAME' && contains(\"+ _cnames_to_clean | string +\", Name)][]\") | unique }}"
+            records_to_clean: "{{ r__route53_info.results | json_query(\"[].ResourceRecordSets[?Type=='CNAME' && contains(\"+ _cnames_to_clean | string +\", Name)][]\") | unique }}"
           with_nested:
             - "{{ hosts_to_clean }}"
             - "{{ records_to_clean }}"
