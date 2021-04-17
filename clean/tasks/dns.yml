@@ -45,6 +45,8 @@
         # Note: route53_info currently does not honour the 'max_items' or 'type' fields, (and if 'start_record_name' is not found, it just returns all records), so we need to filter the responses to match 'hosts_to_clean' when doing the delete
         - name: clean/dns/route53 | Get A records asynchronously
           route53_info:
+            aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
+            aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
             type: "A"
             max_items: 1
             query: record_sets
@@ -82,6 +84,8 @@
         # Note: route53_info currently does not honour the 'max_items' or 'type' fields, (and if 'start_record_name' is not found, it just returns all records), so we need to filter the responses to match 'hosts_to_clean' when doing the delete
         - name: clean/dns/route53 | Get CNAME records asynchronously
           route53_info:
+            aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
+            aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
             type: "CNAME"
             max_items: 1
             query: record_sets
