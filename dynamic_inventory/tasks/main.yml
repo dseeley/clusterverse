@@ -17,7 +17,7 @@
 - name: dynamic_inventory | Get (network) facts - to determine the local IP/network, to see if we need the bastion below (requires the 'ip' tool (the 'iproute2' package on Ubuntu))
   setup: { gather_subset: ["network"] }
 
-- name: dynamic_inventory | Add hosts to dynamic inventory
+- name: dynamic_inventory | Add hosts to dynamic inventory (add only powered-on hosts, in 'current' lifecycle state; if cluster_hosts_target is defined (e.g. redeploying), only consider those hosts).
   add_host:
     name: "{{ item.name }}"
     groups: "{{ item.tagslabels.hosttype }},{{ cluster_name }},{{ clusterid }}{% if item.regionzone is defined and item.regionzone %},{{ item.regionzone }}{% endif %}"
@@ -27,11 +27,12 @@
     ansible_ssh_common_args: "{{ cluster_vars[buildenv].ssh_connection_cfg.bastion.ssh_args if (_bastion_host and (not _bastion_in_host_net or (force_use_bastion is defined and force_use_bastion|bool))) else (omit) }}"    # Don't use the bastion if we're running in the same subnet (assumes all hosts in subnet can operate as a bastion), or if the user sets '-e force_use_bastion=true'
     ansible_user: "{{ cluster_vars[buildenv].ssh_connection_cfg.host.ansible_user | default(omit) }}"
     ansible_ssh_private_key_file: "{{ cluster_vars[buildenv].ssh_connection_cfg.host.ansible_ssh_private_key_file | default(None) | ternary('id_rsa_ansible_ssh_private_key_file', omit) }}"
-  with_items: "{{ cluster_hosts_state | json_query(\"[?contains('RUNNING,running,poweredOn', instance_state)]\") }}"
+  with_items: "{{ cluster_hosts_state | json_query(\"[?contains(['RUNNING','running','poweredOn'], instance_state) && tagslabels.lifecycle_state=='current'  &&  ('\"+ _cluster_hosts_target_names +\"'=='' || contains('\"+ _cluster_hosts_target_names +\"', name))]\") }}"
   vars:
     _local_cidr: "{{ (ansible_default_ipv4.network+'/'+ansible_default_ipv4.netmask) | ipaddr('network/prefix') }}"                                 # Get the network the localhost IP is in
     _bastion_host: "{{ cluster_vars[buildenv].ssh_connection_cfg.bastion.ssh_args | default() | regex_replace('.*@([]\\w\\d\\.-]*).*', '\\1') }}"   # Extract just the bastion hostname from 'cluster_vars[buildenv].ssh_connection_cfg.bastion.ssh_args'
     _bastion_in_host_net: "{{ query('dig', _bastion_host, errors='ignore') | map('ipaddr', _local_cidr) | select() | list | length > 0 }}"          # Check each bastion IP (there could be multiple results from the 'dig'), and see they're in the _local_cidr range.
+    _cluster_hosts_target_names: "{{ cluster_hosts_target | default('') | map(attribute='hostname') | to_json }}"             # If cluster_hosts_target is defined, we're only deploying to those targets
 
 
 - name: dynamic_inventory | stat the inventory_file path

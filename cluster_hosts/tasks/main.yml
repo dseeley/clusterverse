@@ -13,7 +13,7 @@
     that:
       - "cluster_hosts_state | json_query('[?tagslabels.lifecycle_state]') | list | length"
       - "cluster_hosts_state | json_query('[?tagslabels.cluster_suffix]') | list | length"
-    msg: "ERROR - A cluster exists, but does not contain the labels 'cluster_suffix' or 'lifecycle_state'.  If this was created using a previous version of clusterverse, please run 'clusterverse_label_upgrade_v1-v2.yml'."
+    msg: "ERROR - A cluster exists, but does not contain the labels 'cluster_suffix' and 'lifecycle_state'.  If this was created using a previous version of clusterverse, please run 'clusterverse_label_upgrade_v1-v2.yml'."
   when: cluster_hosts_state | length
 
 
