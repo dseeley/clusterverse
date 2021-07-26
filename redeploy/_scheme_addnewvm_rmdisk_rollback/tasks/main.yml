@@ -41,7 +41,7 @@
             name: "{{predeleterole}}"
           when: predeleterole is defined and predeleterole != ""
           vars:
-            hosts_to_remove: "{{ hosts_to_change | json_query(\"[?contains(['RUNNING','running','poweredOn'], instance_state)]\") }}"
+            hosts_to_remove: "{{ hosts_to_change | json_query(\"[?contains('RUNNING,running,poweredOn', instance_state)]\") }}"
 
         - name: Power off any other retiring VM(s) that might exist if we're redeploying to a smaller topology.
           include_role:
@@ -88,5 +88,5 @@
         msg: "tidy | No hosts to tidy.  Only powered-down, non-current machines with be tidied; to clean other machines, please use the '-e clean=<state>' extra variable."
       when: hosts_to_clean | length == 0
   vars:
-    hosts_to_clean: "{{ cluster_hosts_state | json_query(\"[?tagslabels.lifecycle_state!='current' && !(contains(['RUNNING','running','poweredOn'], instance_state)) && ('\"+ canary + \"' == 'tidy'  ||  '\"+ myhosttypes|default('') + \"' == ''  ||  contains(['\"+ myhosttypes|default('') + \"'], tagslabels.hosttype)) ]\") }}"
+    hosts_to_clean: "{{ cluster_hosts_state | json_query(\"[?tagslabels.lifecycle_state!='current' && !(contains('RUNNING,running,poweredOn', instance_state)) && ('\"+ canary + \"' == 'tidy'  ||  '\"+ myhosttypes|default('') + \"' == ''  ||  contains(['\"+ myhosttypes|default('') + \"'], tagslabels.hosttype)) ]\") }}"
   when: canary=="tidy" or  ((canary=="none" or canary=="finish") and canary_tidy_on_success is defined and canary_tidy_on_success|bool)
