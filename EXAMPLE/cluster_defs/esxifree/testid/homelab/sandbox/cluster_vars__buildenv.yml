@@ -32,7 +32,7 @@ cluster_vars:
         networks: [ &sysdisks2_NET1 { networkName: "VM Network", virtualDev: vmxnet3 } ]
         vms_by_az: { a: 1, b: 1, c: 0 }
 
-      sysdisks2-lvm:
+      sysdiskslvm:
         auto_volumes:
           - { mountpoint: "/media/mysvc", volume_size: 1, provisioning_type: "thin", fstype: "ext4" }
           - { mountpoint: "/media/mysvc", volume_size: 1, provisioning_type: "thin", fstype: "ext4" }
