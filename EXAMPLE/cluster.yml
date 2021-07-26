@@ -25,7 +25,7 @@
 
 ###### Application roles
 - name: Application roles
-  hosts: all:!not_target_hosts
+  hosts: all
   tasks:
     - { include_role: { name: "testrole", apply: { tags: ["testrole"]} }, tags: ["testrole"] }
 ######
