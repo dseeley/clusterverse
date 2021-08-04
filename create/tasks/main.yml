@@ -62,7 +62,7 @@
           {%- set elem = {} -%}
           {%- for cht_host_key in cht_host.keys() -%}
             {%- if cht_host_key != 'auto_volumes' -%}
-              {%- set _ = elem.update({'cht_host_key': cht_host[cht_host_key]}) -%}
+              {%- set _ = elem.update({cht_host_key: cht_host[cht_host_key]}) -%}
             {%- else -%}
               {%- set _ = elem.update({'auto_volume': autovol}) -%}
             {%- endif -%}
