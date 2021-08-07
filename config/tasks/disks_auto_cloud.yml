@@ -142,8 +142,9 @@
           filesystem:
             fstype: "{{ raid_vols[0].fstype }}"
             dev: "/dev/{{ lvmparams.vg_name }}/{{ lvmparams.lv_name }}"
-            force: no
-    
+            force: no       # This doesn't appear to prevent the '-F' option being sent to mkfs
+          when: (raid_vols_devices | json_query('[?FSTYPE==``]') | length) == (raid_vols_devices | length)
+
         - name: disks_auto_cloud/lvm | Mount created filesytem(s) persistently
           become: yes
           mount:
