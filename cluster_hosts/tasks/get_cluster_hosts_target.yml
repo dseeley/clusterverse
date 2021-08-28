@@ -42,7 +42,7 @@
           {%- endfor %}
           {{ cluster_hosts_target }}
 
-    - warn_str: msg="get_cluster_hosts_target | Replaced some base images to ensure consistency across cluster. {{cluster_hosts_target | symmetric_difference(__orig_cluster_hosts_target)}}"
+    - warn_str: msg="get_cluster_hosts_target | Replaced some base images to ensure consistency across hosttype. {{cluster_hosts_target | symmetric_difference(__orig_cluster_hosts_target)}}"
       when: (cluster_hosts_target | symmetric_difference(__orig_cluster_hosts_target))
   when: (cluster_hosts_state | json_query('[?tagslabels.lifecycle_state==\'current\']') | length)
 
