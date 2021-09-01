@@ -88,9 +88,10 @@ ansible-playbook redeploy.yml -e buildenv=sandbox -e clusterid=test -e cloud_typ
 
 ### Mandatory command-line variables:
 + `-e buildenv=<sandbox>` - The environment (dev, stage, etc), which must be an attribute of `cluster_vars` defined in `group_vars/<clusterid>/cluster_vars.yml`
-+ `-e canary=['start', 'finish', 'none', 'tidy']` - Specify whether to start or finish a canary deploy, or 'none' deploy
++ `-e canary=['start', 'finish', 'filter', 'none', 'tidy']` - Specify whether to start, finish or filter a canary deploy, or 'none' deploy
 
 ### Extra variables:
 + `-e redeploy_scheme=<subrole_name>` - The scheme corresponds to one defined in `roles/clusterverse/redeploy`
 + `-e canary_tidy_on_success=[true|false]` - Whether to run the tidy (remove the replaced VMs and DNS) on successful redeploy 
++ `-e canary_filter_regex='^.*-test-sysdisks.*$'` - Mandatory when using `canary=filter` and sets the regex pattern used to filter the target hosts by their hostnames
 + `-e myhosttypes="master,slave"`- In redeployment you can define which host type you like to redeploy. If not defined it will redeploy all host types
