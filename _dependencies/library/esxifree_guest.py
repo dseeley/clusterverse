@@ -759,7 +759,7 @@ class esxiFreeScraper(object):
             from email.mime.multipart import MIMEMultipart
             from email.mime.text import MIMEText
             combined_message = MIMEMultipart()
-            sub_message = MIMEText(yaml.dump({"users": cloudinit_userdata}, width=4096, encoding='utf-8'), "cloud-config", sys.getdefaultencoding())
+            sub_message = MIMEText(yaml.dump(cloudinit_userdata, width=4096, encoding='utf-8'), "cloud-config", sys.getdefaultencoding())
             sub_message.add_header('Content-Disposition', 'attachment; filename="cloud-config.yaml"')
             combined_message.attach(sub_message)
             if sys.version_info >= (3, 0):
@@ -893,7 +893,7 @@ def main():
         "annotation": {"type": "str", "default": ""},
         "guest_id": {"type": "str", "default": "ubuntu-64"},
         "hardware": {"type": "dict", "default": {"version": "15", "num_cpus": "2", "memory_mb": "2048", "num_cpu_cores_per_socket": "1", "hotadd_cpu": "False", "hotadd_memory": "False", "memory_reservation_lock": "False"}},
-        "cloudinit_userdata": {"type": "list", "default": []},
+        "cloudinit_userdata": {"type": "dict", "default": {}},
         "disks": {"type": "list", "default": [{"boot": True, "size_gb": 16, "type": "thin"}]},
         "cdrom": {"type": "dict", "default": {"type": "client"}},
         "networks": {"type": "list", "default": [{"networkName": "VM Network", "virtualDev": "vmxnet3"}]},
