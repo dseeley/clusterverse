@@ -41,21 +41,9 @@ def iplookup(fqdn):
         return to_text(dns.resolver.query(fqdn, 'A')[0])
 
 
-# Return extra_vars string from a dict of extra variables
-def extravars_from_dict(extravars_dict):
-    import json
-    if type(extravars_dict) is dict:
-        return " ".join(["-e " + k + "=" + json.dumps(v) for k, v in extravars_dict.items()])
-    else:
-        if type(extravars_dict) != AnsibleUndefined:
-            display.warning(u"extravars_from_dict - WARNING: could not parse extravars as dict")
-        return ""
-
-
 class FilterModule(object):
     def filters(self):
         return {
             'dict_agg': dict_agg,
-            'extravars_from_dict': extravars_from_dict,
             'iplookup': iplookup
         }
