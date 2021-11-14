@@ -17,6 +17,7 @@
       cluster_name: "{{cluster_name}}"
       owner: "{{lookup('env','USER')}}"
       cluster_suffix: "{{cluster_suffix}}"
+      regionzone: "{{cluster_vars.region}}-{{item.az_name}}"
       lifecycle_state: "current"
     cloudinit_userdata: "{{ cluster_vars.cloudinit_userdata | default({}) }}"
     delete_cloudinit:  "{{ cluster_vars.delete_cloudinit | default(omit) }}"

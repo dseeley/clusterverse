@@ -26,4 +26,4 @@
 
 - name: get_cluster_hosts_state/esxifree | Set cluster_hosts_state
   set_fact:
-    cluster_hosts_state: "{{ r__esxifree_guest_info.virtual_machines | json_query(\"[?annotation.cluster_name==`\" + cluster_name + \"`].{name: hw_name, regionzone: None, tagslabels: annotation, instance_id: moid, instance_state: hw_power_status, ipv4: {private: ipv4, public: null}, disk_info_cloud: guest_disk_info }\") }}"
+    cluster_hosts_state: "{{ r__esxifree_guest_info.virtual_machines | json_query(\"[?annotation.cluster_name==`\" + cluster_name + \"`].{name: hw_name, regionzone: annotation.regionzone, tagslabels: annotation, instance_id: moid, instance_state: hw_power_status, ipv4: {private: ipv4, public: null}, disk_info_cloud: guest_disk_info }\") }}"
