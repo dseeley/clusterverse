@@ -9,7 +9,11 @@
     template: "{{ item.image }}"
     name: "{{ item.hostname }}"
     state: present
-    hardware: "{{ {'version': cluster_vars.hardware_version} | combine({'num_cpus': item.flavor['num_cpus'], 'memory_mb': item.flavor['memory_mb']}) }}"
+    hardware:
+      version: "{{ cluster_vars.hardware_version }}"
+      num_cpus: "{{ item.flavor['num_cpus'] }}"
+      memory_mb: "{{ item.flavor['memory_mb'] }}"
+      memory_reservation_lock: "{{ item.flavor['memory_reservation_lock'] | default('TRUE') }}"
     annotation:
       Name: "{{item.hostname}}"
       hosttype: "{{item.hosttype}}"
