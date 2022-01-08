@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2021, Dougal Seeley
+# Copyright (c) 2022, Dougal Seeley
 # https://github.com/dseeley/esxifree_guest
 # BSD 3-Clause License
 
@@ -26,8 +26,7 @@ requirements:
 - paramiko
 - xmltodict
 notes:
-    - Please make sure that the user used for esxifree_guest should have correct level of privileges.
-    - Tested on vSphere 7.0.2
+  - Tested on ESXi 7.0u2
 options:
   hostname:
     description:
@@ -407,8 +406,8 @@ class vmw_soap_client(object):
         envelope = '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' + '<Body>' + str(envelope_body) + '</Body></Envelope>'
         cj = CookieJar()
         req = Request(
-                url='https://' + self.host + '/sdk/vimService.wsdl', data=envelope.encode(),
-                headers={"Content-Type": "text/xml", "SOAPAction": "urn:vim25/6.7.3", "Accept": "*/*", "Cookie": "vmware_client=VMware; vmware_soap_session=" + str(self.vmware_soap_session_cookie)})
+            url='https://' + self.host + '/sdk/vimService.wsdl', data=envelope.encode(),
+            headers={"Content-Type": "text/xml", "SOAPAction": "urn:vim25/6.7.3", "Accept": "*/*", "Cookie": "vmware_client=VMware; vmware_soap_session=" + str(self.vmware_soap_session_cookie)})
 
         opener = build_opener(HTTPSHandler(context=ssl._create_unverified_context()), HTTPCookieProcessor(cj))
         num_send_attempts = 3

@@ -10,6 +10,7 @@ redeploy_schemes_supported: ['_scheme_addallnew_rmdisk_rollback', '_scheme_addne
 
 skip_dynamic_inventory_sshwait: true
 test_touch_disks: true
+debug_nested_log_output: true
 
 app_name: "{{lookup('pipe', 'whoami') | lower}}-test"   # The name of the application cluster (e.g. 'couchbase', 'nginx'); becomes part of cluster_name.  Provided is a default to ensure no accidental overwriting.
 app_class: "test"                                       # The class of application (e.g. 'database', 'webserver'); becomes part of the fqdn

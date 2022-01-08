@@ -2,7 +2,6 @@
 
 - name: Redeploy
   hosts: localhost
-  connection: local
   tasks:
     - { name: "Get dependent roles via ansible-galaxy", local_action: "command ansible-galaxy install -fr requirements.yml", tags: ["always"] }
     - { include_role: { name: 'clusterverse/_dependencies' } }

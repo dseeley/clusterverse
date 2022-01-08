@@ -1,5 +1,18 @@
 ---
 
+- name: get_cluster_hosts_target/esxifree | Get basic instance info of all vms - to get filtered images
+  esxifree_guest_info:
+    username: "{{ cluster_vars.username }}"
+    password: "{{ cluster_vars.password }}"
+    hostname: "{{ cluster_vars.esxi_ip }}"
+    filters: { hw_name: "{{ cluster_vars.image }}" }
+  register: r__esxifree_guest_info
+  delegate_to: localhost
+  run_once: true
+
+- name: get_cluster_hosts_target/esxifree | latest esxi image
+  debug: msg={{r__esxifree_guest_info.virtual_machines[-1]['hw_name']}}
+
 - name: get_cluster_hosts_target/esxifree | Create cluster_hosts_target from optional per-VM config, and add volname (derived from the mountpoint)
   set_fact:
     cluster_hosts_target: |-
@@ -19,7 +32,7 @@
                 'hostname': cluster_name + '-' + hosttyped_name + '-' + azname|string + loop.index0|string + '-' + cluster_suffix|string,
                 'az_name': azname|string,
                 'flavor': hosttyped.flavor,
-                'image': hosttyped.image | default(cluster_vars.image),
+                'image': hosttyped.image | default(r__esxifree_guest_info.virtual_machines[-1]['hw_name']),
                 'auto_volumes': hosttyped.auto_volumes,
                 'networks': vmaz.networks,
                 }) -%}
@@ -31,7 +44,7 @@
                 'hostname': cluster_name + '-' + hosttyped_name + '-' + azname|string + vmazidx|string + '-' + cluster_suffix|string,
                 'az_name': azname|string,
                 'flavor': hosttyped.flavor,
-                'image': hosttyped.image | default(cluster_vars.image),
+                'image': hosttyped.image | default(r__esxifree_guest_info.virtual_machines[-1]['hw_name']),
                 'auto_volumes': hosttyped.auto_volumes,
                 'networks': hosttyped.networks,
                 }) -%}

@@ -17,6 +17,7 @@ google-api-python-client = "*"
 lxml = "*"
 apache-libcloud = "*"
 paramiko = "*"
+PyVmomi = "*"
 
 [dev-packages]
 
