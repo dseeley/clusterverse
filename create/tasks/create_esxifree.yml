@@ -9,7 +9,11 @@
     template: "{{ item.image }}"
     name: "{{ item.hostname }}"
     state: present
-    hardware: "{{ {'version': cluster_vars.hardware_version} | combine({'num_cpus': item.flavor['num_cpus'], 'memory_mb': item.flavor['memory_mb']}) }}"
+    hardware:
+      version: "{{ cluster_vars.hardware_version }}"
+      num_cpus: "{{ item.flavor['num_cpus'] }}"
+      memory_mb: "{{ item.flavor['memory_mb'] }}"
+      memory_reservation_lock: "{{ item.flavor['memory_reservation_lock'] | default('TRUE') }}"
     annotation:
       Name: "{{item.hostname}}"
       hosttype: "{{item.hosttype}}"
@@ -27,15 +31,15 @@
   register: esxi_instances
   run_once: true
   with_items: "{{ cluster_hosts_target }}"
-  async: 7200
-  poll: 0
-
-- name: create/esxifree | Wait for instance creation to complete
-  async_status:
-    jid: "{{ item.ansible_job_id }}"
-  register: esxi_jobs
-  until: esxi_jobs.finished
-  retries: 300
-  with_items: "{{ esxi_instances.results }}"
+#  async: 7200
+#  poll: 0
+#
+#- name: create/esxifree | Wait for instance creation to complete
+#  async_status:
+#    jid: "{{ item.ansible_job_id }}"
+#  register: esxi_jobs
+#  until: esxi_jobs.finished
+#  retries: 300
+#  with_items: "{{ esxi_instances.results }}"
 
 #- debug: msg={{esxi_jobs.results}}
