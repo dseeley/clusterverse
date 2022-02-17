@@ -62,8 +62,7 @@ cluster_vars:
   dns_nameserver_zone: &dns_nameserver_zone ""                    # The zone that dns_server will operate on.  gcloud dns needs a trailing '.'.  Leave blank if no external DNS (use IPs only)
   dns_user_domain: "{%- if _dns_nameserver_zone -%}{{_cloud_type}}-{{_region}}.{{app_class}}.{{buildenv}}.{{_dns_nameserver_zone}}{%- endif -%}"         # A user-defined _domain_ part of the FDQN, (if more prefixes are required before the dns_nameserver_zone)
   dns_server: ""                              # Specify DNS server. nsupdate, route53 or clouddns.  If empty string is specified, no DNS will be added.
-  route53_private_zone: yes                   # Only used when cluster_vars.type == 'aws'. Defaults to true if not set.
-  assign_public_ip: "no"
+  assign_public_ip: "no"                      # Whether a (ephemeral) public IP should be assigned
   inventory_ip: "private"                     # 'public' or 'private', (private in case we're operating in a private LAN).  If public, 'assign_public_ip' must be 'yes'
   instance_profile_name: ""
   user_data: |-
