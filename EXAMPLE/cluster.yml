@@ -2,7 +2,6 @@
 
 - name: clusterverse | Deploy the cluster
   hosts: localhost
-  connection: local
   gather_facts: no
   tasks:
     - { name: "Get dependent roles via ansible-galaxy", local_action: "command ansible-galaxy install -fr requirements.yml", tags: ["always"] }
@@ -33,5 +32,4 @@
 
 - name: clusterverse | Perform cluster readiness operations
   hosts: localhost
-  connection: local
   tasks: [ { include_role: { name: "clusterverse/readiness", apply: { tags: ["clusterverse_readiness"]} }, tags: ["clusterverse_readiness"] } ]

@@ -22,6 +22,8 @@
     name: "{{ item.name }}"
     groups: "{{ item.tagslabels.hosttype }},{{ cluster_name }},{{ clusterid }}{% if item.regionzone is defined and item.regionzone %},{{ item.regionzone }}{% endif %}{% if cluster_hosts_target is defined and item.name not in (cluster_hosts_target | default({}) | map(attribute='hostname')) %},not_target_hosts{% endif %}"
     ansible_host: "{{ item.ipv4.public if cluster_vars.inventory_ip=='public' else item.ipv4.private }}"
+    ipv4_public: "{{ item.ipv4.public if cluster_vars.assign_public_ip|bool  else  omit }}"
+    ipv4_private: "{{ item.ipv4.private }}"
     hosttype: "{{ item.tagslabels.hosttype }}"
     regionzone: "{{ item.regionzone if item.regionzone else omit }}"
     ansible_ssh_common_args: "{{ cluster_vars[buildenv].ssh_connection_cfg.bastion.ssh_args if (_bastion_host and (not _bastion_in_host_net or (force_use_bastion is defined and force_use_bastion|bool))) else (omit) }}"    # Don't use the bastion if we're running in the same subnet (assumes all hosts in subnet can operate as a bastion), or if the user sets '-e force_use_bastion=true'
@@ -47,7 +49,7 @@
           {% if groupname not in ["all", "ungrouped"] -%}
           [{{ groupname }}]
           {% for hostname in groups[groupname] | sort() %}
-          {{ hostname }} ansible_host={{hostvars[hostname].ansible_host}} hosttype={{ hostvars[hostname].hosttype }} {% if 'ansible_user' in hostvars[hostname] %}ansible_user='{{ hostvars[hostname].ansible_user }}'{% endif %} {% if 'ansible_ssh_private_key_file' in hostvars[hostname] %}ansible_ssh_private_key_file='{{ hostvars[hostname].ansible_ssh_private_key_file }}'{% endif %} {% if 'regionzone' in hostvars[hostname] %}regionzone={{ hostvars[hostname].regionzone }}{% endif %} {% if 'ansible_ssh_common_args' in hostvars[hostname] %}ansible_ssh_common_args='{{ hostvars[hostname].ansible_ssh_common_args }}'{% endif %}{{''}}
+          {{ hostname }} ansible_host={{hostvars[hostname].ansible_host}} {% if 'ipv4_public' in hostvars[hostname] %}ipv4_public={{ hostvars[hostname].ipv4_public }}{% endif %} ipv4_private={{ hostvars[hostname].ipv4_private }} hosttype={{ hostvars[hostname].hosttype }} {% if 'ansible_user' in hostvars[hostname] %}ansible_user='{{ hostvars[hostname].ansible_user }}'{% endif %} {% if 'ansible_ssh_private_key_file' in hostvars[hostname] %}ansible_ssh_private_key_file='{{ hostvars[hostname].ansible_ssh_private_key_file }}'{% endif %} {% if 'regionzone' in hostvars[hostname] %}regionzone={{ hostvars[hostname].regionzone }}{% endif %} {% if 'ansible_ssh_common_args' in hostvars[hostname] %}ansible_ssh_common_args='{{ hostvars[hostname].ansible_ssh_common_args }}'{% endif %}{{''}}
           {% endfor %}
 
           {% endif %}
