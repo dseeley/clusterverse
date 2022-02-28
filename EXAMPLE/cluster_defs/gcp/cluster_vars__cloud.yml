@@ -11,9 +11,9 @@ _alma8image: "projects/almalinux-cloud/global/images/almalinux-8-*"             
 cluster_vars:
   image: "{{_ubuntu2004image}}"
   dns_cloud_internal_domain: "c.{{ (_gcp_service_account_rawtext | string | from_json).project_id }}.internal"         # The cloud-internal zone as defined by the cloud provider (e.g. GCP, AWS)
-  dns_server: "clouddns"                                                                          # Specify DNS server. nsupdate, route53 or clouddns.  If empty string is specified, no DNS will be added.
-  assign_public_ip: "no"
-  inventory_ip: "private"                                                                         # 'public' or 'private', (private in case we're operating in a private LAN).  If public, 'assign_public_ip' must be 'yes'
+  dns_server: "clouddns"            # Specify DNS server. nsupdate, route53 or clouddns.  If empty string is specified, no DNS will be added.
+  assign_public_ip: no              # Whether a 'dynamic' (will change on stop/start), 'static' (e.g. elastic IP), or no public IP should be assigned.
+  inventory_ip: "private"           # 'public' or 'private', (private in case we're operating in a private LAN).  If public, 'assign_public_ip' must be 'yes'
   ip_forward: "false"
   metadata:
     #The ssh key is either provided on the command line (as 'ansible_ssh_private_key_file'), or as a variable in cluster_vars[buildenv].ssh_connection_cfg.host.ansible_ssh_private_key_file (anchored to _host_ssh_connection_cfg.ansible_ssh_private_key_file); we can slurp the key from either variable, and then ssh-keygen it into the public key (we have to remove the comment though before we add our own, (hence the regex), because this is what gcp expects).

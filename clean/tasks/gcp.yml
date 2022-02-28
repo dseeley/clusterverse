@@ -3,19 +3,15 @@
 - name: clean/gcp | clean vms
   block:
     - name: clean/gcp | Remove deletion protection
-      command: "gcloud compute instances update {{item.name}} --no-deletion-protection --zone {{ item.regionzone }}"
-      when: cluster_vars[buildenv].deletion_protection | bool
+      gcp_compute_instance:
+        name: "{{item.name}}"
+        project: "{{cluster_vars[buildenv].vpc_project_id}}"
+        zone: "{{ item.regionzone }}"
+        auth_kind: "serviceaccount"
+        service_account_file: "{{gcp_credentials_file}}"
+        deletion_protection: 'no'
       with_items: "{{ hosts_to_clean }}"
-
-    #- name: clean/gcp | Remove deletion protection (broken until https://github.com/ansible-collections/ansible_collections_google/pull/163 gets into a release)
-    #  gcp_compute_instance:
-    #    name: "{{item.name}}"
-    #    project: "{{cluster_vars[buildenv].vpc_project_id}}"
-    #    zone: "{{ item.regionzone }}"
-    #    auth_kind: "serviceaccount"
-    #    service_account_file: "{{gcp_credentials_file}}"
-    #    deletion_protection: 'no'
-    #  with_items: "{{ hosts_to_clean }}"
+      when: cluster_vars[buildenv].deletion_protection | bool
 
     - name: clean/gcp | Delete VMs
       gcp_compute_instance:
@@ -37,6 +33,30 @@
       until: async_jobs.finished
       retries: 300
       with_items: "{{r__gcp_compute_instance.results}}"
+
+    - name: clean/gcp | Get any attached static IPs
+      gcp_compute_address_info:
+        auth_kind: "serviceaccount"
+        service_account_file: "{{gcp_credentials_file}}"
+        project: "{{cluster_vars[buildenv].vpc_project_id}}"
+        region: "{{cluster_vars.region}}"
+        filters:
+          - address = "{{ item.ipv4.public }}"
+      with_items: "{{ hosts_to_clean }}"
+      register: r__gcp_compute_address_info
+
+    - name: clean/gcp | r__gcp_compute_address_info
+      debug: msg={{ r__gcp_compute_address_info }}
+
+    - name: clean/gcp | Delete static IPs (if any were found)
+      gcp_compute_address:
+        auth_kind: "serviceaccount"
+        service_account_file: "{{gcp_credentials_file}}"
+        project: "{{cluster_vars[buildenv].vpc_project_id}}"
+        region: "{{cluster_vars.region}}"
+        name: "{{ item.name }}"
+        state: absent
+      loop: "{{ r__gcp_compute_address_info.results | json_query(\"[].resources[]\") }}"
   when: hosts_to_clean | length
 
 

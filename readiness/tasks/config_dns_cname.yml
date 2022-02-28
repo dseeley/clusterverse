@@ -42,7 +42,7 @@
       with_items: |
         {% set res = [] -%}
         {%- for cht_host in cluster_hosts_target -%}
-          {%- for hosted_zone in r__route53_info__zones.HostedZones | json_query('[?Name==`' + cluster_vars.dns_nameserver_zone + '.`]') -%}
+          {%- for hosted_zone in r__route53_info__zones.HostedZones | default([]) | json_query('[?Name==`' + cluster_vars.dns_nameserver_zone + '.`]') -%}
             {%- if hosted_zone.Config.PrivateZone|bool == true and 'ipv4_private' in hostvars[cht_host.hostname]  or  hosted_zone.Config.PrivateZone|bool == false and 'ipv4_public' in hostvars[cht_host.hostname] -%} 
               {%- set _ = res.append({'hostname': cht_host.hostname, 'private_zone': hosted_zone.Config.PrivateZone}) -%}
             {%- endif -%}

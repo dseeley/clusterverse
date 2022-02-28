@@ -5,8 +5,8 @@ redeploy_schemes_supported: ['_scheme_addallnew_rmdisk_rollback', '_scheme_addne
 cluster_vars:
   dns_cloud_internal_domain: "ACCOUNTNAME_CHANGEME.onmicrosoft.com"        # The cloud-internal zone as defined by the cloud provider (e.g. GCP, AWS)
   dns_server: ""                    # Specify DNS server. nsupdate, route53 or clouddns.  If empty string is specified, no DNS will be added.
-  assign_public_ip: "yes"
-  inventory_ip: "public"            # 'public' or 'private', (private in case we're operating in a private LAN).  If public, 'assign_public_ip' must be 'yes'
+  assign_public_ip: no              # Whether a 'dynamic' (will change on stop/start), 'static' (e.g. elastic IP), or no public IP should be assigned.
+  inventory_ip: "private"           # 'public' or 'private', (private in case we're operating in a private LAN).  If public, 'assign_public_ip' must be 'yes'
   user_data: |-
     #cloud-config
     system_info:
