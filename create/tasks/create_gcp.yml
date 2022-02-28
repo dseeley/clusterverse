@@ -82,6 +82,21 @@
         name: "{{item.auto_volume.src.source_url | basename}}"
       loop: "{{ cluster_hosts_target_denormalised_by_volume | selectattr('auto_volume.src', 'defined') | list }}"
 
+    - name: create/gcp | If (cluster_vars.assign_public_ip in [true, 'static']) then create a new static IP for each instance
+      gcp_compute_address:
+        auth_kind: "serviceaccount"
+        service_account_file: "{{gcp_credentials_file}}"
+        project: "{{cluster_vars[buildenv].vpc_project_id}}"
+        region: "{{cluster_vars.region}}"
+        name: "{{ item.hostname }}"
+        state: present
+      register: r__gcp_compute_address
+      loop: "{{ cluster_hosts_target }}"
+      when: cluster_vars.assign_public_ip in [true, 'static']
+
+    - name: create/gcp | r__gcp_compute_address
+      debug: msg={{r__gcp_compute_address}}
+
     - name: create/gcp | Create VMs asynchronously
       gcp_compute_instance:
         auth_kind: "serviceaccount"
@@ -96,7 +111,15 @@
         network_interfaces:
           - network: "{{ r__gcp_compute_network_info['resources'][0] | default({}) }}"
             subnetwork: "{{ r__gcp_compute_subnetwork_info['resources'][0] | default({}) }}"
-            access_configs: "{%- if cluster_vars.assign_public_ip == 'yes' -%}[{\"name\": \"External NAT\", \"type\": \"ONE_TO_ONE_NAT\"}]{%- else -%}[]{%- endif -%}"
+            access_configs: |-
+              {%- set res = [] -%}
+              {%- if cluster_vars.assign_public_ip in [true, 'dynamic', 'static'] -%}
+                {%- set _dummy = res.append({'name': 'External NAT', 'type': 'ONE_TO_ONE_NAT'}) -%}
+                {%- if cluster_vars.assign_public_ip in [true, 'static'] -%}
+                  {%- set _dummy = res[res | length-1].update({'nat_ip': {'address': r__gcp_compute_address.results | json_query('[?name==\'' + item.hostname + '\'] | [0].address') }}) -%}
+                {%- endif -%}
+              {%- endif -%}
+              {{res}}
         tags: { items: "{{cluster_vars.network_fw_tags}}" }
         can_ip_forward: "{{cluster_vars.ip_forward}}"
         scheduling: { automatic_restart: yes, preemptible: "{{cluster_vars[buildenv].preemptible}}" }
