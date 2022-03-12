@@ -30,10 +30,9 @@
       set_fact:
         cluster_vars: "{{cluster_vars | combine({item.key: item.value | from_yaml}, recursive=True)}}"      # Do the combine with individually parsed variables, because sometimes, the 'value' field of an individual dict is still a string (e.g. during redeploy, which passes the cluster_vars_override again).
       vars:
-        _cluster_vars_override_templated: "{{cluster_vars_override}}"     #This pre-templating technique is needed because sometimes the command-line is interpolated as a string, sometimes as a dict - this normalises it as a dict (which the 'combine' filter, above, requires), however the nested parameters may *still* be stringified (as above).
+        _cluster_vars_override_templated: "{{ cluster_vars_override | default({}) }}"                       #This pre-templating technique is needed because sometimes the command-line is interpolated as a string, sometimes as a dict - this normalises it as a dict (which the 'combine' filter, above, requires), however the nested parameters may *still* be stringified (as above).
       with_dict: "{{_cluster_vars_override_templated}}"
       when: cluster_vars is defined and cluster_vars_override is defined and cluster_vars_override != ''
-
 
 - name: Preflight check
   block:
@@ -68,7 +67,7 @@
       when: "'custom_tagslabels' in cluster_vars"
     - assert: { that: "'{%- for hosttype in cluster_vars[buildenv].hosttype_vars -%}{% if ('version' in cluster_vars[buildenv].hosttype_vars[hosttype]) and (not cluster_vars[buildenv].hosttype_vars[hosttype].version is regex('^[a-z\\d\\-_]{0,63}$')) %}{{cluster_vars[buildenv].hosttype_vars[hosttype].version}}{% endif %}{%- endfor -%}' == ''", fail_msg: "Please ensure cluster_vars[{{buildenv}}].hosttype_vars[hosttype].version is in the set [a-z\\d\\-_], and <63 characters long." }
 
-    - assert: { that: "(cluster_vars.assign_public_ip in [true, 'dynamic', 'static'] and cluster_vars.inventory_ip == 'public') or (cluster_vars.inventory_ip == 'private')", fail_msg: "If inventory_ip=='public', 'assign_public_ip' must be [true, 'dynamic', 'static']" }
+    - assert: { that: "(cluster_vars.inventory_ip == 'private')  or  (cluster_vars.assign_public_ip in [true, 'dynamic', 'static'] and cluster_vars.inventory_ip == 'public')", fail_msg: "If inventory_ip=='public', 'assign_public_ip' must be [true, 'dynamic', 'static']" }
       when: cluster_vars.type == "gcp" or cluster_vars.type == "aws"
 
     - assert: { that: "cluster_vars[buildenv] | json_query(\"hosttype_vars.*.auto_volumes[] | [?contains(`/dev/sdb,/dev/sdc,/dev/sdd,/dev/sde`, device_name) && volume_type!='ephemeral']\") | length == 0", fail_msg: "device_names /dev/sd[b-e] are only allowed for ephemeral volumes in AWS cluster_vars[buildenv].hosttype_vars.  Please start non-ephemeral devices at /dev/sdf." }

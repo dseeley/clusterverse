@@ -47,7 +47,7 @@
         spot_type: "{{cluster_vars[buildenv].hosttype_vars[item.hosttype].spot.spot_type | default('persistent')}}"
         image: "{{ item.image }}"
         vpc_subnet_id: "{{item.vpc_subnet_id}}"
-        assign_public_ip: "{{ true if cluster_vars.assign_public_ip in ['dynamic']  else  false }}"
+        assign_public_ip: "{{ true if ('assign_public_ip' in cluster_vars and cluster_vars.assign_public_ip in ['dynamic'])  else  false }}"
         group: "{{ cluster_vars.secgroups_existing }} {%- if cluster_vars.secgroup_new | length > 0 -%} + {{ ([r__ec2_group.group_name | default()] | default())}} {%- endif -%}"
         wait: yes
         instance_tags: "{{ _instance_tags | combine(cluster_vars.custom_tagslabels | default({})) }}"
@@ -92,7 +92,7 @@
         device_id: "{{ item }}"
         release_on_disassociation: yes
       loop: "{{ r__async_status__ec2.results | json_query(\"[].tagged_instances[].id\") }}"
-      when: cluster_vars.assign_public_ip in [true, 'static']
+      when: "'assign_public_ip' in cluster_vars and cluster_vars.assign_public_ip in [true, 'static']"
 
     - name: create/aws | Set a fact containing the newly-created hosts
       set_fact:

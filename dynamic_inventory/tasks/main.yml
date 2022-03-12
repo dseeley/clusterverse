@@ -22,7 +22,7 @@
     name: "{{ item.name }}"
     groups: "{{ item.tagslabels.hosttype }},{{ cluster_name }},{{ clusterid }}{% if item.regionzone is defined and item.regionzone %},{{ item.regionzone }}{% endif %}{% if cluster_hosts_target is defined and item.name not in (cluster_hosts_target | default({}) | map(attribute='hostname')) %},not_target_hosts{% endif %}"
     ansible_host: "{{ item.ipv4.public if cluster_vars.inventory_ip=='public' else item.ipv4.private }}"
-    ipv4_public: "{{ item.ipv4.public if cluster_vars.assign_public_ip in [true, 'dynamic', 'static']  else  omit }}"
+    ipv4_public: "{{ item.ipv4.public if ('assign_public_ip' in cluster_vars and cluster_vars.assign_public_ip in [true, 'dynamic', 'static'])  else  omit }}"
     ipv4_private: "{{ item.ipv4.private }}"
     hosttype: "{{ item.tagslabels.hosttype }}"
     regionzone: "{{ item.regionzone if item.regionzone else omit }}"

@@ -92,7 +92,7 @@
         state: present
       register: r__gcp_compute_address
       loop: "{{ cluster_hosts_target }}"
-      when: cluster_vars.assign_public_ip in [true, 'static']
+      when: "'assign_public_ip' in cluster_vars and cluster_vars.assign_public_ip in [true, 'static']"
 
     - name: create/gcp | r__gcp_compute_address
       debug: msg={{r__gcp_compute_address}}
@@ -113,9 +113,9 @@
             subnetwork: "{{ r__gcp_compute_subnetwork_info['resources'][0] | default({}) }}"
             access_configs: |-
               {%- set res = [] -%}
-              {%- if cluster_vars.assign_public_ip in [true, 'dynamic', 'static'] -%}
+              {%- if 'assign_public_ip' in cluster_vars and cluster_vars.assign_public_ip in [true, 'dynamic', 'static'] -%}
                 {%- set _dummy = res.append({'name': 'External NAT', 'type': 'ONE_TO_ONE_NAT'}) -%}
-                {%- if cluster_vars.assign_public_ip in [true, 'static'] -%}
+                {%- if 'assign_public_ip' in cluster_vars and cluster_vars.assign_public_ip in [true, 'static'] -%}
                   {%- set _dummy = res[res | length-1].update({'nat_ip': {'address': r__gcp_compute_address.results | json_query('[?name==\'' + item.hostname + '\'] | [0].address') }}) -%}
                 {%- endif -%}
               {%- endif -%}
