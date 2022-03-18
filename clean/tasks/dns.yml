@@ -44,20 +44,24 @@
           register: r__route53_info__zones
 
         - name: clean/dns/route53 | Get A records
-          route53_info:
+          route53:
             aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
             aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+            state: "get"
+            zone: "{{cluster_vars.dns_nameserver_zone}}"
+            record: "{{item.0.name}}.{{cluster_vars.dns_user_domain}}"
             type: "A"
-            max_items: 1
-            query: record_sets
-            hosted_zone_id: "{{ item.1.Id }}"
-            start_record_name: "{{item.0.name}}.{{cluster_vars.dns_user_domain}}"
-          register: r__route53_info__a
-          until: r__route53_info__a is success
-          retries: 10
+            private_zone: "{{ item.1.Config.PrivateZone }}"
+          ignore_errors: yes        # In the ansible=4.x versions of route53.py, a failed lookup results in a failure of this route53 module.
+          register: r__route53_a
           with_nested:
             - "{{ hosts_to_clean }}"
             - "{{ r__route53_info__zones.HostedZones | json_query(\"[?Name==`\" + cluster_vars.dns_nameserver_zone + \".`]\") }}"
+
+        - name: clean/dns/route53 | Remove failed DNS lookups from route53 state=get  (this happens with all the ansible=4.x versions of route53.py)
+          set_fact:
+            r__route53_a: "{{r__route53_a.results | selectattr('failed', '==', false) | list}}"
+          when: r__route53_a is failed
 
         - name: clean/dns/route53 | Delete A records
           route53:
@@ -65,15 +69,15 @@
             aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
             state: "absent"
             zone: "{{ cluster_vars.dns_nameserver_zone }}"
-            record: "{{ item.ResourceRecordSets.Name }}"
-            type: "{{ item.ResourceRecordSets.Type }}"
-            ttl: "{{ item.ResourceRecordSets.TTL }}"
-            value: "{{ item.ResourceRecordSets.ResourceRecords | json_query(\"[].Value\") }}"
+            record: "{{ item.resource_record_sets.name }}"
+            type: "{{ item.resource_record_sets.type }}"
+            ttl: "{{ item.resource_record_sets.ttl }}"
+            value: "{{ item.resource_record_sets.resource_records | json_query(\"[].value\") }}"
             private_zone: "{{ item.PrivateZone }}"
           with_items: "{{ records_to_clean }}"
           vars:
             _fqdns_to_clean: "{{ hosts_to_clean | json_query(\"[].name\") | map('regex_replace', '^(.*)$', '\\1.' + cluster_vars.dns_user_domain + '.') | list }}"
-            records_to_clean: "{{ r__route53_info__a.results | json_query(\"[?ResourceRecordSets[?Type=='A' && contains(\"+ _fqdns_to_clean | string +\", Name)]].{ResourceRecordSets: ResourceRecordSets[?Type=='A']|[0], item0name: item[0].name, PrivateZone: item[1].Config.PrivateZone}\") }}"
+            records_to_clean: "{{ r__route53_a.results | json_query(\"[?resource_record_sets[?type=='A' && contains(\"+ _fqdns_to_clean | string +\", name)]].{resource_record_sets: resource_record_sets[?type=='A']|[0], item0name: item[0].name, PrivateZone: item[1].Config.PrivateZone}\") }}"
 
         - name: clean/dns/route53 | Get CNAME records
           route53:
@@ -114,7 +118,7 @@
 
     - name: "clean/dns/route53 | Delete DNS entries (new mechanism: route53_zone/ route53_info/ route53)"
       block:
-        - name: config/dns/a/route53 | Gather info for pre-existing Hosted Zones (public and/or private)
+        - name: clean/dns/route53 | Gather info for pre-existing Hosted Zones (public and/or private)
           route53_info:
             aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
             aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
