@@ -88,12 +88,13 @@
             record: "{{item.0.name | regex_replace('-(?!.*-).*')}}.{{cluster_vars.dns_user_domain}}"
             type: "CNAME"
             private_zone: "{{ item.1.Config.PrivateZone }}"
+          ignore_errors: yes        # In the ansible=4.x versions of route53.py, a failed lookup results in a failure of this route53 module.
           register: r__route53_cname
           with_nested:
             - "{{ hosts_to_clean }}"
             - "{{ r__route53_info__zones.HostedZones | json_query(\"[?Name==`\" + cluster_vars.dns_nameserver_zone + \".`]\") }}"
-          ignore_errors: yes
-        - name: clean/dns/route53 | Remove failed DNS lookups from route53 state=get
+
+        - name: clean/dns/route53 | Remove failed DNS lookups from route53 state=get  (this happens with all the ansible=4.x versions of route53.py)
           set_fact:
             r__route53_cname: "{{r__route53_cname.results | selectattr('failed', '==', false) | list}}"
           when: r__route53_cname is failed

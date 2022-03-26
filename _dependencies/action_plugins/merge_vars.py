@@ -23,7 +23,7 @@
 # These files could be combined (in the order defined) in the application code, using variables to differentiate between cloud (aws or gcp), region and cluster_id.
 # A variable 'ignore_missing_files' can be set such that any files or directories that are not found in the defined 'from' list will not raise an error.
 #    - merge_vars:
-#        ignore_missing_files: True
+#        ignore_missing_files: yes
 #        from:
 #         - "./cluster_defs/all.yml"
 #         - "./cluster_defs/{{ cloud_type }}/all.yml"
@@ -43,10 +43,23 @@
 #
 # In this case, the 'from' list, would be only the top-level directory (using cluster_id as a variable).  merge_vars does not recurse through directories.
 #    - merge_vars:
-#        ignore_missing_files: True
+#        ignore_missing_files: yes
 #        from:
 #           - "./cluster_defs/{{ clusterid }}"
 #
+#
+# It can also include only files with certain extensions:
+#       cluster_defs/
+#       |-- aws
+#           |-- all.yml
+#           `-- readme.MD
+#
+#    - merge_vars:
+#        ignore_missing_files: yes
+#        extensions: ['yml']
+#        from:
+#           - "./cluster_defs/{{ cloud_type }}"
+
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -60,9 +73,9 @@ from os import path, listdir
 
 display = Display()
 
-class ActionModule(ActionBase):
 
-    VALID_ARGUMENTS = [ 'from', 'ignore_missing_files' ]
+class ActionModule(ActionBase):
+    VALID_ARGUMENTS = ['from', 'ignore_missing_files', 'extensions']
 
     def run(self, tmp=None, task_vars=None):
 
@@ -74,6 +87,7 @@ class ActionModule(ActionBase):
                 raise AnsibleError('%s is not a valid option in merge_vars' % arg)
 
         self.ignore_missing_files = self._task.args.get('ignore_missing_files', False)
+        self.valid_extensions = self._task.args.get('extensions')
 
         self.show_content = True;
         self._task.action = 'include_vars';
@@ -99,12 +113,15 @@ class ActionModule(ActionBase):
         data = {}
         if not failed:
             for filename in files:
-                try:
-                    data = merge_hash(data, self._load_from_file(filename))
+                if (not self.valid_extensions) or path.splitext(filename)[-1][1:] in self.valid_extensions:
+                    try:
+                        data = merge_hash(data, self._load_from_file(filename))
 
-                except AnsibleError as e:
-                    failed = True
-                    err_msg = to_native(e)
+                    except AnsibleError as e:
+                        failed = True
+                        err_msg = to_native(e)
+                else:
+                    display.warning("File extension is not in allowed list: " + filename)
 
         result = super(ActionModule, self).run(task_vars=task_vars)
 
@@ -115,7 +132,7 @@ class ActionModule(ActionBase):
         result['ansible_included_var_files'] = files
         result['ansible_facts'] = data
         result['_ansible_no_log'] = not self.show_content
-        
+
         return result
 
     def _load_from_file(self, filename):
