@@ -1,4 +1,4 @@
-# Copyright 2020 Dougal Seeley <github@dougalseeley.com>
+# Copyright 2022 Dougal Seeley <github@dougalseeley.com>
 # BSD 3-Clause License
 # https://github.com/dseeley/blockdevmap
 
@@ -25,9 +25,9 @@ authors:
 '''
 
 EXAMPLES = '''
-- name: Get block device map information for cloud
+- name: Get block device map information for cloud provider
   blockdevmap:
-    cloud_type: <gcp|aws|azure>
+    cloud_type: <gcp|aws|azure|libvirt>
   become: yes
   register: r__blockdevmap
 
@@ -372,6 +372,8 @@ class cBlockDevMap(object):
             udevadm_output = dict(s.split('=', 1) for s in udevadm_output_lines)
             if 'ID_PART_TABLE_TYPE' in udevadm_output:
                 os_device.update({"parttable_type": udevadm_output['ID_PART_TABLE_TYPE']})
+            if 'ID_SERIAL' in udevadm_output:
+                os_device.update({"SERIAL": udevadm_output['ID_SERIAL']})
         return os_device_names
 
 
@@ -400,6 +402,14 @@ class cAzureMapper(cBlockDevMap):
 class cGCPMapper(cBlockDevMap):
     def __init__(self, **kwds):
         super(cGCPMapper, self).__init__(**kwds)
+
+        for os_device in self.device_map:
+            os_device.update({"device_name_cloud": os_device['SERIAL']})
+
+
+class cLibvirtMapper(cBlockDevMap):
+    def __init__(self, **kwds):
+        super(cLibvirtMapper, self).__init__(**kwds)
 
         for os_device in self.device_map:
             os_device.update({"device_name_cloud": os_device['SERIAL']})
@@ -473,7 +483,7 @@ class cAwsMapper(cBlockDevMap):
 
 def main():
     if not (len(sys.argv) > 1 and sys.argv[1] == "console"):
-        module = AnsibleModule(argument_spec={"cloud_type": {"type": "str", "required": True, "choices": ['aws', 'gcp', 'azure', 'lsblk']}}, supports_check_mode=True)
+        module = AnsibleModule(argument_spec={"cloud_type": {"type": "str", "required": True, "choices": ['aws', 'gcp', 'azure', 'libvirt', 'lsblk']}}, supports_check_mode=True)
     else:
         class cDummyAnsibleModule():  # For testing without Ansible (e.g on Windows)
             def __init__(self):
@@ -495,6 +505,8 @@ def main():
         blockdevmap = cGCPMapper(module=module)
     elif module.params['cloud_type'] == 'azure':
         blockdevmap = cAzureMapper(module=module)
+    elif module.params['cloud_type'] == 'libvirt':
+        blockdevmap = cLibvirtMapper(module=module)
     elif module.params['cloud_type'] == 'lsblk':
         blockdevmap = cLsblkMapper(module=module)
     else:

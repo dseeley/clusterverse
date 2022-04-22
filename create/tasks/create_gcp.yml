@@ -158,7 +158,7 @@
 
     - name: create/gcp | Set a fact containing the newly-created hosts
       set_fact:
-        cluster_hosts_created: "{{ gcp_jobs.results | json_query(\"[?item.changed==`true`].item.item\") }}"
+        cluster_hosts_created: "{{ r__async_status__gcp_compute_instance.results | json_query(\"[?item.changed==`true`].item.item\") }}"
 
     - name: create/gcp | Label the volumes
       gce_labels:

@@ -20,46 +20,47 @@ cluster_vars:
         auto_volumes: [ ]
         flavor: { num_cpus: "2", memory_mb: "2048" }
         version: "{{sys_version | default('')}}"
-        networks: [ &sys_NET1 { networkName: "VM Network", virtualDev: vmxnet3 } ]
+        networks: [ &sys_NET1 { interface_type: "direct", source_dev: "br0" } ]
         vms_by_az: { a: 1, b: 1, c: 0 }
 
       sysdisks2:
         auto_volumes:
-          - { mountpoint: "/media/mysvc1", volume_size: 1, provisioning_type: "thin", fstype: "ext4" }
-          - { mountpoint: "/media/mysvc2", volume_size: 1, provisioning_type: "thin", fstype: "ext4" }
+          - { mountpoint: "/media/mysvc1", size_gb: 1, fstype: "ext4" }
+          - { mountpoint: "/media/mysvc2", size_gb: 1, fstype: "ext4" }
+        rootvol_size_gb: "12"
         flavor: { num_cpus: "2", memory_mb: "2048" }
         version: "{{sys_version | default('')}}"
-        networks: [ &sysdisks2_NET1 { networkName: "VM Network", virtualDev: vmxnet3 } ]
+        networks: [ &sysdisks2_NET1 { interface_type: "direct", source_dev: "br0" } ]
         vms_by_az: { a: 1, b: 1, c: 0 }
 
       sysdiskslvm:
         auto_volumes:
-          - { mountpoint: "/media/mysvc", volume_size: 1, provisioning_type: "thin", fstype: "ext4" }
-          - { mountpoint: "/media/mysvc", volume_size: 1, provisioning_type: "thin", fstype: "ext4" }
+          - { mountpoint: "/media/mysvc", size_gb: 1, fstype: "ext4" }
+          - { mountpoint: "/media/mysvc", size_gb: 1, fstype: "ext4" }
         lvmparams: { vg_name: "vg0", lv_name: "lv0", lv_size: "100%VG" }
         flavor: { num_cpus: "2", memory_mb: "2048" }
         version: "{{sys_version | default('')}}"
-        networks: [ &sysdisks2lvm_NET1 { networkName: "VM Network", virtualDev: vmxnet3 } ]
+        networks: [ &sysdisks2lvm_NET1 { interface_type: "direct", source_dev: "br0" } ]
         vms_by_az: { a: 1, b: 1, c: 0 }
 
-#      sysnets_fulldef:
+#      sysnets-fulldef:
 #        auto_volumes: [ ]
 #        flavor: { num_cpus: "2", memory_mb: "2048" }
 #        version: "{{sys_version | default('')}}"
 #        networks:
-#          - &sysnets1 { networkName: "VM Network", virtualDev: vmxnet3 }
+#          - &sysnets1 { interface_type: "direct", source_dev: "br0" }
 #        vms_by_az:
 #          a:
 #            - networks: [ { <<: *sysnets1 } ]
 #          b:
 #            - networks: [ { <<: *sysnets1 } ]
-#
+
 #      sysnets-cloudinit1:
 #        auto_volumes: [ ]
 #        flavor: { num_cpus: "2", memory_mb: "2048" }
 #        version: "{{sys_version | default('')}}"
 #        networks:
-#          - &systestnets_NET1 { networkName: "VM Network", virtualDev: vmxnet3 }
+#          - &systestnets_NET1 { interface_type: "direct", source_dev: "br0" }
 #        vms_by_az:
 #          a:
 #            - networks:
@@ -73,8 +74,8 @@ cluster_vars:
 #        flavor: { num_cpus: "2", memory_mb: "2048" }
 #        version: "{{sys_version | default('')}}"
 #        networks:
-#          - &systestnets_NET1 { networkName: "VM Network", virtualDev: vmxnet3 }
-#          - &systestnets_NET2 { networkName: "untagged", virtualDev: vmxnet3 }
+#          - &systestnets_NET1 { interface_type: "direct", source_dev: "br0" }
+#          - &systestnets_NET2 { interface_type: "bridge", source_dev: "br0.25" }
 #        vms_by_az:
 #          a:
 #            - networks:
@@ -90,8 +91,8 @@ cluster_vars:
 #        flavor: { num_cpus: "2", memory_mb: "2048" }
 #        version: "{{sys_version | default('')}}"
 #        networks:
-#          - &systestnets_NET1 { networkName: "VM Network", virtualDev: vmxnet3 }
-#          - &systestnets_NET2 { networkName: "untagged", virtualDev: vmxnet3 }
+#          - &systestnets_NET1 { interface_type: "direct", source_dev: "br0" }
+#          - &systestnets_NET2 { interface_type: "bridge", source_dev: "br0.25" }
 #        vms_by_az:
 #          a:
 #            - networks:

@@ -4,7 +4,7 @@
   debug: msg="{{hosts_to_relabel}}"
 
 - name: "set_lifecycle_state_label/esxifree | Change lifecycle_state label to {{new_state}}"
-  esxifree_guest:
+  dseeley.esxifree_guest.esxifree_guest:
     hostname: "{{ cluster_vars.esxi_ip }}"
     username: "{{ cluster_vars.username }}"
     password: "{{ cluster_vars.password }}"

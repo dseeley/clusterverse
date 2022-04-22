@@ -59,11 +59,11 @@
 
 - name: Create partition table, format and attach volumes - AWS, GCP or Azure
   include_tasks: disks_auto_cloud.yml
-  when: cluster_vars.type in ["aws", "gcp", "azure"]
+  when: cluster_vars.type in ["aws", "gcp", "azure", "libvirt"]
 
 - name: Create partition table, format and attach volumes - generic
   include_tasks: disks_auto_generic.yml
-  when: cluster_vars.type not in ["aws", "gcp", "azure"]
+  when: cluster_vars.type not in ["aws", "gcp", "azure", "libvirt"]
 
 - name: install prometheus node exporter daemon
   include_tasks: prometheus_node_exporter.yml

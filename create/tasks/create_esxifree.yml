@@ -1,7 +1,7 @@
 ---
 
 - name: create/esxifree | Create vmware instances from template
-  esxifree_guest:
+  dseeley.esxifree_guest.esxifree_guest:
     hostname: "{{ cluster_vars.esxi_ip }}"
     username: "{{ cluster_vars.username }}"
     password: "{{ cluster_vars.password }}"
@@ -37,9 +37,14 @@
 - name: create/esxifree | Wait for instance creation to complete
   async_status:
     jid: "{{ item.ansible_job_id }}"
-  register: esxi_jobs
-  until: esxi_jobs.finished
+  register: r__async_status__esxifree_guest
+  until: r__async_status__esxifree_guest.finished
   retries: 300
   with_items: "{{ esxi_instances.results }}"
 
-#- debug: msg={{esxi_jobs.results}}
+#- name: create/esxifree | r__async_status__esxifree_guest
+#  debug: msg={{r__async_status__esxifree_guest}}
+
+- name: create/esxifree | Set a fact containing the newly-created hosts
+  set_fact:
+    cluster_hosts_created: "{{ r__async_status__esxifree_guest.results | json_query(\"[?changed==`true`].item.item\") }}"

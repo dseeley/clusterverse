@@ -4,3 +4,12 @@ roles:
   - name: clusterverse
     src: https://github.com/dseeley/clusterverse
     version: master
+
+
+collections:
+  - name: https://github.com/dseeley/community.libvirt.git
+    type: git
+    version: develop
+
+  - name: dseeley.esxifree_guest
+    source: https://galaxy.ansible.com

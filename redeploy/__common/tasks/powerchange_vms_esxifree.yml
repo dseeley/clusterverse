@@ -6,7 +6,7 @@
 - name: "powerchange_vms/esxifree | {{powerchange_new_state}} VM(s) and set maintenance_mode=true"
   block:
     - name: powerchange_vms/esxifree | Set maintenance_mode=true (if stopping)
-      esxifree_guest:
+      dseeley.esxifree_guest.esxifree_guest:
         hostname: "{{ cluster_vars.esxi_ip }}"
         username: "{{ cluster_vars.username }}"
         password: "{{ cluster_vars.password }}"
@@ -17,7 +17,7 @@
       when: "powerchange_new_state == 'stop'"
 
     - name: "powerchange_vms/esxifree | {{powerchange_new_state}} VMs asynchronously"
-      esxifree_guest:
+      dseeley.esxifree_guest.esxifree_guest:
         hostname: "{{ cluster_vars.esxi_ip }}"
         username: "{{ cluster_vars.username }}"
         password: "{{ cluster_vars.password }}"

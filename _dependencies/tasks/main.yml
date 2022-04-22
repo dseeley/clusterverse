@@ -39,11 +39,19 @@
     - assert: { that: "ansible_version.full is version_compare('2.10', '>=')", fail_msg: "ansible-core > 2.10 required for Azure support." }
       when: cluster_vars.type == "azure"
 
-      ## Note cannot use '--format json' in 'ansible-galaxy collection list' command, as it is not present in 2.10.x
-    - assert:
-        that: "(ansible_version.full is version('2.9.6', '>=') and ansible_version.full is version('2.10.6', '<='))  or  ('community.aws' in galaxy_collections  and  galaxy_collections['community.aws'].version is version('1.5.0', '>='))"
-        fail_msg: "If Ansible > 2.9.6 then community.aws > 1.5.0 is required for valid community.aws.route53 support (by default in Ansible v4)."
+    - name: assertions based on collections
+      block:
+        - assert:
+            that: "(ansible_version.full is version('2.9.6', '>=') and ansible_version.full is version('2.10.6', '<='))  or  ('community.aws' in galaxy_collections  and  galaxy_collections['community.aws'].version is version('1.5.0', '>='))"
+            fail_msg: "If Ansible > 2.9.6 then community.aws > 1.5.0 is required for valid community.aws.route53 support (by default in Ansible v4)."
+
+        - assert: { that: "'dseeley.libvirt' in galaxy_collections", fail_msg: "Please ensure the dseeley.libvirt collection is installed:  ansible-galaxy collection install --ignore-errors -fr requirements.yml" }
+          when: cluster_vars.type == "libvirt"
+
+        - assert: { that: "'dseeley.esxifree_guest' in galaxy_collections", fail_msg: "Please ensure the dseeley.esxifree_guest collection is installed:  ansible-galaxy collection install --ignore-errors -fr requirements.yml" }
+          when: cluster_vars.type == "esxifree"
       vars:
+        ## Note cannot use '--format json' in 'ansible-galaxy collection list' command, as it is not present in 2.10.x
         _galaxy_lookup: "{{ lookup('pipe', 'ansible-galaxy collection list', errors='ignore') }}"
         galaxy_collections: |-
           {% set res = {} -%}

@@ -1,7 +1,7 @@
 galaxy_info:
   author: Dougal Seeley
   description: Full-lifecycle cloud infrastructure cluster management, using Ansible
-  company: Sky
+  company: dougalseeley
 
   # If the issue tracker for your role is not on github, uncomment the
   # next line and provide a value

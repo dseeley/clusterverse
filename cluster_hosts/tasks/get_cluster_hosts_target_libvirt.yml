@@ -1,0 +1,73 @@
+---
+
+- name: get_cluster_hosts_target/libvirt | Get basic instance info of all vms - to get filtered images
+  community.libvirt.virt:
+    uri: 'qemu+ssh://{{ cluster_vars.username }}@{{ cluster_vars.libvirt_ip }}/system?keyfile=id_rsa__libvirt_svc'
+    command: list_vms
+  delegate_to: localhost
+  run_once: true
+  register: r__virt_list_vms
+
+- block:
+    - name: get_cluster_hosts_target/libvirt | latest_machine
+      debug: msg={{ latest_machine }}
+
+    - name: get_cluster_hosts_target/libvirt | get_xml of the latest image that matches cluster_vars.image
+      community.libvirt.virt:
+        uri: 'qemu+ssh://{{ cluster_vars.username }}@{{ cluster_vars.libvirt_ip }}/system?keyfile=id_rsa__libvirt_svc'
+        command: get_xml
+        name: "{{ latest_machine }}"
+      register: r__virt_xml
+  delegate_to: localhost
+  run_once: true
+  vars:
+    latest_machine: "{{ r__virt_list_vms.list_vms | select('match', '^' + cluster_vars.image ) | last | default(None) }}"
+
+- block:
+    - name: get_cluster_hosts_target/libvirt | latest image
+      debug:
+        msg: "{{ latest_machine_disk }}"
+
+    - name: get_cluster_hosts_target/libvirt | Create cluster_hosts_target from optional per-VM config, and add volname (derived from the mountpoint)
+      set_fact:
+        cluster_hosts_target: |-
+          {% set res = [] -%}
+          {%- for hosttyped_name, hosttyped in cluster_vars[buildenv].hosttype_vars.items() -%}
+            {%- for hostvol in hosttyped.auto_volumes -%}
+              {%- if 'lvmparams' in hosttyped -%}
+                {%- set lvm_device_index = '-d' + loop.index|string -%}
+              {%- endif -%}
+              {%- set _dummy = hostvol.update({'device_name': hostvol.mountpoint | regex_replace('^\/?') | regex_replace('\/', '__') + lvm_device_index|default('') }) -%}
+            {%- endfor %}
+            {%- for azname, azval in hosttyped.vms_by_az.items() -%}
+              {%- if azval | type_debug == 'list' -%}
+                {%- for vmaz in azval -%}
+                  {%- set _dummy = res.append({
+                    'hosttype': hosttyped_name,
+                    'hostname': cluster_name + '-' + hosttyped_name + '-' + azname|string + loop.index0|string + '-' + cluster_suffix|string,
+                    'az_name': azname|string,
+                    'flavor': hosttyped.flavor,
+                    'image': hosttyped.image | default(latest_machine_disk),
+                    'auto_volumes': hosttyped.auto_volumes,
+                    'networks': vmaz.networks,
+                    }) -%}
+                {%- endfor %}
+              {%- else -%}
+                {%- for vmazidx in range(0, azval | int) -%}
+                  {%- set _dummy = res.append({
+                    'hosttype': hosttyped_name,
+                    'hostname': cluster_name + '-' + hosttyped_name + '-' + azname|string + vmazidx|string + '-' + cluster_suffix|string,
+                    'az_name': azname|string,
+                    'flavor': hosttyped.flavor,
+                    'image': hosttyped.image | default(latest_machine_disk),
+                    'auto_volumes': hosttyped.auto_volumes,
+                    'networks': hosttyped.networks,
+                    }) -%}
+                {%- endfor -%}
+              {%- endif -%}
+            {%- endfor %}
+          {%- endfor %}
+          {{ res }}
+  delegate_to: localhost
+  vars:
+    latest_machine_disk: "{{ r__virt_xml.get_xml | xpath('/domain/devices/disk[target/@dev=\"vda\"]/source/@file') | first | default(None) }}"

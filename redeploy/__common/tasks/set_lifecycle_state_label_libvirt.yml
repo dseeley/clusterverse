@@ -1,0 +1,13 @@
+---
+
+- name: set_lifecycle_state_label/libvirt | hosts_to_relabel
+  debug: msg="{{hosts_to_relabel}}"
+
+- name: "set_lifecycle_state_label/libvirt | Change lifecycle_state label to {{new_state}}"
+  dseeley.libvirt.virt:
+    uri: 'qemu+ssh://{{ cluster_vars.username }}@{{ cluster_vars.libvirt_ip }}/system?keyfile=id_rsa__libvirt_svc'
+    command: set_metadata
+    name: "{{item.name}}"
+    xml: "<cdata><![CDATA[{{ item.tagslabels | combine({'lifecycle_state': new_state}) }}]]></cdata>"
+    params: { 'key': 'clusterverse', 'uri': 'https://github.com/dseeley/clusterverse' }
+  with_items: "{{ hosts_to_relabel | default([]) }}"

@@ -1,7 +1,7 @@
 ---
 
 - name: remove_maintenance_mode/esxifree | Set maintenance_mode to false
-  esxifree_guest:
+  dseeley.esxifree_guest.esxifree_guest:
     hostname: "{{ cluster_vars.esxi_ip }}"
     username: "{{ cluster_vars.username }}"
     password: "{{ cluster_vars.password }}"
