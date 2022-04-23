@@ -13,3 +13,6 @@ collections:
 
   - name: dseeley.esxifree_guest
     source: https://galaxy.ansible.com
+
+  - name: dseeley.inventory_lookup
+    source: https://galaxy.ansible.com

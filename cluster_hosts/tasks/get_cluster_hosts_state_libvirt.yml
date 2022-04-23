@@ -89,7 +89,7 @@
   block:
     - name: get_cluster_hosts_state/libvirt | Get basic instance info of all vms
       set_fact:
-        libvirt_inventory: "{{ lookup('inventory_plugin', 'community.libvirt.libvirt', plugin_options=params) }}"
+        libvirt_inventory: "{{ lookup('dseeley.inventory_lookup.inventory', 'dseeley.libvirt.libvirt', plugin_options=params) }}"
       vars:
         params:
           uri: 'qemu+ssh://{{ cluster_vars.username }}@{{ cluster_vars.libvirt_ip }}/system?keyfile=id_rsa__libvirt_svc'
