@@ -21,7 +21,7 @@
   delegate_to: localhost
   run_once: true
   vars:
-    latest_machine: "{{ r__virt_list_vms.list_vms | select('match', '^' + cluster_vars.image ) | last | default(None) }}"
+    latest_machine: "{{ r__virt_list_vms.list_vms | select('match', '^' + cluster_vars.image ) | sort | last | default(None) }}"
 
 - block:
     - name: get_cluster_hosts_target/libvirt | latest image

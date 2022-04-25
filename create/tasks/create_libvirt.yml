@@ -173,7 +173,7 @@
       {% endif %}
       {% for iface in item.networks %}
           <interface type='{{iface.interface_type}}'>
-            <source {% if iface.interface_type == 'bridge' %}bridge{% else %}dev{% endif %}='{{iface.source_dev}}' mode='vepa'/>
+            <source {% if iface.interface_type == 'bridge' %}bridge{% else %}mode='vepa' dev{% endif %}='{{iface.source_dev}}'/>
             <model type='virtio'/>
           </interface>
       {% endfor %}

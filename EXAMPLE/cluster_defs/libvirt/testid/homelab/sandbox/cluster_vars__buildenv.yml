@@ -54,7 +54,7 @@ cluster_vars:
 #            - networks: [ { <<: *sysnets1 } ]
 #          b:
 #            - networks: [ { <<: *sysnets1 } ]
-
+#
 #      sysnets-cloudinit1:
 #        auto_volumes: [ ]
 #        flavor: { num_cpus: "2", memory_mb: "2048" }

@@ -1,6 +1,6 @@
 # clusterverse  &nbsp; [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) ![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen.svg)
 A full-lifecycle, immutable cloud infrastructure cluster management **role**, using Ansible.
-+ **Multi-cloud:** clusterverse can manage cluster lifecycle in AWS, GCP, Azure and Free ESXi (standalone host only, not vCentre).
++ **Multi-cloud:** clusterverse can manage cluster lifecycle in AWS, GCP, Azure, libvirt (Qemu) and ESXi (standalone host only, not vCentre).
 + **Deploy:**  You define your infrastructure as code (in Ansible yaml), and clusterverse will deploy it 
 + **Scale-up:**  If you change the cluster definitions and rerun the deploy, new nodes will be added.
 + **Redeploy (e.g. up-version):** If you need to up-version, or replace the underlying OS, (i.e. to achieve fully immutable, zero-patching redeploys), the `redeploy.yml` playbook will replace each node in the cluster (via various redeploy schemes), and rollback if any failures occur. 
@@ -37,6 +37,18 @@ To active the pipenv:
 + Store the contents within the `cluster_vars[buildenv].gcp_service_account_rawtext` variable. 
   + During execution, the json file will be copied locally because the Ansible GCP modules often require the file as input. 
 + Google Cloud SDK needs to be installed to run gcloud command-line (e.g. to disable delete protection) - this is handled by `pipenv install`
+
+### libvirt (Qemu)
++ It is non-trivial to set up username/password access to a remote libvirt host, so we use an ssh key instead .
++ Your ssh user should be a member of the `libvirt` and `kvm` groups.
++ Store the config in 
+  ```yaml
+  cluster_vars:
+    libvirt_ip:
+    username:
+    private_key:
+    storage_pool: 
+  ```
 
 ### ESXi (free)
 + Username & password for a privileged user on an ESXi host

@@ -16,6 +16,8 @@ google-auth = "*"
 google-api-python-client = "*"
 lxml = "*"
 apache-libcloud = "*"
+libvirt-python = "*"
+pycdlib = "*"
 paramiko = "*"
 PyVmomi = "*"
 

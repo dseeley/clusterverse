@@ -26,8 +26,8 @@ def create_custom_image(image_name, params = "") {
             ### Note: use pip to install pipenv (not apt) to avoid pypa/pipenv#2196 (when using PIPENV_VENV_IN_PROJECT)
             RUN apt-get update \
                 && apt-get install -y git iproute2 \
-                      python3-boto python3-boto3 python3-botocore python3-dev python3-distutils python3-dnspython python3-google-auth python3-googleapi python3-libcloud python3-jinja2 python3-jmespath python3-netaddr python3-paramiko python3-pip python3-ruamel.yaml python3-setuptools python3-wheel python3-xmltodict \
-                && pip3 install pipenv ansible>=5.4.0 \
+                      python3-boto python3-boto3 python3-botocore python3-dev python3-distutils python3-dnspython python3-google-auth python3-googleapi python3-libcloud python3-jinja2 python3-jmespath python3-netaddr python3-pyvmomi python3-paramiko python3-pip python3-ruamel.yaml python3-setuptools python3-wheel python3-libvirt \
+                && pip3 install pycdlib pipenv ansible>=5.6.0 \
                 && pip3 install -r \$(pip3 show ansible | grep ^Location | sed 's/Location: \\(.*\\)/\\1/')/ansible_collections/azure/azcollection/requirements-azure.txt
             """.stripIndent()
 
@@ -56,7 +56,7 @@ properties([
                 string(name: 'CLUSTER_ID', defaultValue: '', description: "Select a cluster_id to deploy", trim: true),
                 booleanParam(name: 'DNS_FORCE_DISABLE', defaultValue: false, description: 'Tick the box to force disable the DNS as defined in playbook'),
                 choice(name: 'DEPLOY_TYPE', choices: ['deploy', 'redeploy', 'clean'], description: "Choose the deploy type"),
-                choice(name: 'REDEPLOY_SCHEME', choices: ['', '_scheme_addallnew_rmdisk_rollback', '_scheme_addnewvm_rmdisk_rollback', '_scheme_rmvm_rmdisk_only', '_scheme_rmvm_keepdisk_rollback'], description: "Choose the redeploy schemes"),
+                choice(name: 'REDEPLOY_SCHEME', choices: ['', '_scheme_addallnew_rmdisk_rollback', '_scheme_addnewvm_rmdisk_rollback', '_scheme_rmvm_rmdisk_only', '_scheme_rmvm_keepdisk_rollback', '_noredeploy_scale_in_only'], description: "Choose the redeploy schemes"),
                 choice(name: 'CANARY', choices: ['none', 'start', 'finish', 'tidy'], description: "Choose the canary type"),
                 booleanParam(name: 'CANARY_TIDY_ON_SUCCESS', defaultValue: false, description: 'Tick the box to tidy up successful canary (none or finish) redeploys (by default, old machines are left powered off)'),
                 string(name: 'MYHOSTTYPES', description: "comma-separated string, e.g. master,slave - In redeployment you can define which host type you like to redeploy. If not defined it will redeploy all host types"),
