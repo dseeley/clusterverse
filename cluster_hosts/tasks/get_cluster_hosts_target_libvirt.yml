@@ -49,8 +49,10 @@
                     'flavor': hosttyped.flavor,
                     'image': hosttyped.image | default(latest_machine_disk),
                     'auto_volumes': hosttyped.auto_volumes,
-                    'networks': vmaz.networks,
-                    }) -%}
+                    'networks': vmaz.networks }) -%}
+                  {%- if 'rootvol_size_gb' in hosttyped -%}
+                      {%- set _dummy = res[res | length-1].update({'rootvol_size_gb': hosttyped.rootvol_size_gb}) -%}
+                  {%- endif -%}
                 {%- endfor %}
               {%- else -%}
                 {%- for vmazidx in range(0, azval | int) -%}
@@ -61,8 +63,10 @@
                     'flavor': hosttyped.flavor,
                     'image': hosttyped.image | default(latest_machine_disk),
                     'auto_volumes': hosttyped.auto_volumes,
-                    'networks': hosttyped.networks,
-                    }) -%}
+                    'networks': hosttyped.networks }) -%}
+                  {%- if 'rootvol_size_gb' in hosttyped -%}
+                      {%- set _dummy = res[res | length-1].update({'rootvol_size_gb': hosttyped.rootvol_size_gb}) -%}
+                  {%- endif -%}
                 {%- endfor -%}
               {%- endif -%}
             {%- endfor %}

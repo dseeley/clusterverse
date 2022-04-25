@@ -2,8 +2,8 @@
 
 - name: clean/libvirt
   block:
-    - name: clean/libvirt | destroy (forcible shutdown) VM
-      community.libvirt.virt:
+    - name: clean/libvirt | 'destroy' (forcible shutdown) VM
+      dseeley.libvirt.virt:
         uri: 'qemu+ssh://{{ cluster_vars.username }}@{{ cluster_vars.libvirt_ip }}/system?keyfile=id_rsa__libvirt_svc'
         name: "{{item.name}}"
         state: destroyed
@@ -13,7 +13,7 @@
       async: 7200
       poll: 0
 
-    - name: clean/libvirt | Wait for VM destroy (forcible shutdown) to complete
+    - name: clean/libvirt | Wait for VM 'destroy' (forcible shutdown) to complete
       async_status:
         jid: "{{ item.ansible_job_id }}"
       register: r__virt__destroyed_jobs

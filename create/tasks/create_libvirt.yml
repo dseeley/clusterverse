@@ -57,7 +57,7 @@
             uri: 'qemu+ssh://{{ cluster_vars.username }}@{{ cluster_vars.libvirt_ip }}/system?keyfile=id_rsa__libvirt_svc'
             name: default
             command: refresh
-      when: "redeploy_scheme == '_scheme_rmvm_keepdisk_rollback'"
+      when: "redeploy_scheme is defined  and  redeploy_scheme == '_scheme_rmvm_keepdisk_rollback'"
 
 
 #    - name: create/libvirt | MOVE OLD non-root vols by adding libvirt host to dynamic inventory
@@ -83,19 +83,19 @@
 #
 #        - name: create/libvirt | r__virt_volume__nonroot
 #          debug: msg={{ r__virt_volume__nonroot_mv }}
-#      when: "redeploy_scheme == '_scheme_rmvm_keepdisk_rollback'"
+#      when: "redeploy_scheme is defined  and  redeploy_scheme == '_scheme_rmvm_keepdisk_rollback'"
 
 
-    - name: create/libvirt | get root volume XML
+    - name: create/libvirt | get non-root volume XML
       dseeley.libvirt.virt_volume:
         uri: 'qemu+ssh://{{ cluster_vars.username }}@{{ cluster_vars.libvirt_ip }}/system?keyfile=id_rsa__libvirt_svc'
         command: getXMLDesc
         path: "{{cluster_vars.storage_pool}}/{{item.hostname}}--{{item.auto_volume.device_name}}.qcow2"
-      register: r__virt_volume__nonroot_getxml
+      register: r__virt_volume__getxml_nonroot
       loop: "{{ cluster_hosts_target_denormalised_by_volume }}"
 
     - name: create/libvirt | r__virt_volume__nonroot
-      debug: msg={{ r__virt_volume__nonroot_getxml }}
+      debug: msg={{ r__virt_volume__getxml_nonroot }}
 
 
 - name: create/libvirt | create CIDATA (cloud-init) cdrom
@@ -155,7 +155,7 @@
             <source file='{{ r__virt_volume_root.results | json_query('[?item.hostname==`'+ item.hostname +'`]|[0].createXMLFrom.path') }}'/>
             <target dev='vda' bus='virtio'/>
           </disk>
-      {% for vol in r__virt_volume__nonroot_getxml.results | json_query('[?item.hostname==`'+ item.hostname +'`]') %}
+      {% for vol in r__virt_volume__getxml_nonroot.results | json_query('[?item.hostname==`'+ item.hostname +'`]') %}
           <disk type='file' device='disk'>
             <driver name='qemu' type='qcow2'/>
             <source file='{{ vol.XMLDesc | xpath('/volume/target/path/text()') | first | default(None) }}'/>
@@ -221,6 +221,9 @@
     name: "{{item.item.hostname}}"
     state: running
   with_items: "{{ r__virt_define.results }}"
+  run_once: true
+  async: 7200
+  poll: 0
 
 - name: create/libvirt | Wait until IPs are presented for all started VMs
   dseeley.libvirt.virt:
