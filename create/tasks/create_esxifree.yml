@@ -2,15 +2,15 @@
 
 - name: create/esxifree | Create vmware instances from template
   dseeley.esxifree_guest.esxifree_guest:
-    hostname: "{{ cluster_vars.esxi_ip }}"
-    username: "{{ cluster_vars.username }}"
-    password: "{{ cluster_vars.password }}"
-    datastore: "{{ cluster_vars.datastore }}"
+    hostname: "{{ cluster_vars.esxi.esxi_ip }}"
+    username: "{{ cluster_vars.esxi.username }}"
+    password: "{{ cluster_vars.esxi.password }}"
+    datastore: "{{ cluster_vars.esxi.datastore }}"
     template: "{{ item.image }}"
     name: "{{ item.hostname }}"
     state: present
     hardware:
-      version: "{{ cluster_vars.hardware_version }}"
+      version: "{{ cluster_vars.esxi.hardware_version }}"
       num_cpus: "{{ item.flavor['num_cpus'] }}"
       memory_mb: "{{ item.flavor['memory_mb'] }}"
       memory_reservation_lock: "{{ item.flavor['memory_reservation_lock'] | default('TRUE') }}"
@@ -23,8 +23,8 @@
       cluster_suffix: "{{cluster_suffix}}"
       regionzone: "{{cluster_vars.region}}-{{item.az_name}}"
       lifecycle_state: "current"
-    cloudinit_userdata: "{{ cluster_vars.cloudinit_userdata | default({}) }}"
-    delete_cloudinit:  "{{ cluster_vars.delete_cloudinit | default(omit) }}"
+    cloudinit_userdata: "{{ cluster_vars.esxi.cloudinit_userdata | default({}) }}"
+    delete_cloudinit:  "{{ cluster_vars.esxi.delete_cloudinit | default(omit) }}"
     disks: "{{ item.auto_volumes | json_query(\"[].{size_gb: volume_size, type: provisioning_type, volname: volname, src: src }\") | default([]) }}"
     networks: "{{ item.networks | default([]) }}"
     wait: true

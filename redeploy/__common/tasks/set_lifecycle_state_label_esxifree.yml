@@ -5,9 +5,9 @@
 
 - name: "set_lifecycle_state_label/esxifree | Change lifecycle_state label to {{new_state}}"
   dseeley.esxifree_guest.esxifree_guest:
-    hostname: "{{ cluster_vars.esxi_ip }}"
-    username: "{{ cluster_vars.username }}"
-    password: "{{ cluster_vars.password }}"
+    hostname: "{{ cluster_vars.esxi.esxi_ip }}"
+    username: "{{ cluster_vars.esxi.username }}"
+    password: "{{ cluster_vars.esxi.password }}"
     name: "{{item.name}}"
     state: "unchanged"
     annotation: "{{ item.tagslabels | combine({'lifecycle_state': new_state}) }}"

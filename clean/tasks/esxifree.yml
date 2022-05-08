@@ -4,9 +4,9 @@
   block:
     - name: clean/esxifree | Delete VM
       dseeley.esxifree_guest.esxifree_guest:
-        hostname: "{{ cluster_vars.esxi_ip }}"
-        username: "{{ cluster_vars.username }}"
-        password: "{{ cluster_vars.password }}"
+        hostname: "{{ cluster_vars.esxi.esxi_ip }}"
+        username: "{{ cluster_vars.esxi.username }}"
+        password: "{{ cluster_vars.esxi.password }}"
         name: "{{item.name}}"
         state: absent
       with_items: "{{hosts_to_clean}}"

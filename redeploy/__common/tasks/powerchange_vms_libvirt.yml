@@ -7,7 +7,7 @@
   block:
     - name: powerchange_vms/libvirt | Set maintenance_mode=true (if stopping)
       dseeley.libvirt.virt:
-        uri: 'qemu+ssh://{{ cluster_vars.username }}@{{ cluster_vars.libvirt_ip }}/system?keyfile=id_rsa__libvirt_svc'
+        uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc'
         command: set_metadata
         name: "{{item.name}}"
         xml: "<cdata><![CDATA[{{ item.tagslabels | combine({'maintenance_mode': 'true'}) }}]]></cdata>"
@@ -16,7 +16,7 @@
 
     - name: "powerchange_vms/libvirt | {{powerchange_new_state}} VMs"
       community.libvirt.virt:
-        uri: 'qemu+ssh://{{ cluster_vars.username }}@{{ cluster_vars.libvirt_ip }}/system?keyfile=id_rsa__libvirt_svc'
+        uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc'
         name: "{{item.name}}"
         state: "{% if powerchange_new_state == 'stop' %}shutdown{% else %}running{% endif %}"
       with_items: "{{ hosts_to_powerchange }}"

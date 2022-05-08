@@ -4,7 +4,6 @@
   include_tasks: "{{ item }}"
   loop: "{{ query('first_found', params) }}"
   vars: { params: { files: ["remove_maintenance_mode_{{cluster_vars.type}}.yml"], skip: true } }
-  when: (prometheus_set_unset_maintenance_mode is defined and prometheus_set_unset_maintenance_mode|bool)
 
 - name: readiness | create/update DNS CNAME records
   include_tasks: config_dns_cname.yml

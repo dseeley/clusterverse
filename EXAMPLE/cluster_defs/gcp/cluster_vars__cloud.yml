@@ -1,20 +1,37 @@
 ---
 
-_ubuntu2004image: "projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-*"   # Latest Ubuntu Focal (20.04.x) image
-_centos7image: "projects/centos-cloud/global/images/centos-7-*"                  # Latest CentOS 7.x image
-_alma8image: "projects/almalinux-cloud/global/images/almalinux-8-*"              # Latest AlmaLinux 8.x OS image
+prometheus_node_exporter_install: false
+filebeat_install: false
+metricbeat_install: false
 
+beats_config:
+  filebeat:
+#    output_logstash_hosts: ["localhost:5044"]        # The destination hosts for filebeat-gathered logs
+#    extra_logs_paths:                                # The array is optional, if you need to add more paths or files to scrape for logs
+#      - /var/log/myapp/*.log
+  metricbeat:
+#    output_logstash_hosts: ["localhost:5044"]        # The destination hosts for metricbeat-gathered metrics
+#    diskio:                                          # Diskio retrieves metrics for all disks partitions by default. When diskio.include_devices is defined, only look for defined partitions
+#      include_devices: ["sda", "sdb", "nvme0n1", "nvme1n1", "nvme2n1"]
+
+## Source images from which to clone.  Set these as variables so they can be selected on command line (for automated testing).
 #_ubuntu2004image: "projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20210820"   #europe-west4 20.04 amd64 20210820.  Ubuntu images can be located at https://cloud-images.ubuntu.com/locator/
-#_centos7image: "projects/centos-cloud/global/images/centos-7-v20210721"
-#_alma8image: "projects/almalinux-cloud/global/images/almalinux-8-v20210701"
+_ubuntu2004image: "projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-*"            # Latest Ubuntu Focal (20.04.x) image
+_ubuntu2204image: "projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-*"            # Latest Ubuntu Jammy (22.04.x) image
+_centos7image: "projects/centos-cloud/global/images/centos-7-*"                           # Latest CentOS 7.x image
+_alma8image: "projects/almalinux-cloud/global/images/almalinux-8-*"                       # Latest AlmaLinux 8.x OS image
 
 cluster_vars:
-  image: "{{_ubuntu2004image}}"
-  dns_cloud_internal_domain: "c.{{ (_gcp_service_account_rawtext | string | from_json).project_id }}.internal"         # The cloud-internal zone as defined by the cloud provider (e.g. GCP, AWS)
-  dns_server: "clouddns"            # Specify DNS server. nsupdate, route53 or clouddns.  If empty string is specified, no DNS will be added.
-  assign_public_ip: no              # Whether a 'dynamic' (will change on stop/start), 'static' (e.g. elastic IP), or no public IP should be assigned.
-  inventory_ip: "private"           # 'public' or 'private', (private in case we're operating in a private LAN).  If public, 'assign_public_ip' must be 'yes'
+  image: "{{_ubuntu2204image}}"
+  dns_cloud_internal_domain: "c.{{ (_gcp_service_account_rawtext | string | from_json).project_id }}.internal"    # The cloud-internal zone as defined by the cloud provider (e.g. GCP, AWS)
+  dns_nameserver_zone: &dns_nameserver_zone ""                                                                    # The zone that dns_server will operate on.  gcloud dns needs a trailing '.'.  Leave blank if no external DNS (use IPs only)
+  dns_user_domain: "{%- if _dns_nameserver_zone -%}{{cloud_type}}-{{region}}.{{app_class}}.{{buildenv}}.{{_dns_nameserver_zone}}{%- endif -%}"         # A user-defined _domain_ part of the FDQN, (if more prefixes are required before the dns_nameserver_zone)
+  dns_server: "clouddns"                                      # Specify DNS server. nsupdate, route53 or clouddns.  If empty string is specified, no DNS will be added.
+  assign_public_ip: no                                        # Whether a 'dynamic' (will change on stop/start), 'static' (e.g. elastic IP), or no public IP should be assigned.
+  inventory_ip: "private"                                     # 'public' or 'private', (private in case we're operating in a private LAN).  If public, 'assign_public_ip' must be 'yes'
   ip_forward: "false"
+  custom_tagslabels:
+    inv_cost_centre: "0000000000"
   metadata:
     #The ssh key is either provided on the command line (as 'ansible_ssh_private_key_file'), or as a variable in cluster_vars[buildenv].ssh_connection_cfg.host.ansible_ssh_private_key_file (anchored to _host_ssh_connection_cfg.ansible_ssh_private_key_file); we can slurp the key from either variable, and then ssh-keygen it into the public key (we have to remove the comment though before we add our own, (hence the regex), because this is what gcp expects).
     ssh-keys: "{%- if _host_ssh_connection_cfg.ansible_ssh_private_key_file is defined -%}{{ _host_ssh_connection_cfg.ansible_user }}:{{ lookup('pipe', 'ssh-keygen -y -f /dev/stdin <<SSHFILE\n' + _host_ssh_connection_cfg.ansible_ssh_private_key_file|string + '\nSSHFILE') | regex_replace('([\\S]+ [\\S]+)(?:.*$)?', '\\1') }} {{ _host_ssh_connection_cfg.ansible_user }}{%- else -%}{{ cliargs.remote_user }}:{{ lookup('pipe', 'ssh-keygen -y -f ' + ansible_ssh_private_key_file) | regex_replace('([\\S]+ [\\S]+)(?:.*$)?', '\\1') }} {{ cliargs.remote_user }}{%- endif -%}"
@@ -34,3 +51,5 @@ cluster_vars:
 #      allowed: [{ip_protocol: "tcp", ports: ["{{ prometheus_node_exporter_port | default(9100) }}"]}]
 #      source_tags: ["{{cluster_name}}-nwtag"]
 #      description: "Prometheus instances attached to {{cluster_name}}-nwtag can access the exporter port(s)."
+
+_dns_nameserver_zone: *dns_nameserver_zone

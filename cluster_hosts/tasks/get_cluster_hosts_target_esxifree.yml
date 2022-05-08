@@ -2,9 +2,9 @@
 
 - name: get_cluster_hosts_target/esxifree | Get basic instance info of all vms - to get filtered images
   dseeley.esxifree_guest.esxifree_guest_info:
-    username: "{{ cluster_vars.username }}"
-    password: "{{ cluster_vars.password }}"
-    hostname: "{{ cluster_vars.esxi_ip }}"
+    username: "{{ cluster_vars.esxi.username }}"
+    password: "{{ cluster_vars.esxi.password }}"
+    hostname: "{{ cluster_vars.esxi.esxi_ip }}"
     filters: { hw_name: "{{ cluster_vars.image }}" }
   register: r__esxifree_guest_info
   delegate_to: localhost

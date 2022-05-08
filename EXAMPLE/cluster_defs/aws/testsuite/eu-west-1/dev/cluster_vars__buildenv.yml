@@ -1,23 +1,23 @@
 ---
 
 cluster_vars:
-  sandbox:
+  dev:
     aws_access_key: !vault |
-      $ANSIBLE_VAULT;1.2;AES256;sandbox
+      $ANSIBLE_VAULT;1.2;AES256;dev
       7669080460651349243347331538721104778691266429457726036813912140404310
     aws_secret_key: !vault |
-      $ANSIBLE_VAULT;1.2;AES256;sandbox
+      $ANSIBLE_VAULT;1.2;AES256;dev
       7669080460651349243347331538721104778691266429457726036813912140404310
     ssh_connection_cfg:
       host: &host_ssh_connection_cfg
         ansible_user: "ansible"
         ansible_ssh_private_key_file: !vault |
-          $ANSIBLE_VAULT;1.2;AES256;sandbox
+          $ANSIBLE_VAULT;1.2;AES256;dev
           7669080460651349243347331538721104778691266429457726036813912140404310
       bastion:
         ssh_args: '-o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./id_rsa_bastion -W %h:%p -q user@192.168.0.1"'
         ssh_priv_key: !vault |
-          $ANSIBLE_VAULT;1.2;AES256;sandbox
+          $ANSIBLE_VAULT;1.2;AES256;dev
           7669080460651349243347331538721104778691266429457726036813912140404310
     vpc_name: "test{{buildenv}}"
     vpc_subnet_name_prefix: "{{buildenv}}-test-{{region}}"
@@ -35,8 +35,8 @@ cluster_vars:
       sysarm:
         auto_volumes: [ ]
         flavor: t4g.nano
-#        image: "ami-0c28049fa5618bca4"              # eu-west-1 20.04 arm64 hvm-ssd 20210820.  Ubuntu images can be located at https://cloud-images.ubuntu.com/locator/
-        instance_profile_name: "instance-profile-name" # instance_profile_namecan be specified either at cluster level or hosttype level
+#        image: "ami-0c28049fa5618bca4"                 # eu-west-1 20.04 arm64 hvm-ssd 20210820.  Ubuntu images can be located at https://cloud-images.ubuntu.com/locator/
+        instance_profile_name: "instance-profile-name"  # instance_profile_namecan be specified either at cluster level or hosttype level
         version: "{{sys_version | default('')}}"
         vms_by_az: { a: 1, b: 0, c: 0 }
 

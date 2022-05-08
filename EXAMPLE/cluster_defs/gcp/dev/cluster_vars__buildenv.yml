@@ -1,21 +1,23 @@
 ---
 
+create_gcp_network: true
+
 cluster_vars:
-  sandbox:
+  dev:
     gcp_service_account_rawtext: &gcp_service_account_rawtext !vault |
-      $ANSIBLE_VAULT;1.2;AES256;sandbox
+      $ANSIBLE_VAULT;1.2;AES256;dev
       7669080460651349243347331538721104778691266429457726036813912140404310
     ssh_connection_cfg:
       host: &host_ssh_connection_cfg
         ansible_user: "ansible"
         ansible_ssh_private_key_file: !vault |
-          $ANSIBLE_VAULT;1.2;AES256;sandbox
+          $ANSIBLE_VAULT;1.2;AES256;dev
           7669080460651349243347331538721104778691266429457726036813912140404310
-      bastion:
-        ssh_args: '-o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./id_rsa_bastion -W %h:%p -q user@bastion.example.com"'
-        ssh_priv_key: !vault |
-          $ANSIBLE_VAULT;1.2;AES256;sandbox
-          7669080460651349243347331538721104778691266429457726036813912140404310
+#      bastion:
+#        ssh_args: '-o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./id_rsa_bastion -W %h:%p -q user@bastion.example.com"'
+#        ssh_priv_key: !vault |
+#          $ANSIBLE_VAULT;1.2;AES256;dev
+#          7669080460651349243347331538721104778691266429457726036813912140404310
     vpc_project_id: "{{ (_gcp_service_account_rawtext | string | from_json).project_id }}"            # AKA the 'service project' if Shared VPC (https://cloud.google.com/vpc/docs/shared-vpc) is in use.
     vpc_host_project_id: "{{ (_gcp_service_account_rawtext | string | from_json).project_id }}"       # Would differ from vpc_project_id if Shared VPC is in use, (the networking is in a separate project)
     vpc_network_name: "test-{{buildenv}}"
