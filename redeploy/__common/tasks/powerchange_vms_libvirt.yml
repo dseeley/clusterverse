@@ -1,9 +1,9 @@
 ---
 
-- name: "powerchange_vms/esxifree | hosts_to_powerchange (to {{powerchange_new_state}})"
+- name: "powerchange_vms/libvirt | hosts_to_powerchange (to {{powerchange_new_state}})"
   debug: msg="{{hosts_to_powerchange}}"
 
-- name: "powerchange_vms/esxifree | {{powerchange_new_state}} VM(s) and set maintenance_mode=true"
+- name: "powerchange_vms/libvirt | {{powerchange_new_state}} VM(s) and set maintenance_mode=true"
   block:
     - name: powerchange_vms/libvirt | Set maintenance_mode=true (if stopping)
       dseeley.libvirt.virt:
@@ -15,10 +15,9 @@
       with_items: "{{ hosts_to_powerchange }}"
 
     - name: "powerchange_vms/libvirt | {{powerchange_new_state}} VMs"
-      community.libvirt.virt:
+      dseeley.libvirt.virt:
         uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc'
         name: "{{item.name}}"
         state: "{% if powerchange_new_state == 'stop' %}shutdown{% else %}running{% endif %}"
       with_items: "{{ hosts_to_powerchange }}"
   when: hosts_to_powerchange | length
-  

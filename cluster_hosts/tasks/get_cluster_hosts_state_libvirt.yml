@@ -3,7 +3,7 @@
 #- name: get_cluster_hosts_state/libvirt | get cluster_hosts_state using the many individual info modules.
 #  block:
 #    - name: get_cluster_hosts_state/libvirt | list_vms
-#      community.libvirt.virt:
+#      dseeley.libvirt.virt:
 #        uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc'
 #        command: list_vms
 #      delegate_to: localhost
@@ -16,7 +16,7 @@
 #      debug: msg="{{r__virt__list_vms}}"
 #
 #    - name: get_cluster_hosts_state/libvirt | status
-#      community.libvirt.virt:
+#      dseeley.libvirt.virt:
 #        uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc'
 #        command: status
 #        guest: "{{item}}"
@@ -31,7 +31,7 @@
 #      run_once: true
 #
 #    - name: get_cluster_hosts_state/libvirt | get_xml
-#      community.libvirt.virt:
+#      dseeley.libvirt.virt:
 #        uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc'
 #        command: get_xml
 #        guest: "{{item.name}}"
@@ -92,7 +92,7 @@
       no_log: yes
       delegate_to: localhost
       run_once: true
-      when: "cloud_type == 'libvirt'  and  cluster_vars.libvirt.private_key is defined"
+      when: "cluster_vars.type == 'libvirt'  and  cluster_vars.libvirt.private_key is defined"
 
     - name: get_cluster_hosts_state/libvirt | Get basic instance info of all vms
       set_fact:
@@ -101,8 +101,8 @@
         params:
           uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc'
 
-    - name: get_cluster_hosts_state/libvirt | debug libvirt_inventory
-      debug: msg={{libvirt_inventory}}
+#    - name: get_cluster_hosts_state/libvirt | debug libvirt_inventory
+#      debug: msg={{libvirt_inventory}}
 
     - name: get_cluster_hosts_state/libvirt | Set cluster_hosts_state
       set_fact:

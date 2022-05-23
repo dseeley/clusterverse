@@ -125,7 +125,7 @@
 
 
 - name: create/libvirt | Create the VMs asynchronously
-  community.libvirt.virt:
+  dseeley.libvirt.virt:
     uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc'
     command: define
     xml: |
@@ -216,7 +216,7 @@
   debug: msg={{cluster_hosts_created}}
 
 - name: create/libvirt | Set autostart if required
-  community.libvirt.virt:
+  dseeley.libvirt.virt:
     uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc'
     name: "{{item.item.hostname}}"
     autostart: yes
@@ -224,7 +224,7 @@
   when: "'autostart' in item.item.flavor and item.item.flavor.autostart|bool"
 
 - name: create/libvirt | Start the VMs
-  community.libvirt.virt:
+  dseeley.libvirt.virt:
     uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc'
     name: "{{item.item.hostname}}"
     state: running
