@@ -83,12 +83,12 @@
             aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
             aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
             state: present
-            zone: "{{cluster_vars.dns_nameserver_zone}}"
+            zone: "{{item.invocation.module_args.zone}}"
             record: "{{item.invocation.module_args.record}}"
             type: A
             ttl: 60
-            value: "{{ item.invocation.module_args.value }}"
-            private_zone: "{{cluster_vars.route53_private_zone | default(true)}}"
+            value: "{{item.invocation.module_args.value}}"
+            private_zone: "{{item.invocation.module_args.private_zone}}"
             overwrite: true
             wait: yes
           become: false
