@@ -1,10 +1,18 @@
 ---
 
+# A list of CIDRs from which to allow SSH access
+ssh_whitelist:  ['10.0.0.0/8']
+
 cluster_vars:
-  dns_cloud_internal_domain: "{{region}}.compute.internal"        # The cloud-internal zone as defined by the cloud provider (e.g. GCP, AWS)
-  dns_server: "route53"             # Specify DNS server. nsupdate, route53 or clouddns.  If empty string is specified, no DNS will be added.
-  assign_public_ip: no              # Whether a 'dynamic' (will change on stop/start), 'static' (e.g. elastic IP), or no public IP should be assigned.
-  inventory_ip: "private"           # 'public' or 'private', (private in case we're operating in a private LAN).  If public, 'assign_public_ip' must 'static' or 'dynamic'
+  dns_cloud_internal_domain: "{{region}}.compute.internal"    # The cloud-internal zone as defined by the cloud provider (e.g. GCP, AWS)
+  dns_nameserver_zone: &dns_nameserver_zone ""                # The zone that dns_server will operate on.  gcloud dns needs a trailing '.'.  Leave blank if no external DNS (use IPs only)
+  dns_user_domain: "{%- if _dns_nameserver_zone -%}{{cloud_type}}-{{region}}.{{app_class}}.{{buildenv}}.{{_dns_nameserver_zone}}{%- endif -%}"         # A user-defined _domain_ part of the FDQN, (if more prefixes are required before the dns_nameserver_zone)
+  dns_server: "route53"                                       # Specify DNS server. nsupdate, route53 or clouddns.  If empty string is specified, no DNS will be added.
+  assign_public_ip: no                                        # Whether a 'dynamic' (will change on stop/start), 'static' (e.g. elastic IP), or no public IP should be assigned.   NOTE: for Azure 'Standard' instance types, only static IPs are supported
+  inventory_ip: "private"                                     # 'public' or 'private', (private in case we're operating in a private LAN).  If public, 'assign_public_ip' must be 'static' or 'dynamic'
+  instance_profile_name: ""
+  custom_tagslabels:
+    inv_cost_centre: "0000000000"
   user_data: |-
     #cloud-config
     system_info:
@@ -14,7 +22,7 @@ cluster_vars:
   secgroup_new:
     - proto: "tcp"
       ports: ["22"]
-      cidr_ip: "{{_ssh_whitelist}}"
+      cidr_ip: "{{ssh_whitelist}}"
       rule_desc: "SSH Access"
     - proto: all
       group_name: ["{{cluster_name}}-sg"]
@@ -23,3 +31,5 @@ cluster_vars:
 #      ports: ["{{ prometheus_node_exporter_port | default(9100) }}"]
 #      group_name: ["{{buildenv}}-private-sg"]
 #      rule_desc: "Prometheus instances attached to {{buildenv}}-private-sg can access the exporter port(s)."
+
+_dns_nameserver_zone: *dns_nameserver_zone

@@ -90,7 +90,7 @@ properties([
         //disableConcurrentBuilds(),
         //pipelineTriggers([pollSCM(ignorePostCommitHooks: true, scmpoll_spec: '''H/30 8-19 * * 1-5''')]),
         parameters([
-                extendedChoice(name: 'CLOUD_REGION', type: 'PT_MULTI_SELECT', value: 'esxifree/dougalab,libvirt/dougalab,aws/eu-west-1,gcp/europe-west4,azure/westeurope', description: 'Specify which cloud/region(s) to test', visibleItemCount: 5),
+                extendedChoice(name: 'CLOUD_REGION', type: 'PT_MULTI_SELECT', value: 'libvirt/dougalab,esxifree/dougalab,aws/eu-west-1,gcp/europe-west4,azure/westeurope', description: 'Specify which cloud/region(s) to test', visibleItemCount: 5),
                 choice(name: 'BUILDENV', choices: ['', 'dev'], description: "The environment in which to run the tests"),
                 string(name: 'CLUSTER_ID', defaultValue: 'testsuite', trim: true),
                 [name: 'DNS_FORCE_DISABLE', $class: 'ChoiceParameter', choiceType: 'PT_RADIO', description: '', randomName: 'choice-parameter-31196915540455', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: true, script: ''], script: [classpath: [], sandbox: true, script: 'return [\'false:selected\',\'true\',\'true,false\']']]],
@@ -100,7 +100,7 @@ properties([
                 [name: 'MYHOSTTYPES_LIST', $class: 'DynamicReferenceParameter', choiceType: 'ET_FORMATTED_HTML', description: 'These hosttype definitions must exist in cluster_vars for all clusters', randomName: 'choice-parameter-423779762617532', referencedParameters: 'MYHOSTTYPES_TEST', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: true, script: 'return ""'], script: [classpath: [], sandbox: true, script: 'if (MYHOSTTYPES_TEST.split(\',\').contains(\'myhosttypes\')) { return ("<input name=\\"value\\" value=\\"sys,sysdisks2,sysdiskslvm\\" class=\\"setting-input\\" type=\\"text\\">") }']]],
                 [name: 'MYHOSTTYPES_SERIAL_PARALLEL', $class: 'CascadeChoiceParameter', choiceType: 'PT_RADIO', description: 'Run the myhosttype test in serial or parallel', randomName: 'choice-parameter-424489601389882', referencedParameters: 'MYHOSTTYPES_TEST', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: true, script: 'return([])'], script: [classpath: [], sandbox: true, script: 'if (MYHOSTTYPES_TEST==\'nomyhosttypes,myhosttypes\') { return([\'serial:selected\',\'parallel\']) }']]],
                 extendedChoice(name: 'SCALEUPDOWN', type: 'PT_MULTI_SELECT', value: 'noscale,scaleup,scaledown', defaultValue: 'noscale', description: 'Specify whether to test scaling up and/or down.', visibleItemCount: 3),
-                extendedChoice(name: 'IMAGE_TESTED', type: 'PT_MULTI_SELECT', value: '_ubuntu2004image,_centos7image,_alma8image', defaultValue: '_ubuntu2004image', descriptionPropertyValue: 'Ubuntu 20.04, CentOS 7, AlmaLinux 8', description: 'Specify which image(s) to test', visibleItemCount: 3),
+                extendedChoice(name: 'IMAGE_TESTED', type: 'PT_MULTI_SELECT', value: '_ubuntu2204image,_ubuntu2004image,_centos7image,_alma8image', defaultValue: '_ubuntu2204image', descriptionPropertyValue: 'Ubuntu 22.04, Ubuntu 20.04, CentOS 7, AlmaLinux 8', description: 'Specify which image(s) to test', visibleItemCount: 3),
         ])
 ])
 

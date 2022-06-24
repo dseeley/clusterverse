@@ -20,7 +20,7 @@ cluster_vars:
         auto_volumes: [ ]
         flavor: { num_cpus: "2", memory_mb: "2048", autostart: yes }
         version: "{{sys_version | default('')}}"
-        networks: [ &sys_NET1 { interface_type: "direct", source_dev: "br0" } ]
+        networks: [ &sys_NET1 { interface_type: "bridge", source_dev: "br0" } ]
         vms_by_az: { a: 1, b: 1, c: 0 }
 
       sysdisks2:
@@ -30,7 +30,7 @@ cluster_vars:
         rootvol_size_gb: "18"                 # If this is present it must be either the same or bigger than the clone source
         flavor: { num_cpus: "2", memory_mb: "2048" }
         version: "{{sys_version | default('')}}"
-        networks: [ &sysdisks2_NET1 { interface_type: "direct", source_dev: "br0" } ]
+        networks: [ &sysdisks2_NET1 { interface_type: "bridge", source_dev: "br0" } ]
         vms_by_az: { a: 1, b: 1, c: 0 }
 
       sysdiskslvm:
@@ -40,7 +40,7 @@ cluster_vars:
         lvmparams: { vg_name: "vg0", lv_name: "lv0", lv_size: "100%VG" }
         flavor: { num_cpus: "2", memory_mb: "2048" }
         version: "{{sys_version | default('')}}"
-        networks: [ &sysdisks2lvm_NET1 { interface_type: "direct", source_dev: "br0" } ]
+        networks: [ &sysdisks2lvm_NET1 { interface_type: "bridge", source_dev: "br0" } ]
         vms_by_az: { a: 1, b: 1, c: 0 }
 
 #      sysnets-fulldef:
@@ -48,7 +48,7 @@ cluster_vars:
 #        flavor: { num_cpus: "2", memory_mb: "2048" }
 #        version: "{{sys_version | default('')}}"
 #        networks:
-#          - &sysnets1 { interface_type: "direct", source_dev: "br0" }
+#          - &sysnets1 { interface_type: "bridge", source_dev: "br0" }
 #        vms_by_az:
 #          a:
 #            - networks: [ { <<: *sysnets1 } ]
@@ -60,7 +60,7 @@ cluster_vars:
 #        flavor: { num_cpus: "2", memory_mb: "2048" }
 #        version: "{{sys_version | default('')}}"
 #        networks:
-#          - &systestnets_NET1 { interface_type: "direct", source_dev: "br0" }
+#          - &systestnets_NET1 { interface_type: "bridge", source_dev: "br0" }
 #        vms_by_az:
 #          a:
 #            - networks:
