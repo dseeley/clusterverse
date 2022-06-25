@@ -84,7 +84,7 @@ node {
         def docker_parent_net_str = ""
         if (sh(script: 'grep -sq "docker\\|lxc" /proc/1/cgroup', returnStatus: true) == 0) {
             println("Running in docker.  Getting network to pass to docker-in-docker containers...")
-            def docker_parent_net_id = sh(script: 'docker inspect  $(basename $(cat /proc/1/cpuset)) -f "{{ range .NetworkSettings.Networks }}{{println .NetworkID}}{{end}}" | head -n 1', returnStdout: true).trim()
+            def docker_parent_net_id = sh(script: 'docker inspect  $(grep -o -P -m1 \'docker.*\\K[0-9a-f]{64,}\' /proc/self/cgroup) -f "{{ range .NetworkSettings.Networks }}{{println .NetworkID}}{{end}}" | head -n 1', returnStdout: true).trim()
             docker_parent_net_str = "--network ${docker_parent_net_id}"
             println("docker_parent_net_str: ${docker_parent_net_str}")
         }

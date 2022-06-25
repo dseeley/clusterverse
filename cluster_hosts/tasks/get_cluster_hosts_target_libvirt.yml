@@ -2,7 +2,7 @@
 
 - name: get_cluster_hosts_target/libvirt | Get basic instance info of all vms - to get filtered images
   dseeley.libvirt.virt:
-    uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc'
+    uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc&no_verify=1'
     command: list_vms
   delegate_to: localhost
   run_once: true
@@ -14,7 +14,7 @@
 
     - name: get_cluster_hosts_target/libvirt | get_xml of the latest image that matches cluster_vars.image
       dseeley.libvirt.virt:
-        uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc'
+        uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc&no_verify=1'
         command: get_xml
         name: "{{ latest_machine }}"
       register: r__virt_xml

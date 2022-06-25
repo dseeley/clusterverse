@@ -5,7 +5,7 @@
 
 - name: "set_lifecycle_state_label/libvirt | Change lifecycle_state label to {{new_state}}"
   dseeley.libvirt.virt:
-    uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc'
+    uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc&no_verify=1'
     command: set_metadata
     name: "{{item.name}}"
     xml: "<cdata><![CDATA[{{ item.tagslabels | combine({'lifecycle_state': new_state}) }}]]></cdata>"
