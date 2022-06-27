@@ -36,22 +36,26 @@
 
 - name: Preflight check
   block:
-    - assert: { that: "ansible_version.full is version_compare('2.10', '>=')", fail_msg: "ansible-core > 2.10 required for Azure support." }
-      when: cluster_vars.type == "azure"
-
     - name: assertions based on required collections
       block:
         - assert:
             that: "(ansible_version.full is version('2.9.6', '>=') and ansible_version.full is version('2.10.6', '<='))  or  ('community.aws' in galaxy_collections  and  galaxy_collections['community.aws'].version is version('1.5.0', '>='))"
             fail_msg: "If Ansible > 2.9.6 then community.aws > 1.5.0 is required for valid community.aws.route53 support (by default in Ansible v4)."
 
-        - name: required libvirt collections
+        - name: azure collection requirements
+          block:
+            - assert: { that: "ansible_version.full is version_compare('2.10', '>=')", fail_msg: "ansible-core > 2.10 required for Azure support." }
+            - assert: { that: "'azure.azcollection' in galaxy_collections", fail_msg: "Please ensure the azure.azcollection collection is installed:  ansible-galaxy collection install azure.azcollection (or ansible-galaxy collection install --ignore-errors -fr requirements.yml)" }
+          when: cluster_vars.type == "azure"
+
+        - name: libvirt collection requirements
           block:
             - assert: { that: "'dseeley.libvirt' in galaxy_collections", fail_msg: "Please ensure the dseeley.libvirt collection is installed:  ansible-galaxy collection install git+https://github.com/dseeley/libvirt.git (or ansible-galaxy collection install --ignore-errors -fr requirements.yml)" }
             - assert: { that: "'dseeley.inventory_lookup' in galaxy_collections", fail_msg: "Please ensure the dseeley.inventory_lookup collection is installed:  ansible-galaxy collection install dseeley.inventory_lookup (or ansible-galaxy collection install --ignore-errors -fr requirements.yml)" }
           when: cluster_vars.type == "libvirt"
 
-        - assert: { that: "'dseeley.esxifree_guest' in galaxy_collections", fail_msg: "Please ensure the dseeley.esxifree_guest collection is installed:  ansible-galaxy collection install dseeley.esxifree_guest (or ansible-galaxy collection install --ignore-errors -fr requirements.yml)" }
+        - name: esxifree collection requirements
+          assert: { that: "'dseeley.esxifree_guest' in galaxy_collections", fail_msg: "Please ensure the dseeley.esxifree_guest collection is installed:  ansible-galaxy collection install dseeley.esxifree_guest (or ansible-galaxy collection install --ignore-errors -fr requirements.yml)" }
           when: cluster_vars.type == "esxifree"
       vars:
         _galaxy_lookup: "{{ lookup('pipe', 'ansible-galaxy collection list', errors='ignore') }}"

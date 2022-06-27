@@ -27,7 +27,8 @@ def create_custom_image(image_name, params = "") {
             RUN apt-get update \
                 && apt-get install -y git iproute2 \
                       python3-boto python3-boto3 python3-dev python3-distutils python3-docker python3-dnspython python3-google-auth python3-googleapi python3-jinja2 python3-jmespath python3-libcloud python3-libvirt python3-lxml python3-netaddr python3-paramiko python3-passlib python3-pip python3-pyvmomi python3-ruamel.yaml python3-setuptools python3-wheel python3-xmltodict \
-                && pip3 install pycdlib pipenv ansible>=5.6.0 \
+                && pip3 install pycdlib pipenv ansible==5.9.0 \
+                `## uncomment if ansible=6.0.0 #  && ansible-galaxy collection install azure.azcollection -p \$(pip3 show ansible | grep ^Location | sed 's/Location: \\(.*\\)/\\1/') --force` \
                 && pip3 install -r \$(pip3 show ansible | grep ^Location | sed 's/Location: \\(.*\\)/\\1/')/ansible_collections/azure/azcollection/requirements-azure.txt
             """.stripIndent()
 
@@ -160,7 +161,6 @@ node {
                 }
 
                 def (CLOUD_TYPE, REGION) = params.CLOUD_REGION.split('/')
-                sh "ansible-galaxy collection install --ignore-errors -fr requirements.yml"
                 if (params.DEPLOY_TYPE == 'deploy') {
                     sh "ansible-playbook -e cloud_type=${CLOUD_TYPE} -e region=${REGION} -e buildenv=${params.BUILDENV} -e clusterid=${params.CLUSTER_ID} --vault-id=default@.vaultpass-client.py --vault-id=${params.BUILDENV}@.vaultpass-client.py cluster.yml $APP_NAME $DNS_FORCE_DISABLE $MYHOSTTYPES $IAC_RELEASE $params.USER_CMDLINE_VARS"
                 } else if (params.DEPLOY_TYPE == 'redeploy') {
