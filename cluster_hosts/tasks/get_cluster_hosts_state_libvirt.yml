@@ -4,7 +4,7 @@
 #  block:
 #    - name: get_cluster_hosts_state/libvirt | list_vms
 #      dseeley.libvirt.virt:
-#        uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc'
+#        uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc&no_verify=1'
 #        command: list_vms
 #      delegate_to: localhost
 #      run_once: true
@@ -17,7 +17,7 @@
 #
 #    - name: get_cluster_hosts_state/libvirt | status
 #      dseeley.libvirt.virt:
-#        uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc'
+#        uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc&no_verify=1'
 #        command: status
 #        guest: "{{item}}"
 #      delegate_to: localhost
@@ -32,7 +32,7 @@
 #
 #    - name: get_cluster_hosts_state/libvirt | get_xml
 #      dseeley.libvirt.virt:
-#        uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc'
+#        uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc&no_verify=1'
 #        command: get_xml
 #        guest: "{{item.name}}"
 #      delegate_to: localhost
@@ -47,7 +47,7 @@
 #
 #    - name: get_cluster_hosts_state/libvirt | guest_agent_info
 #      dseeley.libvirt.virt:
-#        uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc'
+#        uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc&no_verify=1'
 #        command: get_guest_agent_info
 #        name: "{{item.name}}"
 #      delegate_to: localhost
@@ -99,7 +99,7 @@
         libvirt_inventory: "{{ lookup('dseeley.inventory_lookup.inventory', 'dseeley.libvirt.libvirt', plugin_options=params) }}"
       vars:
         params:
-          uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc'
+          uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc&no_verify=1'
 
 #    - name: get_cluster_hosts_state/libvirt | debug libvirt_inventory
 #      debug: msg={{libvirt_inventory}}

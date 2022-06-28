@@ -60,7 +60,7 @@
 #  debug: msg={{r__azure_rm_publicipaddress}}
 
 #- name: Create NIC
-#  azure_rm_networkinterface:
+#  azure.azcollection.azure_rm_networkinterface:
 #    client_id: "{{cluster_vars[buildenv].azure_client_id}}"
 #    secret: "{{cluster_vars[buildenv].azure_secret}}"
 #    subscription_id: "{{cluster_vars[buildenv].azure_subscription_id}}"
@@ -171,7 +171,7 @@
         subscription_id: "{{cluster_vars[buildenv].azure_subscription_id}}"
         tenant: "{{cluster_vars[buildenv].azure_tenant}}"
         resource_group: "{{cluster_vars[buildenv].azure_resource_group}}"
-        attach_caching: read_only
+        attach_caching: "{{item.auto_volume.caching | default(omit)}}"
         disk_size_gb: "{{item.auto_volume.disk_size_gb}}"
         lun: "{{item.auto_volume.device_name}}"
         managed_by: "{{item.hostname}}"
@@ -202,7 +202,7 @@
 #            subscription_id: "{{cluster_vars[buildenv].azure_subscription_id}}"
 #            tenant: "{{cluster_vars[buildenv].azure_tenant}}"
 #            resource_group: "{{cluster_vars[buildenv].azure_resource_group}}"
-#            attach_caching: read_only
+#            attach_caching: "{{item.auto_volume.caching | default(omit)}}"
 #            disk_size_gb: "{{item.auto_volume.disk_size_gb}}"
 #            name: "{{_tags.name}}"
 #            storage_account_type: "{{item.auto_volume.storage_account_type}}"

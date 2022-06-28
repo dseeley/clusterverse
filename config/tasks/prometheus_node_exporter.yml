@@ -1,4 +1,5 @@
 ---
+
 - name: prometheus node_exporter | download release archive from github.com
   become: yes
   unarchive:
@@ -16,9 +17,18 @@
 
 - name: prometheus node_exporter | install systemd service file
   become: yes
-  template:
-    src: "etc/systemd/system/prometheus_node_exporter.service.j2"
+  copy:
     dest: "/etc/systemd/system/prometheus_node_exporter.service"
+    content: |-
+      [Unit]
+      Description=Prometheus Node Exporter
+
+      [Service]
+      User=node_exporter
+      ExecStart=/opt/node_exporter-{{ prometheus_node_exporter_version }}.linux-{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else ansible_architecture }}/node_exporter --web.listen-address=:{{ prometheus_node_exporter_port }} {{ prometheus_node_exporter_options }}
+
+      [Install]
+      WantedBy=default.target
 
 - name: prometheus node_exporter | force systemd to reread configs
   become: yes

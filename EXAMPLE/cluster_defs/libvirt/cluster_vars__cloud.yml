@@ -2,24 +2,10 @@
 
 _scheme_rmvm_keepdisk_rollback__copy_or_move: "move"
 
-prometheus_node_exporter_install: false
-filebeat_install: false
-metricbeat_install: false
-
-beats_config:
-  filebeat:
-#    output_logstash_hosts: ["localhost:5044"]        # The destination hosts for filebeat-gathered logs
-#    extra_logs_paths:                                # The array is optional, if you need to add more paths or files to scrape for logs
-#      - /var/log/myapp/*.log
-  metricbeat:
-#    output_logstash_hosts: ["localhost:5044"]        # The destination hosts for metricbeat-gathered metrics
-#    diskio:                                          # Diskio retrieves metrics for all disks partitions by default. When diskio.include_devices is defined, only look for defined partitions
-#      include_devices: ["sda", "sdb", "nvme0n1", "nvme1n1", "nvme2n1"]
-
 ## Source images from which to clone.  Set these as variables so they can be selected on command line (for automated testing).
-#_ubuntu2004image: "gold-ubuntu2004-20211122141629"        # Specific Ubuntu Focal (20.04.x) image
-_ubuntu2004image: "gold-ubuntu2004-*"                     # Latest Ubuntu Focal (20.04.x) image
+#_ubuntu2204image: "gold-ubuntu2204-20211122141629"        # Specific Ubuntu Jammy (22.04.x) image
 _ubuntu2204image: "gold-ubuntu2204-*"                     # Latest Ubuntu Jammy (22.04.x) image
+_ubuntu2004image: "gold-ubuntu2004-*"                     # Latest Ubuntu Focal (20.04.x) image
 _centos7image: "gold-centos7-*"
 _alma8image: "gold-alma8-*"
 
@@ -30,8 +16,7 @@ cluster_vars:
   dns_nameserver_zone: &dns_nameserver_zone ""                # The zone that dns_server will operate on.  gcloud dns needs a trailing '.'; leave blank for no DNS (IPs only)
   dns_user_domain: "{%- if _dns_nameserver_zone -%}{{cloud_type}}-{{region}}.{{app_class}}.{{buildenv}}.{{_dns_nameserver_zone}}{%- endif -%}"         # A user-defined _domain_ part of the FDQN, (if more prefixes are required before the dns_nameserver_zone)
   dns_server: ""                                              # Specify DNS server. nsupdate, route53 or clouddns.  If empty string is specified, no DNS will be added.
-  assign_public_ip: no                                        # Whether a 'dynamic' (will change on stop/start), 'static' (e.g. elastic IP), or no public IP should be assigned.
-  inventory_ip: "private"                                     # 'public' or 'private', (private in case we're operating in a private LAN).  If public, 'assign_public_ip' must 'static' or 'dynamic'
+  inventory_ip: "private"                                     # 'public' or 'private', (private in case we're operating in a private LAN).  If public, 'assign_public_ip' must be 'static' or 'dynamic'
   custom_tagslabels:
     inv_cost_centre: "0000000000"
   libvirt:

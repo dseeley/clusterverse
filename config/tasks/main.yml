@@ -1,33 +1,35 @@
 ---
 
-- name: Run cloud-specific config (if defined)
-  include: "{{ item }}"
-  loop: "{{ query('first_found', params) }}"
-  vars: { params: { files: ["config_{{cluster_vars.type}}.yml"], skip: true } }
-
-- name: Disable unattended-upgrades and apt-daily services & timers. Wait for in-flight updates to finish.
+- name: Disable unattended-upgrade and apt-daily timers. Wait for in-flight updates to finish.
   block:
-    - name: Disable unattended-upgrades and apt-daily services & timers
+    - name: Disable unattended-upgrades and apt-daily timers
+      become: yes
       systemd:
         name: "{{ item }}"
         enabled: no
         state: stopped
         daemon_reload: yes
-      become: true
+      register: r__systemd__disable_apt_services
       loop:
         - 'apt-daily.timer'
-        - 'apt-daily.service'
         - 'apt-daily-upgrade.timer'
-        - 'apt-daily-upgrade.service'
         - 'unattended-upgrades.service'
 
+    - name: r__systemd__disable_apt_services
+      debug: msg="{{r__systemd__disable_apt_services}}"
+
     - name: Wait for in-flight updates to finish
-      become: true
-      shell: "while fuser /var/lib/dpkg/{{ item }} >/dev/null 2>&1; do sleep 5; done;"
+      become: yes
+      shell: "while fuser /var/lib/dpkg/{{ item }} -v 2>&1; do sleep 5; done;"
       loop:
         - lock
         - lock-frontend
   when: ansible_os_family == 'Debian'
+
+- name: Run cloud-specific config (if defined)
+  include: "{{ item }}"
+  loop: "{{ query('first_found', params) }}"
+  vars: { params: { files: ["config_{{cluster_vars.type}}.yml"], skip: true } }
 
 - name: Disable requiretty in sudoers to enable pipelining
   become: yes
@@ -50,7 +52,7 @@
     insertbefore: "BOF"
 
 - name: Create /var/log/journal
-  become: true
+  become: yes
   file:
     path: "/var/log/journal"
     state: directory
@@ -90,7 +92,7 @@
   when: pkgupdate is defined and (pkgupdate == 'always' or (pkgupdate == 'onCreate' and inventory_hostname in (hostvars['localhost'].cluster_hosts_created | json_query('[].hostname'))))
 
 - name: Set hostname (e.g. AWS doesn't set it automatically)
-  become: true
+  become: yes
   hostname:
     name: "{{inventory_hostname.split('.')[0]}}"
 
