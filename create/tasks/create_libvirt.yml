@@ -140,7 +140,9 @@
         <vcpu placement='static'>{{item.flavor['num_cpus']}}</vcpu>
         <os>
           <type arch='x86_64' machine='pc-q35-6.2'>hvm</type>
+      {% if item.flavor['firmware'] != 'BIOS' %}
           <loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE.fd</loader>
+      {% endif %}
         </os>
         <features>
           <acpi/>
@@ -182,6 +184,9 @@
             <address type='virtio-serial' controller='0' bus='0' port='1'/>
           </channel>
           <graphics type='vnc' autoport='yes'/>
+          <video>
+            <model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>
+          </video>
           <memballoon model='virtio'/>
           <rng model='virtio'>
             <backend model='random'>/dev/urandom</backend>
