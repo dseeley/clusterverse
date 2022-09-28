@@ -9,9 +9,17 @@
     hosts_to_remove: "{{ [host_to_del] }}"
   when: predeleterole is defined and predeleterole != ""
 
-- include_role:
-    name: clusterverse/clean
-    tasks_from: "{{cluster_vars.type}}.yml"
+- name: remove dns and host
+  block:
+    - include_role:
+        name: clusterverse/clean
+        tasks_from: dns.yml
+      when: (hosts_to_clean | length)  and  (cluster_vars.dns_server is defined and cluster_vars.dns_server != "") and (cluster_vars.dns_user_domain is defined and cluster_vars.dns_user_domain != "")
+
+    - include_role:
+        name: clusterverse/clean
+        tasks_from: "{{cluster_vars.type}}.yml"
+      when: (hosts_to_clean | length)
   vars:
     hosts_to_clean: "{{ [host_to_del] }}"
 
