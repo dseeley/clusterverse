@@ -6,6 +6,7 @@ _scheme_rmvm_keepdisk_rollback__copy_or_move: "move"
 #_ubuntu2204image: "gold-ubuntu2204-20211122141629"        # Specific Ubuntu Jammy (22.04.x) image
 _ubuntu2204image: "gold-ubuntu2204-*"                     # Latest Ubuntu Jammy (22.04.x) image
 _ubuntu2004image: "gold-ubuntu2004-*"                     # Latest Ubuntu Focal (20.04.x) image
+_ubuntu1804image: "gold-ubuntu1804-*"                     # Latest Ubuntu Bionic (18.04.x) image
 _centos7image: "gold-centos7-*"
 _alma8image: "gold-alma8-*"
 
