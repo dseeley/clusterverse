@@ -2,6 +2,9 @@
 
 - debug: msg="Attempting to redeploy {{host_to_del}}"
 
+- name: debug debug_nested_log_output
+  debug: msg="{{debug_nested_log_output}}"
+
 - name: run predeleterole role
   include_role:
     name: "{{predeleterole}}"
@@ -9,22 +12,16 @@
     hosts_to_remove: "{{ [host_to_del] }}"
   when: predeleterole is defined and predeleterole != ""
 
-- name: remove dns and host
-  block:
-    - include_role:
-        name: clusterverse/clean
-        tasks_from: dns.yml
-      when: (hosts_to_clean | length)  and  (cluster_vars.dns_server is defined and cluster_vars.dns_server != "") and (cluster_vars.dns_user_domain is defined and cluster_vars.dns_user_domain != "")
-
-    - include_role:
-        name: clusterverse/clean
-        tasks_from: "{{cluster_vars.type}}.yml"
-      when: (hosts_to_clean | length)
+- name: clean host
+  include_role:
+    name: clusterverse/clean
+    tasks_from: "{{cluster_vars.type}}.yml"
+  when: (hosts_to_clean | length)
   vars:
     hosts_to_clean: "{{ [host_to_del] }}"
 
 - name: "Run {{mainclusteryml}} to fix cluster"
-  shell: "{{ (argv | join(' ')) | regex_replace('redeploy.yml', mainclusteryml) }} {{ redeploy_extra_vars | extravars_from_dict }}"
+  shell: "{{ (argv | join(' ')) | regex_replace('redeploy.yml', mainclusteryml) }} -e cluster_suffix={{cluster_suffix}} {{ redeploy_extra_vars | extravars_from_dict }}"
   register: r__mainclusteryml
   no_log: True
   ignore_errors: yes
