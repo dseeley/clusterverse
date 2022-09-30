@@ -1,0 +1,4 @@
+---
+
+# Show logs when redeploying
+debug_nested_log_output: true

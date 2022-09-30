@@ -15,7 +15,7 @@
   meta: refresh_inventory
 
 - name: dynamic_inventory | Get (network) facts - to determine the local IP/network, to see if we need the bastion below (requires the 'ip' tool (the 'iproute2' package on Ubuntu))
-  setup: { gather_subset: ["network"] }
+  ansible.builtin.setup: { gather_subset: ["network"] }
 
 - name: dynamic_inventory | Add hosts to dynamic inventory (add only powered-on hosts)
   add_host:
