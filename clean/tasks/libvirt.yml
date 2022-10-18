@@ -22,12 +22,12 @@
       with_items: "{{r__virt__destroyed.results}}"
 
 
-    - name: clean/libvirt | Delete VM
+    - name: clean/libvirt | Delete VM and force remove all of its related metadata (nvram, snapshots, etc.)
       dseeley.libvirt.virt:
         uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc&no_verify=1'
         name: "{{item.name}}"
         command: undefine
-        flags: 4     # 4 == libvirt.VIR_DOMAIN_UNDEFINE_NVRAM, needed for EFI-based VMs
+        force: true
       with_items: "{{hosts_to_clean}}"
       register: r__virt__undefine
       run_once: true

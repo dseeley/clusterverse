@@ -9,5 +9,5 @@
     command: set_metadata
     name: "{{item.name}}"
     xml: "<cdata><![CDATA[{{ item.tagslabels | combine({'lifecycle_state': new_state}) }}]]></cdata>"
-    params: { 'key': 'clusterverse', 'uri': 'https://github.com/dseeley/clusterverse' }
+    other_params: { 'metadata_ns_key': 'clusterverse', 'metadata_ns_uri': 'https://github.com/dseeley/clusterverse' }
   with_items: "{{ hosts_to_relabel | default([]) }}"
