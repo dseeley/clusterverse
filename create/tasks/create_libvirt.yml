@@ -259,7 +259,7 @@
         uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc&no_verify=1'
         command: update_device
         xml: "{{ item.invocation.module_args.xml | xpath('/domain/devices/disk[@device=\"cdrom\"]') | json_query('[0]')  }}"
-        flags: 2        # 2 == libvirt.VIR_DOMAIN_DEVICE_MODIFY_CONFIG   (cannot use VIR_DOMAIN_DEVICE_MODIFY_LIVE for a CDROM device on a running VM)
+        flags: device_modify_config        # NOTE: cannot use device_modify_live for a CDROM device on a running VM
         name: "{{item.item.item.hostname}}"
       loop: "{{ r__async_status__virt_define.results }}"
       register: r__virt_volume__update_cidata_cdrom
@@ -275,7 +275,7 @@
           <disk type='file' device='cdrom'>
             <target dev='sda'/>
           </disk>
-        flags: 2        # 2 == libvirt.VIR_DOMAIN_DEVICE_MODIFY_CONFIG   (cannot use VIR_DOMAIN_DEVICE_MODIFY_LIVE for a CDROM device on a running VM)
+        flags: device_modify_config        # NOTE: cannot use device_modify_live for a CDROM device on a running VM
         name: "{{item.item.hostname}}"
       loop: "{{ r__virt_define.results }}"
       register: r__virt_volume__detach_cidata_cdrom
