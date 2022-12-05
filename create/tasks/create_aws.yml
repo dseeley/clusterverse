@@ -39,7 +39,7 @@
         region: "{{cluster_vars.region}}"
         key_name: "{{cluster_vars[buildenv].key_name}}"
         instance_type: "{{item.flavor}}"
-        iam_instance_profile: "{{cluster_vars[buildenv].hosttype_vars[item.hosttype].instance_profile_name | default(cluster_vars.instance_profile_name | default(omit))}}"
+        instance_role: "{{cluster_vars[buildenv].hosttype_vars[item.hosttype].instance_profile_name | default(cluster_vars.instance_profile_name | default(omit))}}"
         instance_initiated_shutdown_behavior: "{{cluster_vars[buildenv].hosttype_vars[item.hosttype].instance_initiated_shutdown_behavior | default(omit)}}"
 #        spot_price: "{{cluster_vars[buildenv].hosttype_vars[item.hosttype].spot.spot_price | default(omit)}}"
 #        spot_wait_timeout: "{{cluster_vars[buildenv].hosttype_vars[item.hosttype].spot.spot_wait_timeout | default(10800)}}"    #3 hours
@@ -150,7 +150,7 @@
     - name: create/aws | Get the ec2_instance_info for EBS tagging
       ec2_instance_info:
         filters:
-          "instance-state-name": ["running", "stopped"]
+          "instance-state-name": ["running", "pending", "stopped"]
           "tag:cluster_name": "{{cluster_name}}"
           "tag:lifecycle_state": "current"
         aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
