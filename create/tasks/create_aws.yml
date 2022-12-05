@@ -54,7 +54,22 @@
         tags: "{{ _instance_tags | combine(cluster_vars.custom_tagslabels | default({})) }}"
         termination_protection: "{{cluster_vars[buildenv].termination_protection}}"
         user_data: "{{ cluster_vars.user_data | default(omit) }}"
-        volumes: "{{ item.auto_volumes | selectattr('src', 'undefined') | list | default([]) }}"
+        volumes: |
+          {%- set res = [] -%}
+          {%- for vol in item.auto_volumes -%}
+            {%- if 'src' not in vol -%}
+              {%- if 'volume_type' in vol and vol.volume_type == 'ephemeral' -%}
+                {%- set _dummy = res.append({ 'device_name': vol.device_name, 'volume_name': vol.ephemeral }) -%}
+              {%- else -%}
+                {%- set _dummy = res.append({ 'device_name': vol.device_name, 'ebs': {'volume_type': vol.volume_type, 'volume_size': vol.volume_size } }) -%}
+                {%- if 'iops' in vol -%} {%- set _dummy = res[res|length-1].ebs.update({'iops': vol.iops}) -%} {%- endif -%}
+                {%- if 'snapshot' in vol -%} {%- set _dummy = res[res|length-1].ebs.update({'snapshot_id': vol.snapshot}) -%} {%- endif -%}
+                {%- if 'encrypted' in vol -%} {%- set _dummy = res[res|length-1].ebs.update({'encrypted': vol.encrypted}) -%} {%- endif -%}
+                {%- if 'delete_on_termination' in vol -%} {%- set _dummy = res[res|length-1].ebs.update({'delete_on_termination': vol.delete_on_termination}) -%} {%- endif -%}
+              {%- endif -%}
+            {%- endif -%}
+          {%- endfor %}
+          {{ res }}
         filters: { "tag:Name": "{{item.hostname}}" }
         exact_count: 1
       vars:
