@@ -41,20 +41,14 @@ To active the pipenv:
 ### libvirt (Qemu)
 + It is non-trivial to set up username/password access to a remote libvirt host, so we use an ssh key instead .
 + Your ssh user should be a member of the `libvirt` and `kvm` groups.
-+ Store the config in 
-  ```yaml
-  cluster_vars:
-    libvirt_ip:
-    username:
-    private_key:
-    storage_pool: 
-  ```
++ Store the config in `cluster_vars.libvirt`
 
 ### ESXi (free)
 + Username & password for a privileged user on an ESXi host
 + SSH must be enabled on the host
 + Set the `Config.HostAgent.vmacore.soap.maxSessionCount` variable to 0 to allow many concurrent tests to run.   
 + Set the `Security.SshSessionLimit` variable to max (100) to allow as many ssh sessions as possible.   
++ Store the config in `cluster_vars.esxi`
 
 ### Azure
 + Create an Azure account.

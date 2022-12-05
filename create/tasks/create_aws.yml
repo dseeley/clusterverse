@@ -33,28 +33,29 @@
       loop: "{{ cluster_hosts_target_denormalised_by_volume | selectattr('auto_volume.src', 'defined') | list }}"
 
     - name: create/aws | Create EC2 VMs asynchronously
-      ec2:
+      amazon.aws.ec2_instance:
         aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         region: "{{cluster_vars.region}}"
         key_name: "{{cluster_vars[buildenv].key_name}}"
         instance_type: "{{item.flavor}}"
-        instance_profile_name: "{{cluster_vars[buildenv].hosttype_vars[item.hosttype].instance_profile_name | default(cluster_vars.instance_profile_name | default(omit))}}"
+        iam_instance_profile: "{{cluster_vars[buildenv].hosttype_vars[item.hosttype].instance_profile_name | default(cluster_vars.instance_profile_name | default(omit))}}"
         instance_initiated_shutdown_behavior: "{{cluster_vars[buildenv].hosttype_vars[item.hosttype].instance_initiated_shutdown_behavior | default(omit)}}"
-        spot_price: "{{cluster_vars[buildenv].hosttype_vars[item.hosttype].spot.spot_price | default(omit)}}"
-        spot_wait_timeout: "{{cluster_vars[buildenv].hosttype_vars[item.hosttype].spot.spot_wait_timeout | default(10800)}}"    #3 hours
-        spot_launch_group: "{{cluster_vars[buildenv].hosttype_vars[item.hosttype].spot.spot_launch_group | default(omit)}}"
-        spot_type: "{{cluster_vars[buildenv].hosttype_vars[item.hosttype].spot.spot_type | default('persistent')}}"
-        image: "{{ item.image }}"
+#        spot_price: "{{cluster_vars[buildenv].hosttype_vars[item.hosttype].spot.spot_price | default(omit)}}"
+#        spot_wait_timeout: "{{cluster_vars[buildenv].hosttype_vars[item.hosttype].spot.spot_wait_timeout | default(10800)}}"    #3 hours
+#        spot_launch_group: "{{cluster_vars[buildenv].hosttype_vars[item.hosttype].spot.spot_launch_group | default(omit)}}"
+#        spot_type: "{{cluster_vars[buildenv].hosttype_vars[item.hosttype].spot.spot_type | default('persistent')}}"
+        image_id: "{{ item.image }}"
         vpc_subnet_id: "{{item.vpc_subnet_id}}"
-        assign_public_ip: "{{ true if ('assign_public_ip' in cluster_vars and cluster_vars.assign_public_ip in ['dynamic'])  else  false }}"
-        group: "{{ cluster_vars.secgroups_existing | default([]) + ([r__ec2_group.group_name] if r__ec2_group.group_name is defined else []) }}"
+        network:
+          assign_public_ip: "{{ true if ('assign_public_ip' in cluster_vars and cluster_vars.assign_public_ip in ['dynamic'])  else  false }}"
+        security_groups: "{{ cluster_vars.secgroups_existing | default([]) + ([r__ec2_group.group_name] if r__ec2_group.group_name is defined else []) }}"
         wait: yes
-        instance_tags: "{{ _instance_tags | combine(cluster_vars.custom_tagslabels | default({})) }}"
+        tags: "{{ _instance_tags | combine(cluster_vars.custom_tagslabels | default({})) }}"
         termination_protection: "{{cluster_vars[buildenv].termination_protection}}"
         user_data: "{{ cluster_vars.user_data | default(omit) }}"
         volumes: "{{ item.auto_volumes | selectattr('src', 'undefined') | list | default([]) }}"
-        count_tag: { Name: "{{item.hostname}}" }
+        filters: { "tag:Name": "{{item.hostname}}" }
         exact_count: 1
       vars:
         _instance_tags:
