@@ -147,16 +147,6 @@
 
 - name: create/aws | Tag the EBS volumes
   block:
-    - name: create/aws | Get ALL the ec2_instance_info for debug
-      ec2_instance_info:
-        aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
-        aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
-        region: "{{cluster_vars.region}}"
-      register: r__debug_ec2_instance_instance_info
-
-    - name: create/aws | r__debug_ec2_instance_instance_info
-      debug: msg={{r__debug_ec2_instance_instance_info}}
-
     - name: create/aws | Get the ec2_instance_info for EBS tagging
       ec2_instance_info:
         filters:

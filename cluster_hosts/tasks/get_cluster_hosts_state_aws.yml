@@ -1,19 +1,5 @@
 ---
 
-- name: get_cluster_hosts_state/aws | Get ALL the ec2_instance_info for debug
-  ec2_instance_info:
-    aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
-    aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
-    region: "{{cluster_vars.region}}"
-  register: r__debug_ec2_instance_instance_info
-  delegate_to: localhost
-  run_once: true
-
-- name: get_cluster_hosts_state/aws | r__debug_ec2_instance_instance_info
-  debug: msg={{r__debug_ec2_instance_instance_info}}
-  delegate_to: localhost
-  run_once: true
-
 - name: get_cluster_hosts_state/aws | Get existing instance info
   ec2_instance_info:
     filters:
