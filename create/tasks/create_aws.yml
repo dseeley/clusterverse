@@ -51,6 +51,7 @@
           assign_public_ip: "{{ true if ('assign_public_ip' in cluster_vars and cluster_vars.assign_public_ip in ['dynamic'])  else  false }}"
         security_groups: "{{ cluster_vars.secgroups_existing | default([]) + ([r__ec2_instance_group.group_name] if r__ec2_instance_group.group_name is defined else []) }}"
         wait: yes
+        state: running
         tags: "{{ _instance_tags | combine(cluster_vars.custom_tagslabels | default({})) }}"
         termination_protection: "{{cluster_vars[buildenv].termination_protection}}"
         user_data: "{{ cluster_vars.user_data | default(omit) }}"
@@ -100,14 +101,19 @@
     - name: create/aws | r__async_status__ec2.results
       debug: msg={{r__async_status__ec2.results}}
 
+    - name: create/aws | Acquire cluster_hosts_state after creating (or confirming already-created), as ec2_instance does not provide instance info if the vm already existed.
+      include_role:
+        name: clusterverse/cluster_hosts
+        tasks_from: "get_cluster_hosts_state_{{cluster_vars.type}}.yml"
+
     - name: create/aws | If (cluster_vars.assign_public_ip in [true, 'static']) then associate a new elastic IP with each instance
       ec2_eip:
         aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         region: "{{cluster_vars.region}}"
-        device_id: "{{ item }}"
+        device_id: "{{ item.instance_id }}"
         release_on_disassociation: yes
-      loop: "{{ r__async_status__ec2.results | json_query(\"[].tagged_instances[].id\") }}"
+      loop: "{{ cluster_hosts_state }}"
       when: "'assign_public_ip' in cluster_vars and cluster_vars.assign_public_ip in [true, 'static']"
 
     - name: create/aws | Set a fact containing the newly-created hosts
@@ -119,7 +125,7 @@
         aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         region: "{{cluster_vars.region}}"
-        instance: "{{ r__async_status__ec2.results | json_query(\"[].tagged_instances[?tags.Name==`\" + item.hostname + \"`].id[] | [0]\") | default(omit) }}"
+        instance: "{{ cluster_hosts_state | json_query(\"[?tagslabels.Name==`\" + item.hostname + \"`].instance_id[] | [0]\") | default(omit) }}"
         id: "{{item.auto_volume.src.volume_id | default(omit)}}"
         snapshot: "{{item.auto_volume.snapshot | default(omit)}}"
         device_name: "{{item.auto_volume.device_name}}"
@@ -144,20 +150,6 @@
 #    - name: create/aws | r__async_status__ec2_vol
 #      debug: msg={{r__async_status__ec2_vol}}
 
-
-- name: create/aws | Tag the EBS volumes
-  block:
-    - name: create/aws | Get the ec2_instance_info for EBS tagging
-      ec2_instance_info:
-        filters:
-          "instance-state-name": ["running", "pending", "stopped"]
-          "tag:cluster_name": "{{cluster_name}}"
-          "tag:lifecycle_state": "current"
-        aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
-        aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
-        region: "{{cluster_vars.region}}"
-      register: r__ec2_instance_instance_info
-
     - name: create/aws | Set the ec2 volume name tag
       ec2_tag:
         aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
@@ -169,9 +161,9 @@
       vars:
         _ec2_vols_denormalised_by_device: |
           {% set res = [] -%}
-          {%- for host_instance in r__ec2_instance_instance_info.instances -%}
-            {%- for block_device in host_instance.block_device_mappings -%}
-              {% set _ = res.append({'hostname': host_instance.tags.Name, 'hosttype': host_instance.tags.hosttype, 'device_name': block_device.device_name, 'volume_id': block_device.ebs.volume_id}) -%}
+          {%- for cluster_host in cluster_hosts_state -%}
+            {%- for block_device in cluster_host.disk_info_cloud -%}
+              {% set _ = res.append({'hostname': cluster_host.tagslabels.Name, 'hosttype': cluster_host.tagslabels.hosttype, 'device_name': block_device.device_name, 'volume_id': block_device.ebs.volume_id}) -%}
             {%- endfor %}
           {%- endfor %}
           {{ res }}
