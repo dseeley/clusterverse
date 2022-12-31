@@ -57,6 +57,9 @@
             uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc&no_verify=1'
             name: default
             command: refresh
+          register: r__virt_pool
+          until: r__virt_pool is success
+          retries: 10
       when: "redeploy_scheme is defined  and  redeploy_scheme == '_scheme_rmvm_keepdisk_rollback'"
 
 
