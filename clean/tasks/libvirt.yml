@@ -3,7 +3,7 @@
 - name: clean/libvirt
   block:
     - name: clean/libvirt | 'destroy' (forcible shutdown) VM
-      dseeley.libvirt.virt:
+      community.libvirt.virt:
         uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc&no_verify=1'
         name: "{{item.name}}"
         state: destroyed

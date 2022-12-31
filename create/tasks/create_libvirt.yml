@@ -57,6 +57,9 @@
             uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc&no_verify=1'
             name: default
             command: refresh
+          register: r__virt_pool
+          until: r__virt_pool is success
+          retries: 10
       when: "redeploy_scheme is defined  and  redeploy_scheme == '_scheme_rmvm_keepdisk_rollback'"
 
 
@@ -125,7 +128,7 @@
 
 
 - name: create/libvirt | Create the VMs asynchronously
-  dseeley.libvirt.virt:
+  community.libvirt.virt:
     uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc&no_verify=1'
     command: define
     xml: |
@@ -221,7 +224,7 @@
   debug: msg={{cluster_hosts_created}}
 
 - name: create/libvirt | Set autostart if required
-  dseeley.libvirt.virt:
+  community.libvirt.virt:
     uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc&no_verify=1'
     name: "{{item.item.hostname}}"
     autostart: yes
@@ -229,7 +232,7 @@
   when: "'autostart' in item.item.flavor and item.item.flavor.autostart|bool"
 
 - name: create/libvirt | Start the VMs
-  dseeley.libvirt.virt:
+  community.libvirt.virt:
     uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc&no_verify=1'
     name: "{{item.item.hostname}}"
     state: running

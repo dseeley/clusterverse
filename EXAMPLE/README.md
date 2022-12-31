@@ -7,8 +7,8 @@ _**Please refer to the full [README.md](https://github.com/dseeley/clusterverse/
 Contributions are welcome and encouraged.  Please see [CONTRIBUTING.md](https://github.com/dseeley/clusterverse/blob/master/CONTRIBUTING.md) for details.
 
 ## Requirements
-+ Ansible >= 2.9
-+ Python >= 2.7
++ Ansible >= 5.6.0
++ Python >= 3.8
 
 
 ---
@@ -93,9 +93,9 @@ ansible-playbook redeploy.yml -e buildenv=sandbox -e cloud_type=azure -e region=
 ### Mandatory command-line variables:
 + `-e buildenv=<sandbox>` - The environment (dev, stage, etc), which must be an attribute of `cluster_vars` defined in `group_vars/<clusterid>/cluster_vars.yml`
 + `-e canary=['start', 'finish', 'filter', 'none', 'tidy']` - Specify whether to start, finish or filter a canary redeploy (or 'none', to redeploy the whole cluster in one command).  See below (`-e canary_filter_regex`) for `canary=filter`.
++ `-e redeploy_scheme=<subrole_name>` - The scheme corresponds to one defined in `roles/clusterverse/redeploy`
 
 ### Extra variables:
-+ `-e redeploy_scheme=<subrole_name>` - The scheme corresponds to one defined in `roles/clusterverse/redeploy`
 + `-e canary_tidy_on_success=[true|false]` - Whether to run the tidy (remove the replaced VMs and DNS) on successful redeploy 
 + `-e canary_filter_regex='^.*-test-sysdisks.*$'` - Sets the regex pattern used to filter the target hosts by their hostnames - mandatory when using `canary=filter`
 + `-e myhosttypes="master,slave"`- In redeployment you can define which host type you like to redeploy. If not defined it will redeploy all host types
