@@ -6,7 +6,7 @@
 - name: "powerchange_vms/aws | {{powerchange_new_state}} VM(s) and set maintenance_mode=true (if stopping)"
   block:
     - name: powerchange_vms/aws | Set maintenance_mode=true (if stopping)
-      ec2_tag:
+      amazon.aws.ec2_tag:
         aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         region: "{{cluster_vars.region}}"
@@ -16,7 +16,7 @@
       when: "powerchange_new_state == 'stop'"
 
     - name: "powerchange_vms/aws | {{powerchange_new_state}} VMs"
-      ec2_instance:
+      amazon.aws.ec2_instance:
         aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         region: "{{ cluster_vars.region }}"

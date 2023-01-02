@@ -35,7 +35,7 @@
     # Create partition-less filesystems.
     - name: disks_auto_generic | Create filesystem(s) on attached volume(s)
       become: yes
-      filesystem:
+      community.general.filesystem:
         fstype: "{{ item.fstype }}"
         dev: "{{ item.device }}"
         force: no
@@ -43,7 +43,7 @@
 
     - name: disks_auto_generic | Mount created filesytem(s) persistently
       become: yes
-      mount:
+      ansible.posix.mount:
         path: "{{ item.mountpoint }}"
         src: "{{ item.device }}"
         fstype: "{{ item.fstype }}"
@@ -85,27 +85,27 @@
 
         - name: disks_auto_generic/lvm | Create a volume group from all block devices
           become: yes
-          lvg:
+          community.general.lvg:
             vg: "{{ lvmparams.vg_name }}"
             pvs: "{{ raid_vols_devices | sort | join(',') }}"
 
         - name: disks_auto_generic/lvm | Create a logical volume from volume group
           become: yes
-          lvol:
+          community.general.lvol:
             vg: "{{ lvmparams.vg_name }}"
             lv: "{{ lvmparams.lv_name }}"
             size: "{{ lvmparams.lv_size }}"
 
         - name: disks_auto_generic/lvm | Create filesystem(s) on attached volume(s)
           become: yes
-          filesystem:
+          community.general.filesystem:
             fstype: "{{ disks_auto_generic__hostvols[0].fstype }}"
             dev: "/dev/{{ lvmparams.vg_name }}/{{ lvmparams.lv_name }}"
             force: no
 
         - name: disks_auto_generic/lvm | Mount created filesytem(s) persistently
           become: yes
-          mount:
+          ansible.posix.mount:
             path: "{{ disks_auto_generic__hostvols[0].mountpoint }}"
             src: "/dev/{{ lvmparams.vg_name }}/{{ lvmparams.lv_name }}"
             fstype: "{{ disks_auto_generic__hostvols[0].fstype }}"

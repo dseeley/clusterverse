@@ -4,7 +4,7 @@
   block:
     - block:
         - name: Preflight check | get ec2_instance_info for current disk information
-          ec2_instance_info:
+          amazon.aws.ec2_instance_info:
             filters: { "instance-state-name": [ "running", "pending", "stopped" ], "tag:cluster_name": "{{cluster_name}}", "tag:lifecycle_state": "current" }
             aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
             aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"

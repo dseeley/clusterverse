@@ -4,7 +4,7 @@
   debug: msg="{{hosts_to_relabel}}"
 
 - name: "set_lifecycle_state_label/aws | Change lifecycle_state label to {{new_state}}"
-  ec2_tag:
+  amazon.aws.ec2_tag:
     aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
     aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
     region: "{{cluster_vars.region}}"

@@ -23,7 +23,7 @@ import sys
 
 
 class VarsModule(BaseVarsPlugin):
-    REQUIRES_WHITELIST = False
+    REQUIRES_ENABLED = False
 
     def get_vars(self, loader, path, entities, cache=True):
         super(VarsModule, self).get_vars(loader, path, entities)

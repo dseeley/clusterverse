@@ -4,7 +4,7 @@
   debug: msg="{{cluster_hosts_target_denormalised_by_volume}}"
 
 - name: create/aws | Create security groups
-  ec2_group:
+  amazon.aws.ec2_security_group:
     name: "{{ cluster_name }}-sg"
     description: "{{ cluster_name }} rules"
     region: "{{cluster_vars.region}}"
@@ -24,7 +24,7 @@
 - name: create/aws | Create EC2 VMs asynchronously and wait for completion
   block:
     - name: create/aws | Detach volumes from previous instances (during the _scheme_rmvm_keepdisk_rollback redeploy, we only redeploy one host at a time, and it is already powered off)
-      ec2_vol:
+      amazon.aws.ec2_vol:
         aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         region: "{{cluster_vars.region}}"
@@ -108,12 +108,17 @@
         tasks_from: "get_cluster_hosts_state_{{cluster_vars.type}}.yml"
 
     - name: create/aws | If (cluster_vars.assign_public_ip in [true, 'static']) then associate a new elastic IP with each instance
-      ec2_eip:
+      amazon.aws.ec2_eip:
         aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         region: "{{cluster_vars.region}}"
         device_id: "{{ item.instance_id }}"
         release_on_disassociation: yes
+        tags:
+          Name: "{{ item.hostname }}"
+          cluster_name: "{{cluster_name}}"
+          cluster_suffix: "{{cluster_suffix}}"
+          owner: "{{ lookup('env','USER') | lower }}"
       loop: "{{ cluster_hosts_state }}"
       when: "'assign_public_ip' in cluster_vars and cluster_vars.assign_public_ip in [true, 'static']"
 
@@ -122,7 +127,7 @@
         cluster_hosts_created: "{{ r__async_status__ec2.results | json_query(\"[?changed==`true`].item.item\") }}"
 
     - name: create/aws | Attach (or create) volumes where 'src' is present (e.g. inserted as part of _scheme_rmvm_keepdisk_rollback scheme)
-      ec2_vol:
+      amazon.aws.ec2_vol:
         aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         region: "{{cluster_vars.region}}"
@@ -152,7 +157,7 @@
 #      debug: msg={{r__async_status__ec2_vol}}
 
     - name: create/aws | Set the ec2 volume name tag
-      ec2_tag:
+      amazon.aws.ec2_tag:
         aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         region: "{{cluster_vars.region}}"
