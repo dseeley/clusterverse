@@ -22,7 +22,7 @@
 
 - block:
     - name: config/dns/a/route53 | Gather info for pre-existing Hosted Zones (public and/or private)
-      amazon.aws.route53_info:
+      community.aws.route53_info:
         aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         query: hosted_zone
@@ -31,7 +31,7 @@
       register: r__route53_info__zones
 
     - name: config/dns/a/route53 | create/update A records for all matching zones, (public and/or private) in AWS (route53)
-      amazon.aws.route53:
+      community.aws.route53:
         aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         state: present
@@ -49,11 +49,11 @@
       with_items: |
         {% set res = [] -%}
         {%- for cht_host in cluster_hosts_target -%}
-          {%- for hosted_zone in r__route53_info__zones.hosted_zones | default([]) | json_query('[?name==`' + cluster_vars.dns_nameserver_zone + '.`]') -%}
-            {%- if hosted_zone.config.private_zone|bool == true and 'ipv4_private' in hostvars[cht_host.hostname] -%}
-              {%- set _ = res.append({'hostname': cht_host.hostname, 'private_zone': hosted_zone.config.private_zone, 'ipv4': hostvars[cht_host.hostname]['ipv4_private']}) -%}
-            {%- elif hosted_zone.config.private_zone|bool == false and 'ipv4_public' in hostvars[cht_host.hostname] -%} 
-              {%- set _ = res.append({'hostname': cht_host.hostname, 'private_zone': hosted_zone.config.private_zone, 'ipv4': hostvars[cht_host.hostname]['ipv4_public']}) -%}
+          {%- for hosted_zone in r__route53_info__zones.HostedZones | default([]) | json_query('[?Name==`' + cluster_vars.dns_nameserver_zone + '.`]') -%}
+            {%- if hosted_zone.Config.PrivateZone|bool == true and 'ipv4_private' in hostvars[cht_host.hostname] -%}
+              {%- set _ = res.append({'hostname': cht_host.hostname, 'private_zone': hosted_zone.Config.PrivateZone, 'ipv4': hostvars[cht_host.hostname]['ipv4_private']}) -%}
+            {%- elif hosted_zone.Config.PrivateZone|bool == false and 'ipv4_public' in hostvars[cht_host.hostname] -%} 
+              {%- set _ = res.append({'hostname': cht_host.hostname, 'private_zone': hosted_zone.Config.PrivateZone, 'ipv4': hostvars[cht_host.hostname]['ipv4_public']}) -%}
             {%- endif -%}
           {%- endfor -%}
         {%- endfor -%}
@@ -79,7 +79,7 @@
       # "Timeout waiting for resource records changes to be applied: Waiter resource_record_setsChanged failed: Rate exceeded"
       rescue:
         - name: config/dns/a/route53 | Resubmit A records in AWS (route53) which failed the previous step
-          amazon.aws.route53:
+          community.aws.route53:
             aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
             aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
             state: present
