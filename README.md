@@ -11,6 +11,8 @@ A full-lifecycle, immutable cloud infrastructure cluster management **role**, us
 Contributions are welcome and encouraged.  Please see [CONTRIBUTING.md](https://github.com/sky-uk/clusterverse/blob/master/CONTRIBUTING.md) for details.
 
 ## Requirements
++ Ansible >= 5.6.0  (**Ansible >= 7.0.0 _strongly recommended_**)
++ Python >= 3.8
 
 ### Python dependencies
 Dependencies are managed via pipenv:
