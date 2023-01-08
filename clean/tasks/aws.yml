@@ -24,7 +24,7 @@
         wait: true
 
     - name: clean/aws | Get any attached Elastic IPs
-      community.aws.ec2_eip_info:
+      amazon.aws.ec2_eip_info:
         access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
@@ -37,7 +37,7 @@
       debug: msg={{r__ec2_eip_info}}
 
     - name: clean/aws | Delete Elastic IPs (if any were found)
-      community.aws.ec2_eip:
+      amazon.aws.ec2_eip:
         access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
@@ -51,7 +51,7 @@
 - name: clean/aws | clean networking (when '-e clean=_all_')
   block:
     - name: clean/aws | Delete security group
-      amazon.aws.ec2_group:
+      amazon.aws.ec2_security_group:
         access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
