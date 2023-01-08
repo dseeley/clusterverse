@@ -7,7 +7,7 @@
     - name: clean/dns/nsupdate | Delete DNS entries
       block:
         - name: clean/dns/nsupdate | Delete A records
-          nsupdate:
+          community.general.nsupdate:
             key_name: "{{cluster_vars[buildenv].nsupdate_cfg.key_name | default(bind9[buildenv].key_name)}}"
             key_secret: "{{cluster_vars[buildenv].nsupdate_cfg.key_secret | default(bind9[buildenv].key_secret)}}"
             server: "{{cluster_vars[buildenv].nsupdate_cfg.server | default(bind9[buildenv].server)}}"
@@ -17,7 +17,7 @@
           with_items: "{{ hosts_to_clean }}"
 
         - name: clean/dns/nsupdate | Delete CNAME records
-          nsupdate:
+          community.general.nsupdate:
             key_name: "{{cluster_vars[buildenv].nsupdate_cfg.key_name | default(bind9[buildenv].key_name)}}"
             key_secret: "{{cluster_vars[buildenv].nsupdate_cfg.key_secret | default(bind9[buildenv].key_secret)}}"
             server: "{{cluster_vars[buildenv].nsupdate_cfg.server | default(bind9[buildenv].server)}}"
@@ -37,14 +37,14 @@
     - name: "clean/dns/route53 | Delete DNS entries (legacy (faster) mechanism: route53(state=get)/ route53)"
       block:
         - name: clean/dns/route53 | Gather info for pre-existing Hosted Zones (public and/or private)
-          route53_info:
+          community.aws.route53_info:
             aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
             aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
             query: hosted_zone
           register: r__route53_info__zones
 
         - name: clean/dns/route53 | Get A records
-          route53:
+          community.aws.route53:
             aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
             aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
             state: "get"
@@ -64,7 +64,7 @@
           when: r__route53_a is failed
 
         - name: clean/dns/route53 | Delete A records
-          route53:
+          community.aws.route53:
             aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
             aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
             state: "absent"
@@ -80,7 +80,7 @@
             records_to_clean: "{{ r__route53_a.results | json_query(\"[?resource_record_sets[?type=='A' && contains(\"+ _fqdns_to_clean | string +\", name)]].{resource_record_sets: resource_record_sets[?type=='A']|[0], item0name: item[0].name, PrivateZone: item[1].Config.PrivateZone}\") }}"
 
         - name: clean/dns/route53 | Get CNAME records
-          route53:
+          community.aws.route53:
             aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
             aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
             state: "get"
@@ -100,7 +100,7 @@
           when: r__route53_cname is failed
 
         - name: clean/dns/route53 | Delete CNAME records
-          route53:
+          community.aws.route53:
             aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
             aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
             state: "absent"
@@ -120,7 +120,7 @@
     - name: "clean/dns/route53 | Delete DNS entries (new mechanism: route53_zone/ route53_info/ route53)"
       block:
         - name: clean/dns/route53 | Gather info for pre-existing Hosted Zones (public and/or private)
-          route53_info:
+          community.aws.route53_info:
             aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
             aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
             query: hosted_zone
@@ -129,7 +129,7 @@
         # Note: route53_info currently does not honour the 'max_items' or 'type' fields, (and if 'start_record_name' is not found, it just returns all records), so we need to filter the responses to match 'hosts_to_clean' when doing the delete
         # Note: cannot run route53_info asynchronously as it makes too many concurrent requests and blows the AWS Route53 API limit.
         - name: clean/dns/route53 | Get A records
-          route53_info:
+          community.aws.route53_info:
             aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
             aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
             type: "A"
@@ -145,16 +145,16 @@
             - "{{ r__route53_info__zones.HostedZones | json_query(\"[?Name==`\" + cluster_vars.dns_nameserver_zone + \".`]\") }}"
 
         - name: clean/dns/route53 | Delete A records
-          route53:
+          community.aws.route53:
             aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
             aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
             state: "absent"
             zone: "{{ cluster_vars.dns_nameserver_zone }}"
-            record: "{{ item.ResourceRecordSets.Name }}"
-            type: "{{ item.ResourceRecordSets.Type }}"
-            ttl: "{{ item.ResourceRecordSets.TTL }}"
+            record: "{{ item.resource_record_sets.name }}"
+            type: "{{ item.resource_record_sets.type }}"
+            ttl: "{{ item.resource_record_sets.ttl }}"
             value: "{{ item.ResourceRecordSets.ResourceRecords | json_query(\"[].Value\") }}"
-            private_zone: "{{ item.PrivateZone }}"
+            private_zone: "{{ item.private_zone }}"
           with_items: "{{ records_to_clean }}"
           vars:
             _fqdns_to_clean: "{{ hosts_to_clean | json_query(\"[].name\") | map('regex_replace', '^(.*)$', '\\1.' + cluster_vars.dns_user_domain + '.') | list }}"
@@ -163,7 +163,7 @@
         # Note: route53_info currently does not honour the 'max_items' or 'type' fields, (and if 'start_record_name' is not found, it just returns all records), so we need to filter the responses to match 'hosts_to_clean' when doing the delete
         # Note: cannot run route53_info asynchronously as it makes too many concurrent requests and blows the AWS Route53 API limit.
         - name: clean/dns/route53 | Get CNAME records
-          route53_info:
+          community.aws.route53_info:
             aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
             aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
             type: "CNAME"
@@ -179,7 +179,7 @@
           retries: 10
 
         - name: clean/dns/route53 | Delete CNAME records
-          route53:
+          community.aws.route53:
             aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
             aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
             state: "absent"
@@ -203,7 +203,7 @@
     - name: clean/dns/clouddns | Delete DNS entries
       block:
         - name: clean/dns/clouddns | Get managed zone(s)
-          gcp_dns_managed_zone_info:
+          google.cloud.gcp_dns_managed_zone_info:
             auth_kind: serviceaccount
             dns_name: "{{cluster_vars.dns_nameserver_zone}}"
             project: "{{cluster_vars[buildenv].vpc_host_project_id}}"
@@ -211,7 +211,7 @@
           register: r__gcp_dns_managed_zone_info
 
         - name: clean/dns/clouddns | Get all non-peered DNS records for managed zones that match cluster_vars.dns_nameserver_zone
-          gcp_dns_resource_record_set_info:
+          google.cloud.gcp_dns_resource_record_set_info:
             auth_kind: serviceaccount
             managed_zone:
               name: "{{item.name}}"
@@ -224,7 +224,7 @@
         - name: clean/dns/clouddns | Delete A and CNAME records
           block:
             - name: clean/dns/clouddns | Delete A records
-              gcp_dns_resource_record_set:
+              google.cloud.gcp_dns_resource_record_set:
                 auth_kind: serviceaccount
                 managed_zone:
                   name: "{{item.1.managed_zone.name}}"
@@ -244,7 +244,7 @@
               when: item.0.name == (item.1.record.name | regex_replace('^(.*?)\\..*$', '\\1'))
 
             - name: clean/dns/clouddns | Delete CNAME records
-              gcp_dns_resource_record_set:
+              google.cloud.gcp_dns_resource_record_set:
                 auth_kind: serviceaccount
                 managed_zone:
                   name: "{{item.1.managed_zone.name}}"

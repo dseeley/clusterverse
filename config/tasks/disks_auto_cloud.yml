@@ -19,7 +19,7 @@
 
     - name: disks_auto_cloud | Create filesystem (partitionless)
       become: yes
-      filesystem:
+      community.general.filesystem:
         fstype: "{{ item.fstype }}"
         dev: "{{ _dev }}"
       loop: "{{auto_vols}}"
@@ -38,7 +38,7 @@
 
     - name: disks_auto_cloud | Mount created filesytem(s) persistently
       become: yes
-      mount:
+      ansible.posix.mount:
         path: "{{ item.mountpoint }}"
         src: "UUID={{ _UUID }}"
         fstype: "{{ item.fstype }}"
@@ -126,20 +126,20 @@
 
         - name: disks_auto_cloud/lvm | Create a volume group from all block devices
           become: yes
-          lvg:
+          community.general.lvg:
             vg: "{{ lvmparams.vg_name }}"
             pvs: "{{ raid_vols_devices | map(attribute='device_name_os') | sort | join(',') }}"
 
         - name: disks_auto_cloud/lvm | Create a logical volume from volume group
           become: yes
-          lvol:
+          community.general.lvol:
             vg: "{{ lvmparams.vg_name }}"
             lv: "{{ lvmparams.lv_name }}"
             size: "{{ lvmparams.lv_size }}"
 
         - name: disks_auto_cloud/lvm | Create filesystem(s) on attached volume(s)
           become: yes
-          filesystem:
+          community.general.filesystem:
             fstype: "{{ raid_vols[0].fstype }}"
             dev: "/dev/{{ lvmparams.vg_name }}/{{ lvmparams.lv_name }}"
             force: no       # This doesn't appear to prevent the '-F' option being sent to mkfs
@@ -147,7 +147,7 @@
 
         - name: disks_auto_cloud/lvm | Mount created filesytem(s) persistently
           become: yes
-          mount:
+          ansible.posix.mount:
             path: "{{ raid_vols[0].mountpoint }}"
             src: "/dev/{{ lvmparams.vg_name }}/{{ lvmparams.lv_name }}"
             fstype: "{{ raid_vols[0].fstype }}"

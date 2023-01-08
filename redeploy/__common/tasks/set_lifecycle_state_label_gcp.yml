@@ -4,7 +4,7 @@
   debug: msg="{{hosts_to_relabel}}"
 
 - name: "set_lifecycle_state_label/gcp | Change lifecycle_state label to {{new_state}}"
-  gcp_compute_instance:
+  google.cloud.gcp_compute_instance:
     name: "{{item.name}}"
     project: "{{cluster_vars[buildenv].vpc_project_id}}"
     zone: "{{ item.regionzone }}"

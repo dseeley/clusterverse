@@ -6,7 +6,7 @@
 - name: "powerchange_vms/gcp | {{powerchange_new_state}} VM(s) and set maintenance_mode=true"
   block:
     - name: "powerchange_vms/gcp | {{powerchange_new_state}} VMs asynchronously and set maintenance_mode=true (if stopping)"
-      gcp_compute_instance:
+      google.cloud.gcp_compute_instance:
         name: "{{item.name}}"
         project: "{{cluster_vars[buildenv].vpc_project_id}}"
         zone: "{{ item.regionzone }}"
