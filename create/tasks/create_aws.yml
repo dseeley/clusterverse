@@ -115,7 +115,7 @@
         device_id: "{{ item.instance_id }}"
         release_on_disassociation: yes
         tags:
-          Name: "{{ item.hostname }}"
+          Name: "{{ item.name }}"
           cluster_name: "{{cluster_name}}"
           cluster_suffix: "{{cluster_suffix}}"
           owner: "{{ lookup('env','USER') | lower }}"
