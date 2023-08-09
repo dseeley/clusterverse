@@ -7,6 +7,9 @@ def DEFAULT_CLUSTERVERSE_BRANCH = "master"
 def DEFAULT_CLUSTERVERSE_TESTSUITE_URL = "https://github.com/dseeley/clusterverse_test"
 def DEFAULT_CLUSTERVERSE_TESTSUITE_BRANCH = "master"
 
+def pypi_ansible = ["curl", "-s", "-H", "Accept: application/json", "-H", "Content-type: application/json", "GET", "https://pypi.org/pypi/ansible/json"].execute().text
+def pypi_ansible_latest = new groovy.json.JsonSlurper().parseText(pypi_ansible).releases.keySet()[-1]
+
 //This allows us to create our own Docker image for this specific use-case.  Once it is built, it will not be rebuilt, so only adds delay the first time we use it.
 def create_custom_image(image_name, build_opts = "") {
     // Create a lock to prevent building the same image in parallel
@@ -67,7 +70,7 @@ properties([
                 string(name: 'CV_GIT_BRANCH', defaultValue: DEFAULT_CLUSTERVERSE_BRANCH, description: "The clusterverse branch to test."),
                 credentials(name: 'CV_GIT_CREDS', credentialType: 'com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl', defaultValue: 'GITHUB_SVC_USER', description: 'Jenkins username/password credentials for GitHub', required: false),
                 string(name: 'USER_CMDLINE_VARS', defaultValue: '', description: "Any user-defined command-line parameters."),
-                string(name: 'ANSIBLE_VERSION', defaultValue: '7.1.0', description: "Ansible version."),
+                string(name: 'ANSIBLE_VERSION', defaultValue: pypi_ansible_latest, description: "Ansible version."),
         ])
 ])
 
@@ -88,7 +91,7 @@ node {
         def docker_parent_net_str = ""
         if (sh(script: 'grep -sq "docker\\|lxc" /proc/1/cgroup', returnStatus: true) == 0) {
             println("Running in docker.  Getting network to pass to docker-in-docker containers...")
-            def docker_parent_net_id = sh(script: 'docker inspect  $(grep -o -P -m1 \'docker.*\\K[0-9a-f]{64,}\' /proc/self/cgroup) -f "{{ range .NetworkSettings.Networks }}{{println .NetworkID}}{{end}}" | head -n 1', returnStdout: true).trim()
+            def docker_parent_net_id = sh(script: 'docker inspect  $(grep -oP \'(?<=docker-)[a-f0-9]+(?=\\.scope)\' /proc/1/cgroup | head -1) -f "{{ range .NetworkSettings.Networks }}{{println .NetworkID}}{{end}}" | head -n 1', returnStdout: true).trim()
             docker_parent_net_str = "--network ${docker_parent_net_id}"
             println("docker_parent_net_str: ${docker_parent_net_str}")
         }
@@ -104,7 +107,7 @@ node {
         //  docker.build("cvops", "--build-arg JENKINS_USERNAME=${jenkins_username} --build-arg JENKINS_UID=${jenkins_uid} --build-arg JENKINS_GID=${jenkins_gid} ./jenkinsfiles").inside("${docker_parent_net_str} -e JENKINS_HOME=${env.JENKINS_HOME}") {
 
         /*** Create a custom docker image within this Jenkinsfile ***/
-        create_custom_image("ubuntu_cvtest_${params.ANSIBLE_VERSION}", "").inside("--init ${docker_parent_net_str}") {
+        create_custom_image("ubuntu_ansible${params.ANSIBLE_VERSION}", "").inside("--init ${docker_parent_net_str}") {
             stage('Setup Environment') {
                 sh 'printenv | sort'
                 println("common_deploy_vars params:" + params)
