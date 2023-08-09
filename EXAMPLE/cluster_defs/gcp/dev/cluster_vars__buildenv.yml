@@ -24,7 +24,7 @@ cluster_vars:
     vpc_subnet_name: ""                                                                               # Can be omitted if using default subnets
     preemptible: "no"
     deletion_protection: "no"
-    nsupdate_cfg: {server: "", key_name: "", key_secret: ""}      # If you're using bind9 (or other nsupdate-compatible 'dns_server')
+#    nsupdate_cfg: {server: "", key_name: "", key_secret: ""}      # If you're using bind9 (or other nsupdate-compatible 'dns_server')
 
     hosttype_vars:
       sys:

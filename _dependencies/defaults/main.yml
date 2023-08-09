@@ -3,6 +3,9 @@
 # Identifies the application version that is being deployed (optional)
 release_version: ""
 
+# If set true, will prevent the playbook from failing in case any of the existing VM has a deprecated AMI.
+override_deprecated_ami: true
+
 # The inverse ping/delegate_to method for detecting connections doesn't work and was deprecated in 5c8f574de7ef87787bc64c8f50cd412186c740e0 (25/01/2021)
 skip_dynamic_inventory_sshwait: true
 

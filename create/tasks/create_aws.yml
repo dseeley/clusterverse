@@ -37,7 +37,7 @@
         aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         region: "{{cluster_vars.region}}"
-        ec2_url: "{{ cluster_vars.aws_endpoint_url | default(omit) }}"
+        endpoint_url: "{{ cluster_vars.aws_endpoint_url | default(omit) }}"
         key_name: "{{cluster_vars[buildenv].key_name}}"
         instance_type: "{{item.flavor}}"
         instance_role: "{{cluster_vars[buildenv].hosttype_vars[item.hosttype].instance_profile_name | default(cluster_vars.instance_profile_name | default(omit))}}"

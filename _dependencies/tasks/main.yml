@@ -41,6 +41,11 @@
         that: "ansible_version.full is version('2.12.4', '>=')"
         fail_msg: "ansible-core 2.12.4 (pypi v5.6.0) is required."
 
+#    - name: Ansible maximum requirement
+#      assert:
+#        that: "ansible_version.full is version('2.14.0', '<=')"
+#        fail_msg: "ansible-core >= 2.14.0 (pypi v7.0.0) is not yet supported due to changes introduced in https://github.com/ansible/ansible/issues/59400."
+
     - name: assertions based on required collections
       block:
         - name: libvirt collection requirements
@@ -54,14 +59,7 @@
           assert: { that: "'dseeley.esxifree_guest' in galaxy_collections", fail_msg: "Please ensure the dseeley.esxifree_guest collection is installed:  ansible-galaxy collection install dseeley.esxifree_guest (or ansible-galaxy collection install --ignore-errors -fr requirements.yml)" }
           when: cluster_vars.type == "esxifree"
       vars:
-        _galaxy_lookup: "{{ lookup('pipe', 'ansible-galaxy collection list', errors='ignore') }}"
-        ## Note cannot use '--format json' in 'ansible-galaxy collection list' command, as it is not present in 2.10.x
-        galaxy_collections: |-
-          {% set res = {} -%}
-          {%- for sub in (_galaxy_lookup | ternary(_galaxy_lookup, '') | trim).split('\n') | map('trim') | map('regex_replace', '\\s+', ' ') | select | list -%}
-            {% set _ = res.update({sub.split(' ')[0]: {'version': sub.split(' ')[1]|default('')}}) -%}
-          {%- endfor %}
-          {{ res }}
+        galaxy_collections: "{{lookup('pipe', 'ansible-galaxy collection list --format=json', errors='ignore') | from_json | json_query(\"*\") | combine }}"
 
     - assert: { that: "app_name is defined and app_name != ''", fail_msg: "Please define app_name" }
     - assert: { that: "app_class is defined and app_class != ''", fail_msg: "Please define app_class" }

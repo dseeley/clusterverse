@@ -3,6 +3,22 @@
 - name: Debug role path
   debug: msg="{{role_path}}"
 
+- name: Test dseeley.tasks_serial
+  dseeley.tasks_serial.tasks_serial:
+    tasks:
+      - name: ansible.builtin.debug
+        args:
+          msg: "Task 1 - debug!"
+      - name: ansible.builtin.debug
+        args:
+          msg: "Task 2 - debug!"
+      - name: ansible.builtin.shell
+        args:
+          cmd: echo "Task 3 - shell echo"
+      - name: command
+        args:
+          cmd: "ls -l"
+
 - name: Forcibly fail (-e testfail=fail_3)
   fail:
     msg: testfail=fail_3
