@@ -6,7 +6,8 @@ inventory_*
 venv
 *.pyc
 Pipfile.lock
-roles/clusterverse
-collections/
+/roles/clusterverse
+/collections/
 /gcp__*.json
 id_rsa*
+/_dynamic_inventory/
