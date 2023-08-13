@@ -45,7 +45,7 @@
           {%- for cht_host in cluster_hosts_target -%}
             {%- for r__gcp_compute_image_info_host in r__gcp_compute_image_info__by_imageid.results -%}
               {%- if r__gcp_compute_image_info_host[r__gcp_compute_image_info_host.ansible_loop_var].hostname == cht_host.hostname -%}
-                {%- set _dummy = cht_host.update({'image': (r__gcp_compute_image_info_host.resources | sort(attribute='creationTimestamp'))[-1].selfLink }) -%}
+                {%- set _dummy = cht_host.update({'image': (r__gcp_compute_image_info_host.resources | json_query('[?architecture==`X86_64`]') | sort(attribute='creationTimestamp'))[-1].selfLink }) -%}
               {%- endif %}
             {%- endfor %}
           {%- endfor %}

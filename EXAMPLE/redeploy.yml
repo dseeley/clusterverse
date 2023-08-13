@@ -22,3 +22,8 @@
           redeploy_var_list1:
             - "var_list1__elem1"
             - "var_list1__elem2"
+
+- name: Redeploy | Application roles
+  hosts: all
+  tasks:
+    - { include_role: { name: "testrole", apply: { tags: ["testrole"]} }, tags: ["testrole"] }
