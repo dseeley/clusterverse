@@ -29,7 +29,7 @@
 - name: Run cloud-specific config (if defined)
   include_tasks: "{{ item__include_tasks }}"
   loop: "{{ query('first_found', params) }}"
-  loop_control: { loop_var: item__include_tasks }   #This mechanism to include_tasks only when the file exists, also creates a loop iterator 'item' that it sends to the included tasks.  If they also have loops, we get "The loop variable 'item' is already in use" warning.
+  loop_control: { loop_var: item__include_tasks }   #This mechanism (to include_tasks only when the file exists), also creates a loop iterator 'item' that it sends to the included tasks.  If they also have loops, we get "The loop variable 'item' is already in use" warning.
   vars: { params: { files: ["config_{{cluster_vars.type}}.yml"], skip: true } }
 
 - name: Disable requiretty in sudoers to enable pipelining

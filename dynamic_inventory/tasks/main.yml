@@ -34,6 +34,12 @@
   when: r__stat_inventory_sources.results | json_query('[?stat.isreg].item') | length
 
 - block:
+    - name: dynamic_inventory | create the inventory_source directory
+      ansible.builtin.file:
+        path: "{{inventory_source}}"
+        state: directory
+        mode: '0755'
+
     - name: dynamic_inventory | Get (network) facts - to determine the local IP/network, to see if we need the bastion below (requires the 'ip' tool (the 'iproute2' package on Ubuntu))
       ansible.builtin.setup: { gather_subset: ["network"] }
 
@@ -49,21 +55,11 @@
                 'ipv4_private': item.ipv4.private,
                 'hosttype': item.tagslabels.hosttype
               }) -%}
-            {%- if item.regionzone -%}
-              {%- set _dummy = res[res | length-1].update({'regionzone': item.regionzone}) -%}
-            {%- endif -%}
-            {%- if cluster_vars[buildenv].ssh_connection_cfg.host.ansible_user -%}
-              {%- set _dummy = res[res | length-1].update({'ansible_user': cluster_vars[buildenv].ssh_connection_cfg.host.ansible_user}) -%}
-            {%- endif -%}
-            {%- if 'assign_public_ip' in cluster_vars and cluster_vars.assign_public_ip in [true, 'dynamic', 'static'] -%}
-              {%- set _dummy = res[res | length-1].update({'ipv4_public': item.ipv4.public}) -%}
-            {%- endif -%}
-            {%- if cluster_vars[buildenv].ssh_connection_cfg.host.ansible_ssh_private_key_file -%}
-              {%- set _dummy = res[res | length-1].update({'ansible_ssh_private_key_file': 'id_rsa_ansible_ssh_private_key_file'}) -%}
-            {%- endif -%}
-            {%- if _bastion_host and (not _bastion_in_host_net or (force_use_bastion is defined and force_use_bastion|bool)) -%}
-              {%- set _dummy = res[res | length-1].update({'ansible_ssh_common_args': cluster_vars[buildenv].ssh_connection_cfg.bastion.ssh_args}) -%}
-            {%- endif -%}
+            {%- set _dummy = res[res | length-1].update({'regionzone': item.regionzone})  if item.regionzone else '' -%}
+            {%- set _dummy = res[res | length-1].update({'ansible_user': cluster_vars[buildenv].ssh_connection_cfg.host.ansible_user})  if cluster_vars[buildenv].ssh_connection_cfg.host.ansible_user else '' -%}
+            {%- set _dummy = res[res | length-1].update({'ipv4_public': item.ipv4.public})  if 'assign_public_ip' in cluster_vars and cluster_vars.assign_public_ip in [true, 'dynamic', 'static'] else '' -%}
+            {%- set _dummy = res[res | length-1].update({'ansible_ssh_private_key_file': 'id_rsa_ansible_ssh_private_key_file'})  if cluster_vars[buildenv].ssh_connection_cfg.host.ansible_ssh_private_key_file else '' -%}
+            {%- set _dummy = res[res | length-1].update({'ansible_ssh_common_args': cluster_vars[buildenv].ssh_connection_cfg.bastion.ssh_args})  if _bastion_host and (not _bastion_in_host_net or (force_use_bastion is defined and force_use_bastion|bool)) else '' -%}
             {%- endfor -%}
             {{ res }}
       vars:
@@ -74,27 +70,34 @@
     - name: dynamic_inventory | dynamic_inv
       debug: msg="{{ dynamic_inv }}"
 
-    - name: dynamic_inventory | create the directory
-      ansible.builtin.file:
-        path: "{{inventory_source}}"
-        state: directory
-        mode: '0755'
+    - name: dynamic_inventory | Populate (or delete) inventory files
+      block:
+        - name: dynamic_inventory | Populate inventory file from dynamic inventory (if not empty)
+          copy:
+            content: |
+              {% set groups = dynamic_inv | json_query('[].groups|[]') | unique | sort() %}
+              {% for groupname in groups -%}
+              [{{ groupname }}]
+              {% for host in dynamic_inv | json_query('[?contains(groups, \'' + groupname + '\')]') %}
+              {{ host['name'] }} ansible_host={{host['ansible_host']}} {% if 'ipv4_public' in host %}ipv4_public={{ host['ipv4_public'] }}{% endif %} ipv4_private={{ host['ipv4_private'] }} hosttype={{ host['hosttype'] }} {% if 'ansible_user' in host %}ansible_user='{{ host['ansible_user'] }}'{% endif %} {% if 'ansible_ssh_private_key_file' in host %}ansible_ssh_private_key_file='{{ host['ansible_ssh_private_key_file'] }}'{% endif %} {% if 'regionzone' in host %}regionzone={{ host['regionzone'] }}{% endif %} {% if 'ansible_ssh_common_args' in host %}ansible_ssh_common_args='{{ host['ansible_ssh_common_args'] }}'{% endif %}{{''}}
+              {% endfor %}
+              
+              {% endfor %}
+            dest: "{{item}}"
+            force: yes
+          with_items: "{{inventory_files}}"
+          when: dynamic_inv | length
 
-    - name: dynamic_inventory | Populate inventory file from dynamic inventory
-      copy:
-        content: |
-          {% set groups = dynamic_inv | json_query('[].groups|[]') | unique | sort() %}
-          {% for groupname in groups -%}
-          [{{ groupname }}]
-          {% for host in dynamic_inv | json_query('[?contains(groups, \'' + groupname + '\')]') %}
-          {{ host['name'] }} ansible_host={{host['ansible_host']}} {% if 'ipv4_public' in host %}ipv4_public={{ host['ipv4_public'] }}{% endif %} ipv4_private={{ host['ipv4_private'] }} hosttype={{ host['hosttype'] }} {% if 'ansible_user' in host %}ansible_user='{{ host['ansible_user'] }}'{% endif %} {% if 'ansible_ssh_private_key_file' in host %}ansible_ssh_private_key_file='{{ host['ansible_ssh_private_key_file'] }}'{% endif %} {% if 'regionzone' in host %}regionzone={{ host['regionzone'] }}{% endif %} {% if 'ansible_ssh_common_args' in host %}ansible_ssh_common_args='{{ host['ansible_ssh_common_args'] }}'{% endif %}{{''}}
-          {% endfor %}
-          
-          {% endfor %}
-        dest: "{{inventory_source}}/{{cur_inventory_filename}}"
-        force: yes
+        - name: dynamic_inventory | Delete inventory files if inventory is zero-length
+          file:
+            state: absent
+            path: "{{item}}"
+          with_items: "{{inventory_files}}"
+          when: dynamic_inv | length == 0
+      vars:
+        inventory_files: ["{{inventory_source}}/{{cur_inventory_filename}}", "{{playbook_dir}}/{{cur_inventory_filename}}"]
 
-    - name: dynamic_inventory | write out inventory script
+    - name: dynamic_inventory | Create inventory deletion script
       copy:
         content: |
           #!/usr/bin/env python3
@@ -120,14 +123,15 @@
         dest: "{{inventory_source}}/00-delete-non-inventory-files.py"
         force: yes
 
+      # NOTE: if the file lookup error handler is called, it returns a NoneType, which the split() filter cannot understand - hence the ternary.
     - name: dynamic_inventory | inventory file contents
-      debug: msg="{{ (lookup('file', inventory_source+'/'+cur_inventory_filename)).split('\n') | map('trim') }}"
+      debug: msg="{{ ((lookup('file', inventory_source+'/'+cur_inventory_filename, errors='ignore') | type_debug=='NoneType') | ternary('', lookup('file', inventory_source+'/'+cur_inventory_filename, errors='ignore'))).split('\n') | map('trim') }}"
   vars:
     cur_inventory_filename: "inventory__{{ app_name + ('-' + cloud_type if cloud_type is defined and cloud_type else '') + ('-' + clusterid if clusterid is defined and clusterid else '') + ('-' + region if region is defined and region else '') + ('-' + buildenv if buildenv is defined and buildenv else '') }}"
     inventory_source: "{{ansible_inventory_sources[0]}}"
   when: ((r__stat_inventory_sources.results | json_query('[?stat.exists]') | length == 0) and (ansible_inventory_sources | length == 1))  or  ((r__stat_inventory_sources.results | json_query('[?stat.exists]') | length == 1)  and  (r__stat_inventory_sources.results | json_query('[?stat.isdir]') | length == 1))
 
-  #Note: ideally this refresh_inventory would only be called within the above 'when' clause, but refresh_inventory does not support 'when', and putting it there just causes a warning.
+  #Note: Ideally this refresh_inventory would only be called within the 'when' clause, but refresh_inventory does not support 'when', and it causes a warning.
 - name: dynamic_inventory | Refresh the inventory (with the dynamically created inventory, if applicable)
   meta: refresh_inventory
 
