@@ -25,7 +25,7 @@
     powerchange_new_state: "stop"
 
 - name: "Run {{mainclusteryml}} to fix cluster"
-  nested_playbook:
+  dseeley.nested_playbook.nested_playbook:
     playbook_cmdline: "{{ (argv[1:] | join(' ')) | regex_replace('redeploy.yml', mainclusteryml) }} {{ redeploy_extra_vars | extravars_from_dict }}"
 
 - name: re-acquire the dynamic inventory

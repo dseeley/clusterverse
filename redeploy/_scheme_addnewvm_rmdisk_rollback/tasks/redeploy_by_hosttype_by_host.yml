@@ -1,7 +1,7 @@
 ---
 
 - name: "Run {{mainclusteryml}} to add {{cluster_host_redeploying.hostname}} to cluster"
-  nested_playbook:
+  dseeley.nested_playbook.nested_playbook:
     playbook_cmdline: "{{ (argv[1:] | join(' ')) | regex_replace('redeploy.yml', mainclusteryml) }} -e cluster_suffix={{cluster_suffix}} -e '{'cluster_hosts_target': [{{cluster_host_redeploying | to_json}}]}'  {{ redeploy_extra_vars | extravars_from_dict }}"
 
 - fail:
