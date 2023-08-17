@@ -23,13 +23,8 @@
     hosts_to_change: "{{ cluster_hosts_state | to_json | from_json | json_query(\"[?tagslabels.lifecycle_state!='current' && starts_with(name, '\" + _host_to_redeploy_nosuffix + \"')]\") }}"
 
 - name: "by_hosttype_by_host | Run {{mainclusteryml}} to add {{host_to_redeploy.hostname}} to cluster"
-  shell: "{{ (argv | join(' ')) | regex_replace('redeploy.yml', mainclusteryml) }} -e cluster_suffix={{cluster_suffix}} -e '{'cluster_hosts_target': [{{host_to_redeploy | to_json}}]}' {{ redeploy_extra_vars | extravars_from_dict }}"
-  register: r__mainclusteryml
-  no_log: True
-  ignore_errors: yes
-- debug: msg="{{[r__mainclusteryml.stdout_lines] + [r__mainclusteryml.stderr_lines]}}"
-  failed_when: r__mainclusteryml is failed
-  when: r__mainclusteryml is failed  or  (debug_nested_log_output is defined and debug_nested_log_output|bool)
+  nested_playbook:
+    playbook_cmdline: "{{ (argv[1:] | join(' ')) | regex_replace('redeploy.yml', mainclusteryml) }} -e cluster_suffix={{cluster_suffix}} -e '{'cluster_hosts_target': [{{host_to_redeploy | to_json}}]}' {{ redeploy_extra_vars | extravars_from_dict }}"
 
 - name: by_hosttype_by_host | re-acquire cluster_hosts_state (NOT cluster_hosts_target, as we are augmenting this in _add_src_diskinfo_to_cluster_hosts_target__ (also, it is not affected by change of state))
   include_role:

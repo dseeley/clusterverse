@@ -32,16 +32,11 @@
     name: clusterverse/cluster_hosts
 
 - name: "rescue | Run {{mainclusteryml}} to perform readiness steps on old cluster (maintenance_mode, CNAME).  Send cluster_hosts_target that maps to cluster_hosts_state, because the topology might have changed, and should only set CNAMEs back for original hosts, not those in cluster_vars."
-  shell: "{{ (argv | join(' ')) | regex_replace('redeploy.yml', mainclusteryml) }} -e '{'cluster_hosts_target': {{_cluster_hosts_target_prev | to_json}}}' {{ redeploy_extra_vars | extravars_from_dict }} --tags=clusterverse_dynamic_inventory,clusterverse_readiness"
+  nested_playbook:
+    playbook_cmdline: "{{ (argv[1:] | join(' ')) | regex_replace('redeploy.yml', mainclusteryml) }} -e '{'cluster_hosts_target': {{_cluster_hosts_target_prev | to_json}}}' {{ redeploy_extra_vars | extravars_from_dict }} --tags=clusterverse_dynamic_inventory,clusterverse_readiness"
   vars:
     _cluster_hosts_state_current: "{{ cluster_hosts_state | json_query(\"[?tagslabels.lifecycle_state=='current'].name\") }}"
     _cluster_hosts_target_prev: "{{ cluster_hosts_target | json_query(\"[?contains(`\" + _cluster_hosts_state_current | join(',') + \"`, hostname)]\") }}"
-  register: r__mainclusteryml
-  no_log: True
-  ignore_errors: yes
-- debug: msg="{{[r__mainclusteryml.stdout_lines] + [r__mainclusteryml.stderr_lines]}}"
-  failed_when: r__mainclusteryml is failed
-  when: r__mainclusteryml is failed  or  (debug_nested_log_output is defined and debug_nested_log_output|bool)
 
 - name: rescue | re-acquire cluster_hosts_target and cluster_hosts_state
   import_role:

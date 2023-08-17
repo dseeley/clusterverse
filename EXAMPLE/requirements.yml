@@ -7,6 +7,9 @@ roles:
 
 
 collections:
+  - name: dseeley.nested_playbook
+    source: https://galaxy.ansible.com
+
   - name: https://github.com/dseeley/community.libvirt.git
     type: git
     version: develop

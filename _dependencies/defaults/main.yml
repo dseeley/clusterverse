@@ -9,10 +9,6 @@ override_deprecated_ami: true
 # The inverse ping/delegate_to method for detecting connections doesn't work and was deprecated in 5c8f574de7ef87787bc64c8f50cd412186c740e0 (25/01/2021)
 skip_dynamic_inventory_sshwait: true
 
-# Show logs when redeploying
-debug_nested_log_output: true
-
-
 # Default Prometheus node exporter configurations
 prometheus_node_exporter_install: true                    # Whether to install the prometheus node_exporter tool
 prometheus_node_exporter_port: "19100"                    # Port to export metrics to.  The default (9100), conflicts with a Couchbase port, and prevents couchbase working.
