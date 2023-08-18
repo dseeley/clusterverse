@@ -33,14 +33,16 @@ def create_custom_image(image_name, build_opts = "") {
                 && apt-get install -y git iproute2 python3-boto python3-boto3 python3-dev python3-distutils python3-docker python3-dnspython python3-google-auth python3-googleapi python3-jinja2 python3-jmespath python3-libcloud python3-libvirt python3-lxml python3-netaddr python3-paramiko python3-passlib python3-pip python3-pyvmomi python3-ruamel.yaml python3-setuptools python3-wheel python3-xmltodict \
                 && pip3 --no-cache-dir install pycdlib pipenv ansible==${params.ANSIBLE_VERSION}
 
-            ### Install azure.azcollection:==1.13.0 if our Ansible version is <= 6.1.0 (it is otherwise included in the pypi release)
-            ### Always install the azcollection/requirements-azure.txt dependencies (in the correct place)
-            RUN if [ \$(echo -e "\$(pip3 --no-cache-dir show ansible | grep ^Version | sed -r 's/^Version: (.*)/\\1/')\\n6.1.0"|sort|head -1) != "6.1.0" ]; then ansible-galaxy collection install azure.azcollection:==1.13.0 -p \$(pip3 --no-cache-dir show ansible | grep ^Location | sed -r 's/Location: (.*)/\\1/') --force && chown -R jenkins.jenkins ~/.ansible; fi \
-                && pip3 --no-cache-dir install -r \$(pip3 --no-cache-dir show ansible | grep ^Location | sed -r 's/^Location: (.*)/\\1/')/ansible_collections/azure/azcollection/requirements-azure.txt
+            ### Install community.libvirt:==1.2.0 if our Ansible version is < 6.3.0 (it is otherwise included in the pypi release) and azure.azcollection:==1.13.0 if our Ansible version is <= 6.0.0 (it is otherwise included in the pypi release)
+            RUN if [ \$(echo -e "\$(pip3 --no-cache-dir show ansible | grep ^Version | sed -r 's/^Version: (.*)/\\1/')\\n6.4.0"|sort|head -1) != "6.4.0" ]; then ansible-galaxy collection install community.libvirt:==1.2.0 -p \$(pip3 --no-cache-dir show ansible | grep ^Location | sed 's/Location: \\(.*\\)/\\1/') --force && chown -R jenkins.jenkins ~/.ansible; fi \
+                && if [ \$(echo -e "\$(pip3 --no-cache-dir show ansible | grep ^Version | sed -r 's/^Version: (.*)/\\1/')\\n6.1.0"|sort|head -1) != "6.1.0" ]; then ansible-galaxy collection install azure.azcollection:==1.13.0 -p \$(pip3 --no-cache-dir show ansible | grep ^Location | sed -r 's/Location: (.*)/\\1/') --force && chown -R jenkins.jenkins ~/.ansible; fi
+
+            ### Install the azcollection/requirements-azure.txt dependencies (in the default python library location)
+            RUN pip3 --no-cache-dir install -r \$(pip3 --no-cache-dir show ansible | grep ^Location | sed -r 's/^Location: (.*)/\\1/')/ansible_collections/azure/azcollection/requirements-azure.txt
             """.stripIndent()
 
-        writeFile(file: "Dockerfile", text: dockerfile, encoding: "UTF-8")
-        custom_build = docker.build(image_name, build_opts + "--network host .")
+        writeFile(file: "Dockerfile_${image_name}", text: dockerfile, encoding: "UTF-8")
+        custom_build = docker.build(image_name, build_opts + "--network host -f Dockerfile_${image_name} .")
 
         return (custom_build)
     }
