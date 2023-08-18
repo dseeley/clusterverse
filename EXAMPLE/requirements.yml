@@ -10,6 +10,9 @@ collections:
   - name: dseeley.nested_playbook
     source: https://galaxy.ansible.com
 
+  - name: dseeley.tasks_serial
+    source: https://galaxy.ansible.com
+
   - name: https://github.com/dseeley/community.libvirt.git
     type: git
     version: develop
@@ -18,7 +21,4 @@ collections:
     source: https://galaxy.ansible.com
 
   - name: dseeley.inventory_lookup
-    source: https://galaxy.ansible.com
-
-  - name: dseeley.tasks_serial
     source: https://galaxy.ansible.com
