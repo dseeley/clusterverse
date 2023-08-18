@@ -25,13 +25,8 @@
     powerchange_new_state: "stop"
 
 - name: "Run {{mainclusteryml}} to fix cluster"
-  shell: "{{ (argv | join(' ')) | regex_replace('redeploy.yml', mainclusteryml) }} {{ redeploy_extra_vars | extravars_from_dict }}"
-  register: r__mainclusteryml
-  no_log: True
-  ignore_errors: yes
-- debug: msg="{{[r__mainclusteryml.stdout_lines] + [r__mainclusteryml.stderr_lines]}}"
-  failed_when: r__mainclusteryml is failed
-  when: r__mainclusteryml is failed  or  (debug_nested_log_output is defined and debug_nested_log_output|bool)
+  dseeley.nested_playbook.nested_playbook:
+    playbook_cmdline: "{{ (argv[1:] | join(' ')) | regex_replace('redeploy.yml', mainclusteryml) }} {{ redeploy_extra_vars | extravars_from_dict }}"
 
 - name: re-acquire the dynamic inventory
   include_role:

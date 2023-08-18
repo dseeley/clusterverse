@@ -251,7 +251,7 @@
   register: r__virt__guest_agent_info
   loop: "{{ r__virt_define.results }}"
   until: "(r__virt__guest_agent_info | json_query('guest_agent_info.interfaceAddresses.*.addrs') | length)"
-  retries: 24     #2 minutes (24*5s)
+  retries: 36     #3 minutes (24*5s)
   delay: 5
 
 

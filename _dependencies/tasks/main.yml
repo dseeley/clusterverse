@@ -41,13 +41,11 @@
         that: "ansible_version.full is version('2.12.4', '>=')"
         fail_msg: "ansible-core 2.12.4 (pypi v5.6.0) is required."
 
-#    - name: Ansible maximum requirement
-#      assert:
-#        that: "ansible_version.full is version('2.14.0', '<=')"
-#        fail_msg: "ansible-core >= 2.14.0 (pypi v7.0.0) is not yet supported due to changes introduced in https://github.com/ansible/ansible/issues/59400."
-
     - name: assertions based on required collections
       block:
+        - name: dseeley.nested_playbook is required for redeploys
+          assert: { that: "'dseeley.nested_playbook' in galaxy_collections", fail_msg: "Please ensure the dseeley.nested_playbook collection is installed:  ansible-galaxy collection install dseeley.nested_playbook (or ansible-galaxy collection install --ignore-errors -fr requirements.yml)" }
+
         - name: libvirt collection requirements
           block:
             - assert: { that: "galaxy_collections['community.libvirt'].version is version('1.2.0', '>=')", fail_msg: "community.libvirt > 1.2.0 required for libvirt support (default in Ansible >= 6.3.0)." }
