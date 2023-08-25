@@ -41,5 +41,7 @@ cluster_vars:
 #      allowed: [{ip_protocol: "tcp", ports: ["{{ prometheus_node_exporter_port | default(9100) }}"]}]
 #      source_tags: ["{{cluster_name}}-nwtag"]
 #      description: "Prometheus instances attached to {{cluster_name}}-nwtag can access the exporter port(s)."
+#      direction: "INGRESS"          #"EGRESS" also allowed, (but then source_ranges not valid)
+#      priority: 1000
 
 _dns_nameserver_zone: *dns_nameserver_zone
