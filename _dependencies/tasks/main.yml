@@ -34,6 +34,30 @@
       with_dict: "{{_cluster_vars_override_templated}}"
       when: cluster_vars is defined and cluster_vars_override is defined and cluster_vars_override != ''
 
+
+- name: Get AWS STS credentials if required
+  block:
+    - assert: { that: "cluster_vars[buildenv].aws_secret_key is not defined or cluster_vars[buildenv].aws_secret_key == ''", fail_msg: "aws_secret_key and aws_sts_assume_role_arn cannot both be set." }
+      when: cluster_vars.type == "aws"
+
+    - name: sts_assume_role
+      community.aws.sts_assume_role:
+        role_arn: "{{cluster_vars[buildenv].aws_sts_assume_role_arn}}"
+        role_session_name: "ansible__{{cluster_vars[buildenv].aws_sts_assume_role_arn | basename }}__{{cluster_name}}"
+      register: r__sts_assume_role
+
+    - name: update cluster_vars[buildenv].aws_access_key and cluster_vars[buildenv].aws_secret_key
+      set_fact:
+        cluster_vars: "{{cluster_vars | combine({buildenv: {'aws_access_key': r__sts_assume_role.sts_creds.access_key, 'aws_secret_key': r__sts_assume_role.sts_creds.secret_key, 'aws_session_token': r__sts_assume_role.sts_creds.session_token }}, recursive=True)}}"
+
+    - name: debug cluster_vars[buildenv].aws_access_key
+      debug:
+        msg:
+           - "{{cluster_vars[buildenv].aws_access_key}}"
+           - "{{cluster_vars[buildenv].aws_secret_key}}"
+           - "{{cluster_vars[buildenv].aws_session_token}}"
+  when: cluster_vars.type == "aws" and cluster_vars[buildenv].aws_sts_assume_role_arn is defined and cluster_vars[buildenv].aws_sts_assume_role_arn != ''
+
 - name: Preflight check
   block:
     - name: Ansible requirement

@@ -8,6 +8,7 @@ cluster_vars:
     aws_secret_key: !vault |
       $ANSIBLE_VAULT;1.2;AES256;dev
       7669080460651349243347331538721104778691266429457726036813912140404310
+    aws_sts_assume_role_arn: "arn:aws:iam::<ACCOUNT>:role/MyRole"               # NOTE: Can only set aws_sts_assume_role_arn if aws_secret_key is not set
     ssh_connection_cfg:
       host: &host_ssh_connection_cfg
         ansible_user: "ansible"

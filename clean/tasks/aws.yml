@@ -4,10 +4,11 @@
   block:
     - name: clean/aws | Remove instances termination protection
       amazon.aws.ec2_instance:
-        aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
-        aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
-        region: "{{ cluster_vars.region }}"
+        access_key: "{{cluster_vars[buildenv].aws_access_key}}"
+        secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+        session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
         endpoint_url: "{{ cluster_vars.aws_endpoint_url | default(omit) }}"
+        region: "{{ cluster_vars.region }}"
         state: "{{ item.instance_state }}"
         termination_protection: false
         instance_ids: ["{{ item.instance_id }}"]
@@ -15,18 +16,21 @@
 
     - name: clean/aws | Delete VMs
       amazon.aws.ec2_instance:
-        aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
-        aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
-        region: "{{ cluster_vars.region }}"
+        access_key: "{{cluster_vars[buildenv].aws_access_key}}"
+        secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+        session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
         endpoint_url: "{{ cluster_vars.aws_endpoint_url | default(omit) }}"
+        region: "{{ cluster_vars.region }}"
         state: "absent"
         instance_ids: "{{ hosts_to_clean | json_query(\"[].instance_id\") }}"
         wait: true
 
     - name: clean/aws | Get any attached Elastic IPs
       community.aws.ec2_eip_info:
-        aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
-        aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+        access_key: "{{cluster_vars[buildenv].aws_access_key}}"
+        secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+        session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
+        endpoint_url: "{{ cluster_vars.aws_endpoint_url | default(omit) }}"
         region: "{{ cluster_vars.region }}"
         filters:
           public-ip: "{{ hosts_to_clean | json_query(\"[].ipv4.public\") | default([]) }}"
@@ -37,8 +41,10 @@
 
     - name: clean/aws | Delete Elastic IPs (if any were found)
       community.aws.ec2_eip:
-        aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
-        aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+        access_key: "{{cluster_vars[buildenv].aws_access_key}}"
+        secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+        session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
+        endpoint_url: "{{ cluster_vars.aws_endpoint_url | default(omit) }}"
         region: "{{ cluster_vars.region }}"
         ip: "{{ item.public_ip }}"
         state: absent
@@ -50,8 +56,10 @@
   block:
     - name: clean/aws | Delete security group
       amazon.aws.ec2_group:
-        aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
-        aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+        access_key: "{{cluster_vars[buildenv].aws_access_key}}"
+        secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+        session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
+        endpoint_url: "{{ cluster_vars.aws_endpoint_url | default(omit) }}"
         region: "{{cluster_vars.region}}"
         name: "{{ cluster_name }}-sg"
         vpc_id: "{{vpc_id}}"

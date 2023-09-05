@@ -2,8 +2,10 @@
 
 - name: remove_maintenance_mode/aws | Set maintenance_mode to false
   amazon.aws.ec2_tag:
-    aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
-    aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+    access_key: "{{cluster_vars[buildenv].aws_access_key}}"
+    secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+    session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
+    endpoint_url: "{{ cluster_vars.aws_endpoint_url | default(omit) }}"
     region: "{{cluster_vars.region}}"
     resource: "{{ item }}"
     tags:
