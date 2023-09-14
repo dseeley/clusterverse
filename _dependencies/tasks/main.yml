@@ -7,9 +7,10 @@
           merge_vars:
             from: "{{ merge_dict_vars_list }}"
             ignore_missing_files: True
+            replace: True
 
-#        - name: Loaded/derived/overridden cluster_vars
-#          debug: msg="{{cluster_vars}}"
+        - name: Loaded/derived/overridden cluster_vars
+          debug: msg="{{cluster_vars}}"
       when: merge_dict_vars_list is defined and merge_dict_vars_list | length > 0
 
     - block:
@@ -27,36 +28,45 @@
       when: cluster_vars_override is defined
 
     - name: Combine command-line cluster_vars_override into the loaded cluster_vars
-      set_fact:
-        cluster_vars: "{{cluster_vars | combine({item.key: item.value | from_yaml}, recursive=True)}}"      # Do the combine with individually parsed variables, because sometimes, the 'value' field of an individual dict is still a string (e.g. during redeploy, which passes the cluster_vars_override again).
+      merge_vars:
+        vars:
+          - path: "cluster_vars.{{item.key}}"
+            value: "{{item.value}}"
       vars:
         _cluster_vars_override_templated: "{{ cluster_vars_override | default({}) }}"                       #This pre-templating technique is needed because sometimes the command-line is interpolated as a string, sometimes as a dict - this normalises it as a dict (which the 'combine' filter, above, requires), however the nested parameters may *still* be stringified (as above).
       with_dict: "{{_cluster_vars_override_templated}}"
       when: cluster_vars is defined and cluster_vars_override is defined and cluster_vars_override != ''
 
 
-- name: Get AWS STS credentials if required
+- name: Get AWS STS credentials (if required) for all hosts (but only run on localhost as we cannot run ansible tasks on the remote hosts)
   block:
-    - assert: { that: "cluster_vars[buildenv].aws_secret_key is not defined or cluster_vars[buildenv].aws_secret_key == ''", fail_msg: "aws_secret_key and aws_sts_assume_role_arn cannot both be set." }
+    - assert: { that: "cluster_vars[buildenv].aws_secret_key is not defined or cluster_vars[buildenv].aws_secret_key == ''", fail_msg: "aws_secret_key ({{cluster_vars[buildenv].aws_secret_key | default(None)}}) and aws_sts_assume_role_arn ({{cluster_vars[buildenv].aws_sts_assume_role_arn | default(None)}}) cannot both be set." }
       when: cluster_vars.type == "aws"
 
     - name: sts_assume_role
       community.aws.sts_assume_role:
         role_arn: "{{cluster_vars[buildenv].aws_sts_assume_role_arn}}"
         role_session_name: "ansible__{{cluster_vars[buildenv].aws_sts_assume_role_arn | basename }}__{{cluster_name}}"
+      delegate_to: localhost
+      run_once: yes
       register: r__sts_assume_role
 
     - name: update cluster_vars[buildenv].aws_access_key and cluster_vars[buildenv].aws_secret_key
-      set_fact:
-        cluster_vars: "{{cluster_vars | combine({buildenv: {'aws_access_key': r__sts_assume_role.sts_creds.access_key, 'aws_secret_key': r__sts_assume_role.sts_creds.secret_key, 'aws_session_token': r__sts_assume_role.sts_creds.session_token }}, recursive=True)}}"
+      merge_vars:
+        vars:
+          - path: "cluster_vars.{{buildenv}}.aws_access_key"
+            value: "{{hostvars['localhost']['r__sts_assume_role']['sts_creds']['access_key']}}"
+          - path: "cluster_vars.{{buildenv}}.aws_secret_key"
+            value: "{{hostvars['localhost']['r__sts_assume_role']['sts_creds']['secret_key']}}"
+          - path: "cluster_vars.{{buildenv}}.aws_session_token"
+            value: "{{hostvars['localhost']['r__sts_assume_role']['sts_creds']['session_token']}}"
+      delegate_to: "{{ item }}"
+      with_items: "{{ play_hosts }}"
+      run_once: yes
 
-    - name: debug cluster_vars[buildenv].aws_access_key
-      debug:
-        msg:
-           - "{{cluster_vars[buildenv].aws_access_key}}"
-           - "{{cluster_vars[buildenv].aws_secret_key}}"
-           - "{{cluster_vars[buildenv].aws_session_token}}"
-  when: cluster_vars.type == "aws" and cluster_vars[buildenv].aws_sts_assume_role_arn is defined and cluster_vars[buildenv].aws_sts_assume_role_arn != ''
+    - name: Loaded/derived/overridden cluster_vars
+      debug: msg="{{cluster_vars}}"
+  when: (cluster_vars.type == "aws" and cluster_vars[buildenv].aws_sts_assume_role_arn is defined and cluster_vars[buildenv].aws_sts_assume_role_arn != '')
 
 - name: Preflight check
   block:
