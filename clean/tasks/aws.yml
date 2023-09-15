@@ -30,7 +30,6 @@
         access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
-        endpoint_url: "{{ cluster_vars.aws_endpoint_url | default(omit) }}"
         region: "{{ cluster_vars.region }}"
         filters:
           public-ip: "{{ hosts_to_clean | json_query(\"[].ipv4.public\") | default([]) }}"
@@ -44,7 +43,6 @@
         access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
-        endpoint_url: "{{ cluster_vars.aws_endpoint_url | default(omit) }}"
         region: "{{ cluster_vars.region }}"
         ip: "{{ item.public_ip }}"
         state: absent
@@ -59,7 +57,6 @@
         access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
-        endpoint_url: "{{ cluster_vars.aws_endpoint_url | default(omit) }}"
         region: "{{cluster_vars.region}}"
         name: "{{ cluster_name }}-sg"
         vpc_id: "{{vpc_id}}"

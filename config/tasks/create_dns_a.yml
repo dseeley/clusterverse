@@ -26,7 +26,6 @@
         access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
-        endpoint_url: "{{ cluster_vars.aws_endpoint_url | default(omit) }}"
         query: hosted_zone
       become: false
       delegate_to: localhost
@@ -37,7 +36,6 @@
         access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
-        endpoint_url: "{{ cluster_vars.aws_endpoint_url | default(omit) }}"
         state: present
         zone: "{{cluster_vars.dns_nameserver_zone}}"
         record: "{{item.hostname}}.{{cluster_vars.dns_user_domain}}"
@@ -87,7 +85,6 @@
             access_key: "{{cluster_vars[buildenv].aws_access_key}}"
             secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
             session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
-            endpoint_url: "{{ cluster_vars.aws_endpoint_url | default(omit) }}"
             state: present
             zone: "{{cluster_vars.dns_nameserver_zone}}"
             record: "{{item.item.item.hostname}}.{{cluster_vars.dns_user_domain}}"

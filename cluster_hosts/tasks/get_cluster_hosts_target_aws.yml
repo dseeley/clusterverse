@@ -6,7 +6,6 @@
     access_key: "{{cluster_vars[buildenv].aws_access_key}}"
     secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
     session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
-    endpoint_url: "{{ cluster_vars.aws_endpoint_url | default(omit) }}"
     region: "{{ cluster_vars.region }}"
     filters:
       "tag:Name": "{{ cluster_vars[buildenv].vpc_name }}"
@@ -26,7 +25,6 @@
         access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
-        endpoint_url: "{{ cluster_vars.aws_endpoint_url | default(omit) }}"
         region: "{{cluster_vars.region}}"
         filters:
           vpc-id: "{{ vpc_id }}"
@@ -51,7 +49,6 @@
         access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
-        endpoint_url: "{{ cluster_vars.aws_endpoint_url | default(omit) }}"
         region: "{{ cluster_vars.region }}"
         filters: "{{ _snapshot_tags[0] }}"
       register: r__ebs_snapshots
@@ -96,7 +93,6 @@
         access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
-        endpoint_url: "{{ cluster_vars.aws_endpoint_url | default(omit) }}"
         region: "{{cluster_vars.region}}"
         filters: { image-id: "{{ item__ec2_ami_info__by_imageid.image }}" }
       register: r__ec2_ami_info__by_imageid
@@ -117,7 +113,6 @@
             access_key: "{{cluster_vars[buildenv].aws_access_key}}"
             secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
             session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
-            endpoint_url: "{{ cluster_vars.aws_endpoint_url | default(omit) }}"
             region: "{{cluster_vars.region}}"
             instance_types: "{{ _cluster_hosts_targets__no_ami | json_query(\"[].flavor\") | unique }}"
           register: r__ec2_instance_type_info
@@ -129,7 +124,6 @@
             access_key: "{{cluster_vars[buildenv].aws_access_key}}"
             secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
             session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
-            endpoint_url: "{{ cluster_vars.aws_endpoint_url | default(omit) }}"
             region: "{{cluster_vars.region}}"
             filters:
               manifest-location: "{{ item__ec2_ami_info__by_location.image }}"
