@@ -1,5 +1,8 @@
 ---
 
+- name: Gather only the facts needed
+  ansible.builtin.setup: { gather_subset: ["os_family", "network"] }
+
 - name: Disable unattended-upgrade and apt-daily timers. Wait for in-flight updates to finish.
   block:
     - name: Disable unattended-upgrades and apt-daily timers
