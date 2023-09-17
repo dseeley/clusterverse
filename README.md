@@ -26,6 +26,7 @@ To active the pipenv:
 + AWS account with IAM rights to create EC2 VMs and security groups in the chosen VPCs/subnets.  Place the credentials in:
   + `cluster_vars[buildenv].aws_access_key:`
   + `cluster_vars[buildenv].aws_secret_key:`
+  + Or assume a role using: `cluster_vars[buildenv].aws_sts_assume_role_arn:`
 + Preexisting VPCs:
   + `cluster_vars[buildenv].vpc_name: my-vpc-{{buildenv}}`
 + Preexisting subnets. This is a prefix - the cloud availability zone will be appended to the end (e.g. `a`, `b`, `c`).

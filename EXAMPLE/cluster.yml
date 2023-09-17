@@ -19,6 +19,7 @@
 
 - name: clusterverse | Configure the cluster
   hosts: all:!not_target_hosts
+  gather_facts: no
   tasks: [ { include_role: { name: "clusterverse/config", apply: { tags: ["clusterverse_config"]} }, tags: ["clusterverse_config"] } ]
 
 

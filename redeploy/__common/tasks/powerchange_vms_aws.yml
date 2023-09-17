@@ -7,8 +7,9 @@
   block:
     - name: powerchange_vms/aws | Set maintenance_mode=true (if stopping)
       amazon.aws.ec2_tag:
-        aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
-        aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+        access_key: "{{cluster_vars[buildenv].aws_access_key}}"
+        secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+        session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
         region: "{{cluster_vars.region}}"
         resource: "{{ item.instance_id }}"
         tags: { maintenance_mode: "true" }
@@ -17,8 +18,9 @@
 
     - name: "powerchange_vms/aws | {{powerchange_new_state}} VMs"
       amazon.aws.ec2_instance:
-        aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
-        aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+        access_key: "{{cluster_vars[buildenv].aws_access_key}}"
+        secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+        session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
         region: "{{ cluster_vars.region }}"
         state: "{% if powerchange_new_state == 'stop' %}stopped{% else %}running{% endif %}"
         instance_ids: "{{ hosts_to_powerchange | json_query(\"[].instance_id\") }}"

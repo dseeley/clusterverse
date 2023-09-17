@@ -2,12 +2,13 @@
 
 - name: get_cluster_hosts_state/aws | Get existing instance info
   amazon.aws.ec2_instance_info:
+    access_key: "{{cluster_vars[buildenv].aws_access_key}}"
+    secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+    session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
+    region: "{{cluster_vars.region}}"
     filters:
       "tag:cluster_name": "{{cluster_name}}"
       "instance-state-name": ["running", "pending", "stopped"]
-    aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
-    aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
-    region: "{{cluster_vars.region}}"
   register: r__ec2_instance_info
   delegate_to: localhost
   run_once: true

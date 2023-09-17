@@ -230,9 +230,9 @@ CVTEST_NOMYHOSTTYPES = new MatrixBuilder([
 
                     // Update the clustervars with new scaled cluster size
                     if (env.SCALEUPDOWN == 'scaleup') {
-                        cluster_vars_override += ["${env.BUILDENV}": [hosttype_vars: [sys: [vms_by_az: [b: 1, c: 1]]]]]     // AZ 'c' is not set normally
+                        cluster_vars_override += ["${env.BUILDENV}.hosttype_vars.sys.vms_by_az.b": 1,"${env.BUILDENV}.hosttype_vars.sys.vms_by_az.c": 1]     // AZ 'c' is not set normally
                     } else if (env.SCALEUPDOWN == 'scaledown') {
-                        cluster_vars_override += ["${env.BUILDENV}": [hosttype_vars: [sys: [vms_by_az: [b: 0, c: 0]]]]]     // AZ 'b' is set normally
+                        cluster_vars_override += ["${env.BUILDENV}.hosttype_vars.sys.vms_by_az.b": 0,"${env.BUILDENV}.hosttype_vars.sys.vms_by_az.c": 0]      // AZ 'b' is set normally
                     }
 
                     if (cluster_vars_override.size()) {
@@ -264,9 +264,9 @@ CVTEST_NOMYHOSTTYPES = new MatrixBuilder([
 
                             //Re-add the scaleup/down cmdline for next redeploy test (canary=none)
                             if (env.SCALEUPDOWN == 'scaleup') {
-                                cluster_vars_override += ["${env.BUILDENV}": [hosttype_vars: [sys: [vms_by_az: [b: 1, c: 1]]]]]     // AZ 'c' is not set normally
+                                cluster_vars_override += ["${env.BUILDENV}.hosttype_vars.sys.vms_by_az.b": 1,"${env.BUILDENV}.hosttype_vars.sys.vms_by_az.c": 1]     // AZ 'c' is not set normally
                             } else if (env.SCALEUPDOWN == 'scaledown') {
-                                cluster_vars_override += ["${env.BUILDENV}": [hosttype_vars: [sys: [vms_by_az: [b: 0, c: 0]]]]]     // AZ 'b' is set normally
+                                cluster_vars_override += ["${env.BUILDENV}.hosttype_vars.sys.vms_by_az.b": 0,"${env.BUILDENV}.hosttype_vars.sys.vms_by_az.c": 0]      // AZ 'b' is set normally
                             }
                             stageBuild.extraVars.put("cluster_vars_override", "\\\'" + groovy.json.JsonOutput.toJson(cluster_vars_override).replace("\"", "\\\"") + "\\\'")   // Quote the quotes.  NOTE: NO SPACES are allowed in this!!
                         }
@@ -350,9 +350,9 @@ CVTEST_MYHOSTTYPES = new MatrixBuilder([
 
                         // Update the clustervars with new scaled cluster size
                         if (env.SCALEUPDOWN == 'scaleup') {
-                            cluster_vars_override += ["${env.BUILDENV}": [hosttype_vars: [sys: [vms_by_az: [b: 1, c: 1]]]]]     // AZ 'c' is not set normally
+                            cluster_vars_override += ["${env.BUILDENV}.hosttype_vars.sys.vms_by_az.b": 1,"${env.BUILDENV}.hosttype_vars.sys.vms_by_az.c": 1]     // AZ 'c' is not set normally
                         } else if (env.SCALEUPDOWN == 'scaledown') {
-                            cluster_vars_override += ["${env.BUILDENV}": [hosttype_vars: [sys: [vms_by_az: [b: 0, c: 0]]]]]     // AZ 'b' is set normally
+                            cluster_vars_override += ["${env.BUILDENV}.hosttype_vars.sys.vms_by_az.b": 0,"${env.BUILDENV}.hosttype_vars.sys.vms_by_az.c": 0]      // AZ 'b' is set normally
                         }
 
                         if (cluster_vars_override.size()) {
@@ -386,9 +386,9 @@ CVTEST_MYHOSTTYPES = new MatrixBuilder([
 
                             //Re-add the scaleup/down cmdline for next redeploy test (canary=none)
                             if (env.SCALEUPDOWN == 'scaleup') {
-                                cluster_vars_override += ["${env.BUILDENV}": [hosttype_vars: [sys: [vms_by_az: [b: 1, c: 1]]]]]     // AZ 'c' is not set normally
+                                cluster_vars_override += ["${env.BUILDENV}.hosttype_vars.sys.vms_by_az.b": 1,"${env.BUILDENV}.hosttype_vars.sys.vms_by_az.c": 1]     // AZ 'c' is not set normally
                             } else if (env.SCALEUPDOWN == 'scaledown') {
-                                cluster_vars_override += ["${env.BUILDENV}": [hosttype_vars: [sys: [vms_by_az: [b: 0, c: 0]]]]]     // AZ 'b' is set normally
+                                cluster_vars_override += ["${env.BUILDENV}.hosttype_vars.sys.vms_by_az.b": 0,"${env.BUILDENV}.hosttype_vars.sys.vms_by_az.c": 0]      // AZ 'b' is set normally
                             }
                             stageBuild.extraVars.put("cluster_vars_override", "\\\'" + groovy.json.JsonOutput.toJson(cluster_vars_override).replace("\"", "\\\"") + "\\\'")   // Quote the quotes.  NOTE: NO SPACES are allowed in this!!
                         }

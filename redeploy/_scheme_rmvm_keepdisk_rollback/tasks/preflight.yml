@@ -5,10 +5,11 @@
     - block:
         - name: Preflight check | get ec2_instance_info for current disk information
           amazon.aws.ec2_instance_info:
-            filters: { "instance-state-name": [ "running", "pending", "stopped" ], "tag:cluster_name": "{{cluster_name}}", "tag:lifecycle_state": "current" }
-            aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
-            aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+            access_key: "{{cluster_vars[buildenv].aws_access_key}}"
+            secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+            session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
             region: "{{cluster_vars.region}}"
+            filters: { "instance-state-name": [ "running", "pending", "stopped" ], "tag:cluster_name": "{{cluster_name}}", "tag:lifecycle_state": "current" }
           register: r__ec2_instance_info
 
         - assert: { that: "_invalid_disks | length == 0", fail_msg: "Disks cannot be attached to /dev/sd[b-e] after the instance has been created (these are supposed to be ephemeral mounts only, so can only exist if created with the VM). [Found on: {{ _invalid_disks | join(',')}}].  If you have EBS disks, you'll need to move them to another mount point (a redeploy scheme that replaces the disks will do this" }

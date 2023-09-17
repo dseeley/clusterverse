@@ -38,15 +38,17 @@
       block:
         - name: clean/dns/route53 | Gather info for pre-existing Hosted Zones (public and/or private)
           community.aws.route53_info:
-            aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
-            aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+            access_key: "{{cluster_vars[buildenv].aws_access_key}}"
+            secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+            session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
             query: hosted_zone
           register: r__route53_info__zones
 
         - name: clean/dns/route53 | Get A records
           community.aws.route53:
-            aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
-            aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+            access_key: "{{cluster_vars[buildenv].aws_access_key}}"
+            secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+            session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
             state: "get"
             zone: "{{cluster_vars.dns_nameserver_zone}}"
             record: "{{item.0.name}}.{{cluster_vars.dns_user_domain}}"
@@ -65,8 +67,9 @@
 
         - name: clean/dns/route53 | Delete A records
           community.aws.route53:
-            aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
-            aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+            access_key: "{{cluster_vars[buildenv].aws_access_key}}"
+            secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+            session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
             state: "absent"
             zone: "{{ cluster_vars.dns_nameserver_zone }}"
             record: "{{ item.resource_record_sets.name }}"
@@ -81,8 +84,9 @@
 
         - name: clean/dns/route53 | Get CNAME records
           community.aws.route53:
-            aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
-            aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+            access_key: "{{cluster_vars[buildenv].aws_access_key}}"
+            secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+            session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
             state: "get"
             zone: "{{cluster_vars.dns_nameserver_zone}}"
             record: "{{item.0.name | regex_replace('-(?!.*-).*')}}.{{cluster_vars.dns_user_domain}}"
@@ -101,8 +105,9 @@
 
         - name: clean/dns/route53 | Delete CNAME records
           community.aws.route53:
-            aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
-            aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+            access_key: "{{cluster_vars[buildenv].aws_access_key}}"
+            secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+            session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
             state: "absent"
             zone: "{{ item.1.set.zone }}"
             record: "{{ item.1.set.record }}"
@@ -121,8 +126,9 @@
       block:
         - name: clean/dns/route53 | Gather info for pre-existing Hosted Zones (public and/or private)
           community.aws.route53_info:
-            aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
-            aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+            access_key: "{{cluster_vars[buildenv].aws_access_key}}"
+            secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+            session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
             query: hosted_zone
           register: r__route53_info__zones
 
@@ -130,8 +136,9 @@
         # Note: cannot run route53_info asynchronously as it makes too many concurrent requests and blows the AWS Route53 API limit.
         - name: clean/dns/route53 | Get A records
           community.aws.route53_info:
-            aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
-            aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+            access_key: "{{cluster_vars[buildenv].aws_access_key}}"
+            secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+            session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
             type: "A"
             max_items: 1
             query: record_sets
@@ -146,8 +153,9 @@
 
         - name: clean/dns/route53 | Delete A records
           community.aws.route53:
-            aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
-            aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+            access_key: "{{cluster_vars[buildenv].aws_access_key}}"
+            secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+            session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
             state: "absent"
             zone: "{{ cluster_vars.dns_nameserver_zone }}"
             record: "{{ item.resource_record_sets.name }}"
@@ -164,8 +172,9 @@
         # Note: cannot run route53_info asynchronously as it makes too many concurrent requests and blows the AWS Route53 API limit.
         - name: clean/dns/route53 | Get CNAME records
           community.aws.route53_info:
-            aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
-            aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+            access_key: "{{cluster_vars[buildenv].aws_access_key}}"
+            secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+            session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
             type: "CNAME"
             max_items: 1
             query: record_sets
@@ -180,8 +189,9 @@
 
         - name: clean/dns/route53 | Delete CNAME records
           community.aws.route53:
-            aws_access_key: "{{cluster_vars[buildenv].aws_access_key}}"
-            aws_secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+            access_key: "{{cluster_vars[buildenv].aws_access_key}}"
+            secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
+            session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
             state: "absent"
             zone: "{{ cluster_vars.dns_nameserver_zone }}"
             record: "{{ item.1.ResourceRecordSets.Name }}"
