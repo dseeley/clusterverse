@@ -7,7 +7,6 @@
         access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
-        endpoint_url: "{{ cluster_vars.aws_endpoint_url | default(omit) }}"
         region: "{{ cluster_vars.region }}"
         state: "{{ item.instance_state }}"
         termination_protection: false
@@ -19,7 +18,6 @@
         access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
-        endpoint_url: "{{ cluster_vars.aws_endpoint_url | default(omit) }}"
         region: "{{ cluster_vars.region }}"
         state: "absent"
         instance_ids: "{{ hosts_to_clean | json_query(\"[].instance_id\") }}"
