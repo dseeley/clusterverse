@@ -51,7 +51,7 @@
 
 # It can merge in variables literally:
 #   - merge_vars:
-#       vars:
+#       facts:
 #         - path: "cluster_vars.innov.aws_access_key"
 #           value: "{{get_url_registered_value}}"
 
@@ -68,7 +68,7 @@ from copy import deepcopy
 
 
 class ActionModule(ActionBase):
-    VALID_ARGUMENTS = ['from', 'vars', 'ignore_missing_files', 'extensions', 'replace']
+    VALID_ARGUMENTS = ['from', 'facts', 'ignore_missing_files', 'extensions', 'replace']
 
     def __init__(self, *args, **kwargs):
         super(ActionModule, self).__init__(*args, **kwargs)
@@ -82,7 +82,7 @@ class ActionModule(ActionBase):
         self.ignore_missing_files = self._task.args.get('ignore_missing_files', False)
         self.valid_extensions = self._task.args.get('extensions')
 
-        self._display.vvvv("*** task_vars.get('ansible_facts', {}),: %s " % task_vars.get('ansible_facts', {}))
+        self._display.vvvvv("*** task_vars.get('ansible_facts', {}),: %s " % task_vars.get('ansible_facts', {}))
 
         # NOTE: We have to pretend that this plugin action is actually the 'include_vars' plugin, so that the loaded vars
         # are treated as host variables, (and not just facts), otherwise they are not templated.  We could try to
@@ -97,8 +97,8 @@ class ActionModule(ActionBase):
             raise AnsibleActionFail(message="The following are not valid options in merge_vars '%s'" % ", ".join(invalid_args))
 
         # Check that minimum arguments are present
-        if not any(item in self._task.args for item in ['from', 'vars']):
-            raise AnsibleActionFail(message="At least one of 'from' or 'vars' should be present.")
+        if not any(item in self._task.args for item in ['from', 'facts']):
+            raise AnsibleActionFail(message="At least one of 'from' or 'facts' should be present.")
 
         new_facts = {}
         if 'from' in self._task.args:
@@ -125,10 +125,10 @@ class ActionModule(ActionBase):
                 else:
                     self._display.warning("File extension is not in the allowed list: %s " % filename)
 
-        if 'vars' in self._task.args:
+        if 'facts' in self._task.args:
             new_task = self._task.copy()
             new_task.action = 'ansible.utils.update_fact'
-            new_task.args = {'updates': self._task.args['vars']}
+            new_task.args = {'updates': self._task.args['facts']}
 
             # Get the action_loader for ansible.utils.update_fact
             update_fact_actionloader = self._shared_loader_obj.action_loader.get(new_task.action, task=new_task, connection=self._connection, play_context=self._play_context, loader=self._loader, templar=self._templar, shared_loader_obj=self._shared_loader_obj)
@@ -148,7 +148,7 @@ class ActionModule(ActionBase):
         # Merge these new variables with previously-defined variables if 'replace' is not set
         new_facts = merge_hash(task_vars.get('ansible_facts', {}), new_facts, recursive=(not self._task.args.get('replace')))
 
-        self._display.vvvv("*** new_facts: %s " % new_facts)
+        self._display.vvvvv("*** new_facts: %s " % new_facts)
         self._result['ansible_facts'] = new_facts
         return self._result
 
