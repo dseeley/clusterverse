@@ -82,7 +82,7 @@ class ActionModule(ActionBase):
         self.ignore_missing_files = self._task.args.get('ignore_missing_files', False)
         self.valid_extensions = self._task.args.get('extensions')
 
-        self._display.vvv("*** task_vars.get('ansible_facts', {}),: %s " % task_vars.get('ansible_facts', {}))
+        self._display.vvvv("*** task_vars.get('ansible_facts', {}),: %s " % task_vars.get('ansible_facts', {}))
 
         # NOTE: We have to pretend that this plugin action is actually the 'include_vars' plugin, so that the loaded vars
         # are treated as host variables, (and not just facts), otherwise they are not templated.  We could try to
@@ -148,7 +148,7 @@ class ActionModule(ActionBase):
         # Merge these new variables with previously-defined variables if 'replace' is not set
         new_facts = merge_hash(task_vars.get('ansible_facts', {}), new_facts, recursive=(not self._task.args.get('replace')))
 
-        self._display.vvv("*** new_facts: %s " % new_facts)
+        self._display.vvvv("*** new_facts: %s " % new_facts)
         self._result['ansible_facts'] = new_facts
         return self._result
 
