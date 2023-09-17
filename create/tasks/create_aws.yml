@@ -39,7 +39,6 @@
         access_key: "{{cluster_vars[buildenv].aws_access_key}}"
         secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
-        endpoint_url: "{{ cluster_vars.aws_endpoint_url | default(omit) }}"
         region: "{{cluster_vars.region}}"
         key_name: "{{cluster_vars[buildenv].key_name}}"
         instance_type: "{{item.flavor}}"
