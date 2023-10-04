@@ -1,8 +1,8 @@
 ---
 
-- name: Chrony | Restart and enable chrony
+- name: systemd-timesyncd | Restart and enable systemd-timesyncd
   become: true
   service:
-    name: chronyd
+    name: systemd-timesyncd
     state: restarted
     enabled: true

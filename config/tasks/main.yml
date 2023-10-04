@@ -84,9 +84,9 @@
   - name: "debug 'timedatectl show --property=NTP --value'"
     debug: msg="{{r__command_netplan}}"
 
-  - name: Install chrony (NTP client)
-    include_tasks: chrony.yml
-    when: chrony_install|bool  and  r__command_netplan.stdout != "yes"
+  - name: Install systemd-timesyncd (NTP client)
+    include_tasks: systemd-timesyncd.yml
+    when: timesyncd_install|bool  and  r__command_netplan.stdout != "yes"
 
 - name: Update packages (when pkgupdate is defined)
   include_tasks: pkgupdate.yml

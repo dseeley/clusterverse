@@ -1,0 +1,32 @@
+---
+
+- name: systemd-timesyncd | Install and Configure - Ubuntu
+  block:
+    - name: systemd-timesyncd | Ubuntu install
+      become: yes
+      apt:
+        name: systemd-timesyncd
+        update_cache: yes
+        state: present
+  when: ansible_os_family == "Debian"
+
+- name: systemd-timesyncd | Install and Configure - CentOS
+  block:
+    - name: systemd-timesyncd | CentOS install
+      become: yes
+      yum:
+        name: systemd-timesyncd
+        state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Configure systemd-timesyncd
+  become: yes
+  community.general.ini_file:
+    path: "/etc/systemd/timesyncd.conf"
+    section: Time
+    option: NTP
+    value: "{{ timesyncd_ntp_servers | join(' ') }}"
+    state: present
+    exclusive: false
+  notify:
+    - systemd-timesyncd | Restart and enable systemd-timesyncd
