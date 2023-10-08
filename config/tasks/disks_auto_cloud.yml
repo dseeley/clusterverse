@@ -11,14 +11,14 @@
     - name: disks_auto_cloud | Get the block device information (pre-filesystem create)
       blockdevmap:
         cloud_type: "{{cluster_vars.type}}"
-      become: yes
+      become: true
       register: r__blockdevmap
 
     - name: disks_auto_cloud | r__blockdevmap (pre-filesystem create)
       debug: msg={{r__blockdevmap}}
 
     - name: disks_auto_cloud | Create filesystem (partitionless)
-      become: yes
+      become: true
       community.general.filesystem:
         fstype: "{{ item.fstype }}"
         dev: "{{ _dev }}"
@@ -30,14 +30,14 @@
     - name: disks_auto_cloud | Get the block device information (post-filesystem create), to get the block IDs for mounting
       blockdevmap:
         cloud_type: "{{cluster_vars.type}}"
-      become: yes
+      become: true
       register: r__blockdevmap
 
     - name: disks_auto_cloud | r__blockdevmap (post-filesystem create)
       debug: msg={{r__blockdevmap}}
 
     - name: disks_auto_cloud | Mount created filesytem(s) persistently
-      become: yes
+      become: true
       ansible.posix.mount:
         path: "{{ item.mountpoint }}"
         src: "UUID={{ _UUID }}"
@@ -50,7 +50,7 @@
       when: _UUID is defined and _UUID != ''
 
     - name: disks_auto_cloud | change ownership of mountpoint (if set)
-      become: yes
+      become: true
       file:
         path: "{{ item.mountpoint }}"
         state: directory
@@ -62,7 +62,7 @@
     - name: disks_auto_cloud | Check that we haven't mounted disks in the wrong place.  Especially useful for redeploys when we're moving disks.
       block:
         - name: "disks_auto_cloud | Touch a file with the mountpoint and device name for testing that disk attachment is correct.  Note: Use a unique filename here instead of writing to a file, so that more than one file per device is an error.  Note: don't add device_name for GCP, because we can't rename the disks when redeploying and keeping disks (_scheme_rmvm_keepdisk_rollback)"
-          become: yes
+          become: true
           file:
             path: "{{item.mountpoint}}/.clusterversetest__{{inventory_hostname | regex_replace('-(?!.*-).*')}}__{{ item.mountpoint | regex_replace('\\/', '_') }}{%- if cluster_vars.type != 'gcp'-%}__{{ item.device_name | regex_replace('\/', '_') }}{%- endif -%}"
             state: touch
@@ -71,7 +71,7 @@
         - name: disks_auto_cloud | Find all .clusterversetest__ files in mounted disks
           find:
             paths: "{{item.mountpoint}}"
-            hidden: yes
+            hidden: true
             patterns: ".clusterversetest__*"
           loop: "{{auto_vols}}"
           register: r__find_test
@@ -100,7 +100,7 @@
     - name: disks_auto_cloud/lvm | Install logical volume management tooling. (apt - Debian/Ubuntu)
       become: true
       apt:
-        update_cache: yes
+        update_cache: true
         name: "lvm2"
       when: ansible_os_family == 'Debian'
 
@@ -114,7 +114,7 @@
     - name: disks_auto_cloud/lvm | Get the device information (pre-filesystem create)
       blockdevmap:
         cloud_type: "{{cluster_vars.type}}"
-      become: yes
+      become: true
       register: r__blockdevmap
 
     - name: disks_auto_cloud/lvm | r__blockdevmap (pre raid create)
@@ -125,28 +125,28 @@
           debug: msg={{ raid_vols_devices }}
 
         - name: disks_auto_cloud/lvm | Create a volume group from all block devices
-          become: yes
+          become: true
           community.general.lvg:
             vg: "{{ lvmparams.vg_name }}"
             pvs: "{{ raid_vols_devices | map(attribute='device_name_os') | sort | join(',') }}"
 
         - name: disks_auto_cloud/lvm | Create a logical volume from volume group
-          become: yes
+          become: true
           community.general.lvol:
             vg: "{{ lvmparams.vg_name }}"
             lv: "{{ lvmparams.lv_name }}"
             size: "{{ lvmparams.lv_size }}"
 
         - name: disks_auto_cloud/lvm | Create filesystem(s) on attached volume(s)
-          become: yes
+          become: true
           community.general.filesystem:
             fstype: "{{ raid_vols[0].fstype }}"
             dev: "/dev/{{ lvmparams.vg_name }}/{{ lvmparams.lv_name }}"
-            force: no       # This doesn't appear to prevent the '-F' option being sent to mkfs
+            force: false       # This doesn't appear to prevent the '-F' option being sent to mkfs
           when: (raid_vols_devices | json_query('[?FSTYPE==``]') | length) == (raid_vols_devices | length)
 
         - name: disks_auto_cloud/lvm | Mount created filesytem(s) persistently
-          become: yes
+          become: true
           ansible.posix.mount:
             path: "{{ raid_vols[0].mountpoint }}"
             src: "/dev/{{ lvmparams.vg_name }}/{{ lvmparams.lv_name }}"
@@ -157,7 +157,7 @@
         - name: disks_auto_cloud/lvm | Check that we haven't mounted disks in the wrong place.  Especially useful for redeploys when we're moving disks.
           block:
             - name: "disks_auto_cloud/lvm | Touch a file with the mountpoint for testing that disk attachment is correct.  Note: Use a unique filename here instead of writing to a file, so that more than one file per device is an error."
-              become: yes
+              become: true
               file:
                 path: "{{ raid_vols[0].mountpoint }}/.clusterversetest__{{inventory_hostname | regex_replace('-(?!.*-).*')}}__{{ raid_vols[0].mountpoint | regex_replace('\\/', '_') }}"
                 state: touch
@@ -165,7 +165,7 @@
             - name: disks_auto_cloud/lvm | Find all .clusterversetest__ files in mounted disks
               find:
                 paths: "{{ raid_vols[0].mountpoint }}"
-                hidden: yes
+                hidden: true
                 patterns: ".clusterversetest__*"
               register: r__find_test
 

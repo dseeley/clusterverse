@@ -18,7 +18,7 @@ cluster_vars:
     hosttype_vars:
       sys:
         auto_volumes: [ ]
-        flavor: { num_cpus: "2", memory_mb: "2048", autostart: yes, firmware: EFI }   # firmware: EFI(default), or BIOS
+        flavor: { num_cpus: "2", memory_mb: "2048", autostart: true, firmware: EFI }   # firmware: EFI(default), or BIOS
         version: "{{sys_version | default('')}}"
         networks: [ &sys_NET1 { interface_type: "bridge", source_dev: "br0" } ]
         vms_by_az: { a: 1, b: 1, c: 0 }

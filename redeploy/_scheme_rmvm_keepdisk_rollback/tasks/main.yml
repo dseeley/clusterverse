@@ -19,7 +19,7 @@
         - name: re-acquire cluster_hosts_target and cluster_hosts_state
           include_role:
             name: clusterverse/cluster_hosts
-            public: yes
+            public: true
 
         - assert: { that: "cluster_hosts_state | json_query(\"[?tagslabels.cluster_suffix == '\"+ cluster_suffix +\"' && ('\"+ myhosttypes|default('') + \"' == ''  ||  contains(['\"+ myhosttypes|default('') + \"'], tagslabels.hosttype))]\") | length == 0", msg: "Please ensure cluster_suffix ({{cluster_suffix}}) is not already set on the cluster" }
           when: cluster_suffix is defined

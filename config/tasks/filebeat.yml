@@ -1,7 +1,7 @@
 ---
 
 - name: Filebeat | Download and install filebeat from elastic.co
-  become: yes
+  become: true
   apt:
     deb: "https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-{{ filebeat_version }}-{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else ansible_architecture }}.deb"
   register: apt_jobs
@@ -10,7 +10,7 @@
   when: ansible_os_family == 'Debian'
 
 - name: Filebeat | Download and install filebeat from elastic.co
-  become: yes
+  become: true
   yum:
     name: "https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-{{ filebeat_version }}-{{ ansible_architecture }}.rpm"
   register: yum_jobs
@@ -21,14 +21,14 @@
 - name: Filebeat | Configure filebeat
   block:
     - name: Filebeat | Copy filebeat configuration
-      become: yes
+      become: true
       template:
         src: etc/filebeat/filebeat.yml.j2
         dest: "/etc/filebeat/filebeat.yml"
       notify: Filebeat | Restart and enable filebeat
 
     - name: Filebeat | Copy filebeat service
-      become: yes
+      become: true
       template:
         src: lib/systemd/system//filebeat.service.j2
         dest: "/lib/systemd/system/filebeat.service"

@@ -44,7 +44,7 @@
         value: "{{ item.ipv4 }}"
         private_zone: "{{ item.private_zone }}"
         overwrite: true
-        wait: yes
+        wait: true
       become: false
       delegate_to: localhost
       run_once: true
@@ -93,7 +93,7 @@
             value: "{{item.item.item.ipv4}}"
             private_zone: "{{item.item.item.private_zone}}"
             overwrite: true
-            wait: yes
+            wait: true
           become: false
           delegate_to: localhost
           run_once: true

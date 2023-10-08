@@ -54,7 +54,7 @@
         network:
           assign_public_ip: "{{ true if ('assign_public_ip' in cluster_vars and cluster_vars.assign_public_ip in ['dynamic'])  else  false }}"
         security_groups: "{{ cluster_vars.secgroups_existing | default([]) + ([r__ec2_group.group_name] if r__ec2_group.group_name is defined else []) }}"
-        wait: yes
+        wait: true
         state: running
         tags: "{{ _instance_tags | combine(cluster_vars.custom_tagslabels | default({})) }}"
         termination_protection: "{{cluster_vars[buildenv].termination_protection}}"
@@ -118,7 +118,7 @@
         session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
         region: "{{cluster_vars.region}}"
         device_id: "{{ item.instance_id }}"
-        release_on_disassociation: yes
+        release_on_disassociation: true
         tags:
           Name: "{{ item.name }}"
           cluster_name: "{{cluster_name}}"
@@ -146,7 +146,7 @@
         volume_type: "{{item.auto_volume.volume_type}}"
         iops: "{{item.auto_volume.iops | default(omit)}}"
         throughput: "{{item.auto_volume.throughput | default(omit)}}"        
-        delete_on_termination: yes
+        delete_on_termination: true
       loop: "{{ cluster_hosts_target_denormalised_by_volume | selectattr('auto_volume.src', 'defined') | list }}"
       async: 7200
       poll: 0

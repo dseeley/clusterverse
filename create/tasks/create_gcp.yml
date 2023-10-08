@@ -78,7 +78,7 @@
         service_account_email: "{{ (lookup('file', gcp_credentials_file) | from_json).client_email }}"
         project_id: "{{cluster_vars[buildenv].vpc_project_id}}"
         zone: "{{cluster_vars.region}}-{{item.az_name}}"
-        detach_only : yes
+        detach_only: true
         state: deleted
         instance_name: "{{ item.auto_volume.src.hostname }}"
         name: "{{item.auto_volume.src.source_url | basename}}"
@@ -124,7 +124,7 @@
               {{res}}
         tags: { items: "{{cluster_vars.network_fw_tags}}" }
         can_ip_forward: "{{cluster_vars.ip_forward}}"
-        scheduling: { automatic_restart: yes, preemptible: "{{cluster_vars[buildenv].preemptible}}" }
+        scheduling: { automatic_restart: true, preemptible: "{{cluster_vars[buildenv].preemptible}}" }
         state: present
         deletion_protection: "{{cluster_vars[buildenv].deletion_protection}}"
       vars:
@@ -191,7 +191,7 @@
 #        service_account_email: "{{ (lookup('file', gcp_credentials_file) | from_json).client_email }}"
 #        project_id: "{{cluster_vars[buildenv].vpc_project_id}}"
 #        zone: "{{cluster_vars.region}}-{{item.az_name}}"
-#        delete_on_termination: yes
+#        delete_on_termination: true
 #        disk_type : "{{item.auto_volume.volume_type | default(omit)}}"
 #        instance_name: "{{ item.hostname }}"
 #        mode: "READ_WRITE"

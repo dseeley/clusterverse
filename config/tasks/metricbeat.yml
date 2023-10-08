@@ -1,7 +1,7 @@
 ---
 
 - name: Metricbeat | Download and install metricbeat from elastic.co
-  become: yes
+  become: true
   apt:
     deb: "https://artifacts.elastic.co/downloads/beats/metricbeat/metricbeat-{{ metricbeat_version }}-{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else ansible_architecture }}.deb"
   register: apt_jobs
@@ -10,7 +10,7 @@
   when: ansible_os_family == 'Debian'
 
 - name: Metricbeat | Download and install filebeat from elastic.co
-  become: yes
+  become: true
   yum:
     name: "https://artifacts.elastic.co/downloads/beats/metricbeat/metricbeat-{{ metricbeat_version }}-{{ ansible_architecture }}.rpm"
   register: yum_jobs
@@ -21,21 +21,21 @@
 - name: Metricbeat | Configure metricbeat
   block:
     - name: Metricbeat | Copy metricbeat configuration
-      become: yes
+      become: true
       template:
         src: etc/metricbeat/metricbeat.yml.j2
         dest: "/etc/metricbeat/metricbeat.yml"
       notify: Metricbeat | Restart and enable metricbeat
 
     - name: Metricbeat | Copy metricbeat system module configuration
-      become: yes
+      become: true
       template:
         src: etc/metricbeat/metricbeat_system.yml.j2
         dest: "/etc/metricbeat/modules.d/system.yml"
       notify: Metricbeat | Restart and enable metricbeat
 
     - name: Metricbeat | Copy metricbeat service
-      become: yes
+      become: true
       template:
         src: lib/systemd/system//metricbeat.service.j2
         dest: "/lib/systemd/system/metricbeat.service"

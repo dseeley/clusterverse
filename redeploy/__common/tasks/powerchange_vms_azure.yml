@@ -12,7 +12,7 @@
         subscription_id: "{{cluster_vars[buildenv].azure_subscription_id}}"
         tenant: "{{cluster_vars[buildenv].azure_tenant}}"
         resource_group: "{{cluster_vars[buildenv].azure_resource_group}}"
-        append_tags: yes
+        append_tags: true
         name: "{{ item.name }}"
         tags: "{% if powerchange_new_state == 'stop' %}{'maintenance_mode': 'true'}{% else %}{{omit}}{% endif %}"
         started: "{% if powerchange_new_state == 'stop' %}no{% else %}yes{% endif %}"

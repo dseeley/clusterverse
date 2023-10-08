@@ -3,27 +3,27 @@
 - name: Chrony | Install and Configure - Ubuntu
   block:
     - name: Chrony | Ubuntu install
-      become: yes
+      become: true
       apt:
         name: chrony
-        update_cache: yes
+        update_cache: true
         state: present
   when: ansible_os_family == "Debian"
 
 - name: Chrony | Install and Configure - CentOS
   block:
     - name: Chrony | CentOS install
-      become: yes
+      become: true
       yum:
         name: chrony
         state: present
   when: ansible_os_family == "RedHat"
 
 - name: Configure Chrony
-  become: yes
+  become: true
   copy:
     dest: "/etc/{% if ansible_os_family == 'Debian'%}chrony/{% endif %}chrony.conf"
-    backup: yes
+    backup: true
     content: |-
       {% for ntp_server in ntp_servers %}
       server {{ ntp_server }}
