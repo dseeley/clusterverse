@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # Copyright 2022 Dougal Seeley <github@dougalseeley.com>
 # BSD 3-Clause License
 # https://github.com/dseeley/blockdevmap
@@ -8,43 +10,47 @@
 # the License.
 # /sbin/ebsnvme-id - https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvme-ebs-volumes.html
 
-from __future__ import (absolute_import, division, print_function)
-
+from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-DOCUMENTATION = '''
----
+DOCUMENTATION = r'''
 module: blockdevmap
 version_added: 1.0.0
-short_description: blockdevmap
+short_description: Map the block device names from cloud providers to the OS.
 description:
-    - Map the block device name as defined in AWS/GCP/Azure (e.g. /dev/sdf) with the volume provided to the OS
+    - This Ansible module maps the block device names as defined in AWS, GCP, Azure, and libvirt (e.g. /dev/sdf) with the corresponding volumes provided to the OS.
 authors:
     - Dougal Seeley <blockdevmap@dougalseeley.com>
-    - Amazon.com Inc.
+    - Amazon.com Inc. <https://aws.amazon.com>
+license:
+    - BSD 3-Clause License <https://opensource.org/licenses/BSD-3-Clause>
+    - MIT License <https://opensource.org/licenses/MIT>
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Get block device map information for cloud provider
   blockdevmap:
     cloud_type: <gcp|aws|azure|libvirt>
-  become: yes
+  become: true
   register: r__blockdevmap
 
 - name: Get lsblk device map information
   blockdevmap:
     cloud_type: lsblk
-  become: yes
+  become: true
   register: r__blockdevmap
 
 - name: debug blockdevmap
   debug: msg={{r__blockdevmap}}
 '''
 
-RETURN = '''
-## AWS Nitro
-"device_map": [
-    {
+RETURN = r'''
+device_map (AWS Nitro):
+    description: OS to Cloud device mapping
+    returned: success
+    type: list
+    sample: [
+      {
         "FSTYPE": "ext4",
         "MOUNTPOINT": "/media/mysvc",
         "NAME": "nvme1n1",
@@ -55,8 +61,8 @@ RETURN = '''
         "device_name_cloud": "/dev/sdf",
         "device_name_os": "/dev/nvme1n1",
         "volume_id": "vol-0c2c47ee4516063e9"
-    },
-    {
+      },
+      {
         "FSTYPE": "",
         "MOUNTPOINT": "",
         "NAME": "nvme0n1",
@@ -67,8 +73,8 @@ RETURN = '''
         "device_name_cloud": "/dev/sda1",
         "device_name_os": "/dev/nvme0n1",
         "volume_id": "vol-0b05e48d5677db81a"
-    },
-    {
+      },
+      {
         "FSTYPE": "ext4",
         "MOUNTPOINT": "/",
         "NAME": "nvme0n1p1",
@@ -79,11 +85,15 @@ RETURN = '''
         "device_name_cloud": "/dev/sda1",
         "device_name_os": "/dev/nvme0n1p1",
         "volume_id": "vol-0b05e48d5677db81a"
-    }
-    
-## AWS non-Nitro
-"device_map": [
-    {
+      }
+    ]
+  
+device_map (AWS non-Nitro):
+    description: OS to Cloud device mapping
+    returned: success
+    type: list
+    sample: [
+      {
         "FSTYPE": "",
         "MOUNTPOINT": "",
         "NAME": "xvda",
@@ -93,8 +103,8 @@ RETURN = '''
         "UUID": "",
         "device_name_cloud": "/dev/sda",
         "device_name_os": "/dev/xvda"
-    },
-    {
+      },
+      {
         "FSTYPE": "ext4",
         "MOUNTPOINT": "/",
         "NAME": "xvda1",
@@ -104,11 +114,15 @@ RETURN = '''
         "UUID": "96ec7adb-9d94-41c0-96a5-d6992c9d5f20",
         "device_name_cloud": "/dev/sda1",
         "device_name_os": "/dev/xvda1"
-    }
-
-## AZURE    
-"device_map": [
-    {
+      }
+    ]
+  
+device_map (Azure):
+    description: OS to Cloud device mapping
+    returned: success
+    type: list
+    sample: [
+      {
         "FSTYPE": "",
         "HCTL": "0:0:0:0",
         "MODEL": "Virtual Disk",
@@ -121,8 +135,8 @@ RETURN = '''
         "device_name_cloud": "ROOTDISK",
         "device_name_os": "/dev/sda",
         "parttable_type": "gpt"
-    },
-    {
+      },
+      {
         "FSTYPE": "xfs",
         "HCTL": "",
         "MODEL": "",
@@ -135,8 +149,8 @@ RETURN = '''
         "device_name_cloud": "",
         "device_name_os": "/dev/sda1",
         "parttable_type": "gpt"
-    },
-    {
+      },
+      {
         "FSTYPE": "",
         "HCTL": "",
         "MODEL": "",
@@ -149,8 +163,8 @@ RETURN = '''
         "device_name_cloud": "",
         "device_name_os": "/dev/sda14",
         "parttable_type": "gpt"
-    },
-    {
+      },
+      {
         "FSTYPE": "vfat",
         "HCTL": "",
         "MODEL": "",
@@ -163,8 +177,8 @@ RETURN = '''
         "device_name_cloud": "",
         "device_name_os": "/dev/sda15",
         "parttable_type": "gpt"
-    },
-    {
+      },
+      {
         "FSTYPE": "xfs",
         "HCTL": "",
         "MODEL": "",
@@ -177,8 +191,8 @@ RETURN = '''
         "device_name_cloud": "",
         "device_name_os": "/dev/sda2",
         "parttable_type": "gpt"
-    },
-    {
+      },
+      {
         "FSTYPE": "",
         "HCTL": "0:0:0:1",
         "MODEL": "Virtual Disk",
@@ -191,8 +205,8 @@ RETURN = '''
         "device_name_cloud": "RESOURCEDISK",
         "device_name_os": "/dev/sdb",
         "parttable_type": "dos"
-    },
-    {
+      },
+      {
         "FSTYPE": "ext4",
         "HCTL": "",
         "MODEL": "",
@@ -205,10 +219,10 @@ RETURN = '''
         "device_name_cloud": "",
         "device_name_os": "/dev/sdb1",
         "parttable_type": "dos"
-    },
-    {
+      },
+      {
         "FSTYPE": "",
-        "HCTL": "1:0:0:0",
+        "HCTL": 216000,
         "MODEL": "Virtual Disk",
         "MOUNTPOINT": "",
         "NAME": "sdc",
@@ -219,10 +233,10 @@ RETURN = '''
         "device_name_cloud": "0",
         "device_name_os": "/dev/sdc",
         "parttable_type": ""
-    },
-    {
+      },
+      {
         "FSTYPE": "",
-        "HCTL": "1:0:0:1",
+        "HCTL": 216001,
         "MODEL": "Virtual Disk",
         "MOUNTPOINT": "",
         "NAME": "sdd",
@@ -233,8 +247,8 @@ RETURN = '''
         "device_name_cloud": "1",
         "device_name_os": "/dev/sdd",
         "parttable_type": ""
-    }
-]
+      }
+   ]
 '''
 
 from ctypes import *
@@ -440,13 +454,13 @@ class cAwsMapper(cBlockDevMap):
                     dev = cAwsMapper.ebs_nvme_device(os_device['device_name_os'])
                 except FileNotFoundError as e:
                     self.module.fail_json(msg=os_device['device_name_os'] + ": FileNotFoundError" + str(e))
-                except TypeError as e:
+                except TypeError:
                     if instance_store_count < len(instance_store_map):
                         os_device.update({"device_name_os": os_device['device_name_os'], "device_name_cloud": '/dev/' + instance_store_map[instance_store_count]['ephemeral_map'], "volume_id": instance_store_map[instance_store_count]['ephemeral_id']})
                         instance_store_count += 1
                     else:
                         self.module.warn(u"%s is not an EBS device and there is no instance store mapping." % os_device['device_name_os'])
-                except OSError as e:
+                except OSError:
                     self.module.warn(u"%s is not an nvme device." % os_device['device_name_os'])
                 else:
                     os_device.update({"device_name_os": os_device['device_name_os'], "device_name_cloud": '/dev/' + dev.get_block_device(stripped=True).rstrip(), "volume_id": dev.get_volume_id()})
@@ -455,7 +469,7 @@ class cAwsMapper(cBlockDevMap):
             else:
                 os_device.update({"device_name_os": os_device['device_name_os'], "device_name_cloud": ""})
 
-    class ebs_nvme_device():
+    class ebs_nvme_device:
         def __init__(self, device):
             self.device = device
             self.ctrl_identify()
@@ -488,7 +502,7 @@ def main():
     if not (len(sys.argv) > 1 and sys.argv[1] == "console"):
         module = AnsibleModule(argument_spec={"cloud_type": {"type": "str", "required": True, "choices": ['aws', 'gcp', 'azure', 'libvirt', 'lsblk']}}, supports_check_mode=True)
     else:
-        class cDummyAnsibleModule():  # For testing without Ansible (e.g on Windows)
+        class cDummyAnsibleModule:  # For testing without Ansible (e.g. on Windows)
             def __init__(self):
                 self.params = {}
 

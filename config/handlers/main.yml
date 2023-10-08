@@ -1,24 +1,24 @@
 ---
 
 - name: Filebeat | Restart and enable filebeat
-  become: yes
+  become: true
   service:
     name: filebeat
     state: restarted
-    enabled: yes
+    enabled: true
 
 
 - name: Metricbeat | Restart and enable metricbeat
-  become: yes
+  become: true
   service:
     name: metricbeat
     state: restarted
-    enabled: yes
+    enabled: true
 
 
 - name: Chrony | Restart and enable chrony
-  become: yes
+  become: true
   service:
     name: chronyd
     state: restarted
-    enabled: yes
+    enabled: true

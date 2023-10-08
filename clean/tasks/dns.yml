@@ -54,7 +54,7 @@
             record: "{{item.0.name}}.{{cluster_vars.dns_user_domain}}"
             type: "A"
             private_zone: "{{ item.1.Config.PrivateZone }}"
-          ignore_errors: yes        # In the ansible=4.x versions of route53.py, a failed lookup results in a failure of this route53 module.
+          ignore_errors: true        # In the ansible=4.x versions of route53.py, a failed lookup results in a failure of this route53 module.
           register: r__route53_a
           with_nested:
             - "{{ hosts_to_clean }}"
@@ -92,7 +92,7 @@
             record: "{{item.0.name | regex_replace('-(?!.*-).*')}}.{{cluster_vars.dns_user_domain}}"
             type: "CNAME"
             private_zone: "{{ item.1.Config.PrivateZone }}"
-          ignore_errors: yes        # In the ansible=4.x versions of route53.py, a failed lookup results in a failure of this route53 module.
+          ignore_errors: true        # In the ansible=4.x versions of route53.py, a failed lookup results in a failure of this route53 module.
           register: r__route53_cname
           with_nested:
             - "{{ hosts_to_clean }}"

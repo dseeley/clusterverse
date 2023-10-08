@@ -29,7 +29,7 @@
 # These files can be combined (in the order defined) in the application code, using variables to differentiate between cloud (aws or gcp), region and build env.
 # A variable 'ignore_missing_files' can be set such that any files or directories that are not found in the defined 'from' list will not raise an error.
 #    - merge_vars:
-#        ignore_missing_files: yes
+#        ignore_missing_files: true
 #        from:
 #         - "./cluster_defs/all.yml"
 #         - "./cluster_defs/{{ cloud_type }}/all.yml"

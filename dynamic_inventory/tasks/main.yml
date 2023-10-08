@@ -84,7 +84,7 @@
               
               {% endfor %}
             dest: "{{item}}"
-            force: yes
+            force: true
           with_items: "{{inventory_files}}"
           when: dynamic_inv | length
 
@@ -121,7 +121,7 @@
           print(json.dumps({'_meta': {'hostvars': {}}}))
         mode: 0755
         dest: "{{inventory_source}}/00-delete-non-inventory-files.py"
-        force: yes
+        force: true
 
       # NOTE: if the file lookup error handler is called, it returns a NoneType, which the split() filter cannot understand - hence the ternary.
     - name: dynamic_inventory | inventory file contents
@@ -154,8 +154,8 @@
       delegate_to: "{{ item }}"
       with_items: "{{ groups['all'] }}"
       failed_when: false
-      ignore_unreachable: yes
-      ignore_errors: yes
+      ignore_unreachable: true
+      ignore_errors: true
     - meta: clear_host_errors
     - deprecate_str: { msg: "Waiting for SSH connectivity using 'ping' is unreliable and thus deprecated (see comment in roles/clusterverse/dynamic_inventory/tasks/main.yml).  Please use 'wait_for_connection' in the top-level cluster.yml (see roles/clusterverse/EXAMPLE/cluster.yml)" }
   when: skip_dynamic_inventory_sshwait is not defined or (skip_dynamic_inventory_sshwait|bool == false)

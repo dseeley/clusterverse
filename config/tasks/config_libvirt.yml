@@ -1,9 +1,9 @@
 ---
 
 - name: config/libvirt | Remove cloud-init (if cluster_vars.libvirt.delete_cloudinit == true)
-  become: yes
+  become: true
   apt:
     name: "cloud-init"
-    purge: yes
+    purge: true
     state: absent
   when: cluster_vars.libvirt.delete_cloudinit is defined and cluster_vars.libvirt.delete_cloudinit | bool

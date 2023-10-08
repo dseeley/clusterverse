@@ -6,12 +6,12 @@
 - name: Disable unattended-upgrade and apt-daily timers. Wait for in-flight updates to finish.
   block:
     - name: Disable unattended-upgrades and apt-daily timers
-      become: yes
+      become: true
       systemd:
         name: "{{ item }}"
-        enabled: no
+        enabled: false
         state: stopped
-        daemon_reload: yes
+        daemon_reload: true
       register: r__systemd__disable_apt_services
       loop:
         - 'apt-daily.timer'
@@ -22,7 +22,7 @@
       debug: msg="{{r__systemd__disable_apt_services}}"
 
     - name: Wait for in-flight updates to finish
-      become: yes
+      become: true
       shell: "while fuser /var/lib/dpkg/{{ item }} -v 2>&1; do sleep 5; done;"
       loop:
         - lock
@@ -36,17 +36,17 @@
   vars: { params: { files: ["config_{{cluster_vars.type}}.yml"], skip: true } }
 
 - name: Disable requiretty in sudoers to enable pipelining
-  become: yes
+  become: true
   lineinfile:
     dest: /etc/sudoers
     regexp: '(^Defaults requiretty)$'
     line: '#\1",'
-    backrefs: yes
+    backrefs: true
   vars:
-    ansible_ssh_pipelining: no
+    ansible_ssh_pipelining: false
 
 - name: Add hostname to hosts (gives hostname resolution without calling out to DNS.  Needed on Ubuntu.)
-  become: yes
+  become: true
   lineinfile:
     path: /etc/hosts
     regexp: '^{{ansible_default_ipv4.address}}'
@@ -56,7 +56,7 @@
     insertbefore: "BOF"
 
 - name: Create /var/log/journal
-  become: yes
+  become: true
   file:
     path: "/var/log/journal"
     state: directory
@@ -100,7 +100,7 @@
   when: pkgupdate is defined and (pkgupdate == 'always' or (pkgupdate == 'onCreate' and inventory_hostname in (hostvars['localhost'].cluster_hosts_created | json_query('[].hostname'))))
 
 - name: Set hostname (e.g. AWS doesn't set it automatically)
-  become: yes
+  become: true
   hostname:
     name: "{{inventory_hostname.split('.')[0]}}"
 

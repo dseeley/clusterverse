@@ -46,7 +46,7 @@
         role_arn: "{{cluster_vars[buildenv].aws_sts_assume_role_arn}}"
         role_session_name: "ansible__{{cluster_vars[buildenv].aws_sts_assume_role_arn | basename }}__{{cluster_name}}"
       delegate_to: localhost
-      run_once: yes
+      run_once: true
       register: r__sts_assume_role
 
     - name: update cluster_vars[buildenv].aws_access_key and cluster_vars[buildenv].aws_secret_key
@@ -60,7 +60,7 @@
             value: "{{hostvars['localhost']['r__sts_assume_role']['sts_creds']['session_token']}}"
       delegate_to: "{{ item }}"
       with_items: "{{ play_hosts }}"
-      run_once: yes
+      run_once: true
 
     - name: Loaded/derived/overridden cluster_vars
       debug: msg="{{cluster_vars}}"

@@ -89,7 +89,7 @@
   block:
     - name: get_cluster_hosts_state/libvirt | Copy libvirt ssh private key file
       copy: { content: "{{cluster_vars.libvirt.private_key}}", dest: '{{ playbook_dir }}/id_rsa__libvirt_svc', mode: '0600' }
-      no_log: yes
+      no_log: true
       delegate_to: localhost
       run_once: true
       when: "cluster_vars.type == 'libvirt'  and  cluster_vars.libvirt.private_key is defined"

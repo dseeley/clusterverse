@@ -110,7 +110,7 @@
 #        network_interface_names: "{{r__azure_rm_networkinterface.results | json_query(\"[?item.hostname == `\" + item.hostname + \"`].state.name\") }}"
         open_ports: ["9"]       # tcp/9 is the 'discard' (dev/null) port. It is set because we must put a value in here, otherwise the default tcp/22 is opened to any/any.  azure_rm_securitygroup is set below.
         public_ip_allocation_method: "{%- if 'assign_public_ip' in cluster_vars and cluster_vars.assign_public_ip in [true, 'static'] -%}Static{%- elif 'assign_public_ip' in cluster_vars and cluster_vars.assign_public_ip in ['dynamic'] -%}Dynamic{%- else -%}Disabled{%- endif -%}"
-        ssh_password_enabled: no
+        ssh_password_enabled: false
         ssh_public_keys:
           - path: "/home/{{cluster_vars[buildenv].ssh_connection_cfg.host.ansible_user}}/.ssh/authorized_keys"
             #The ssh key is either provided on the command line (as 'ansible_ssh_private_key_file'), or as a variable in cluster_vars[buildenv].ssh_connection_cfg.host.ansible_ssh_private_key_file (anchored to _host_ssh_connection_cfg.ansible_ssh_private_key_file); we can slurp the key from either variable, and then ssh-keygen it into the public key (we have to remove the comment though before we add our own, (hence the regex), because this is what gcp expects).
@@ -155,7 +155,7 @@
         tenant: "{{cluster_vars[buildenv].azure_tenant}}"
         resource_group: "{{cluster_vars[buildenv].azure_resource_group}}"
         name: "{{ r__async_status__azure_rm_virtualmachine.results | json_query(\"[?ansible_facts.azure_vm.name== `\" + item.hostname + \"`].ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].name|[0]\") }}"
-        purge_rules: yes
+        purge_rules: true
         rules: "{{ cluster_vars.rules }}"
       loop: "{{ cluster_hosts_target }}"
       register: r__azure_rm_securitygroup

@@ -28,7 +28,7 @@ cluster_vars:
       7669080460651349243347331538721104778691266429457726036813912140404310
     datastore: "vdisks"
     hardware_version: "19"
-    delete_cloudinit: yes
+    delete_cloudinit: true
     cloudinit_userdata:
       users:
         - name: ansible

@@ -37,7 +37,7 @@ canary_tidy_on_success: false
 external_dns_resolver: "8.8.8.8"
 
 # Whether to install chrony (ntp client)
-chrony_install: yes
+chrony_install: true
 
 # NTP servers for chrony
 ntp_servers: "{{ ['169.254.169.123 prefer iburst minpoll 4 maxpoll 4'] if cluster_vars.type == 'aws' else ['metadata.google.internal'] if cluster_vars.type == 'gcp' else ['pool.ntp.org'] }}"

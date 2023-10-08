@@ -1,5 +1,6 @@
-# blockdevmap
-This is an Ansible module (or python script) that is able to map AWS, GCP and Azure device names to the host device names.  It returns a list of dictionaries (per disk), derived from Linux `lsblk`, (augmented in the case of AWS & Azure with disk information from other machine metadata).
+# Ansible Collection - dseeley.blockdevmap
+
+An Ansible module to map cloud-specific (AWS, GCP, Azure, LibVirt) block device names (e.g. /dev/sdf) with the volume provided to the OS.
 
 ## Output
 ### Common
@@ -29,13 +30,13 @@ This can be run as an Ansible module (needs root):
 - name: Get block device map information for cloud
   blockdevmap:
     cloud_type: <gcp|aws|azure>
-  become: yes
+  become: true
   register: r__blockdevmap
 
 - name: Get lsblk device map information
   blockdevmap:
     cloud_type: lsblk
-  become: yes
+  become: true
   register: r__blockdevmap
 
 - name: debug blockdevmap
