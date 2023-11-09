@@ -141,11 +141,8 @@
         </metadata>
         <memory unit='KiB'>{{item.flavor['memory_mb']|int * 1024}}</memory>
         <vcpu placement='static'>{{item.flavor['num_cpus']}}</vcpu>
-        <os>
+        <os {% if item.flavor['firmware'] is not defined or item.flavor['firmware'] != 'BIOS' %}firmware='efi'{% endif %}>
           <type arch='x86_64' machine='pc-q35-6.2'>hvm</type>
-      {% if item.flavor['firmware'] is not defined or item.flavor['firmware'] != 'BIOS' %}
-          <loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE.fd</loader>
-      {% endif %}
         </os>
         <features>
           <acpi/>
@@ -156,13 +153,13 @@
         <devices>
           <emulator>/usr/bin/qemu-system-x86_64</emulator>
           <disk type='file' device='disk'>
-            <driver name='qemu' type='qcow2'/>
+            <driver name='qemu' type='qcow2' discard='unmap'/>
             <source file='{{ r__virt_volume_root.results | json_query('[?item.hostname==`'+ item.hostname +'`]|[0].createXMLFrom.path') }}'/>
             <target dev='vda' bus='virtio'/>
           </disk>
       {% for vol in r__virt_volume__getxml_nonroot.results | json_query('[?item.hostname==`'+ item.hostname +'`]') %}
           <disk type='file' device='disk'>
-            <driver name='qemu' type='qcow2'/>
+            <driver name='qemu' type='qcow2' discard='unmap'/>
             <source file='{{ vol.XMLDesc | xpath('/volume/target/path/text()') | first | default(None) }}'/>
             <target dev='vd{{ (loop.index|int + 97) | tochr }}' bus='virtio'/>
             <serial>{{ vol.item.auto_volume.device_name }}</serial>

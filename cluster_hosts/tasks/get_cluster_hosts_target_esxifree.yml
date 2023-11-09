@@ -10,6 +10,9 @@
   delegate_to: localhost
   run_once: true
 
+- name: get_cluster_hosts_target/esxifree | assert that there is an esxi image
+  assert: { that: "r__esxifree_guest_info.virtual_machines | length", fail_msg: "No VM images defined on esxi host {{cluster_vars.esxi.esxi_ip}}" }
+
 - name: get_cluster_hosts_target/esxifree | latest esxi image
   debug: msg={{r__esxifree_guest_info.virtual_machines[-1]['hw_name']}}
 
