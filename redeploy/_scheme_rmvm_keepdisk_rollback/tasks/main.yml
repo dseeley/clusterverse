@@ -23,10 +23,13 @@
 
         - assert: { that: "cluster_hosts_state | json_query(\"[?tagslabels.cluster_suffix == '\"+ cluster_suffix +\"' && ('\"+ myhosttypes|default('') + \"' == ''  ||  contains(['\"+ myhosttypes|default('') + \"'], tagslabels.hosttype))]\") | length == 0", msg: "Please ensure cluster_suffix ({{cluster_suffix}}) is not already set on the cluster" }
           when: cluster_suffix is defined
-      when: (canary=="start" or canary=="none")
+      when: canary in ["start", "none"]
 
     - name: Add the disk info from previous instances to cluster_hosts_target
-      include_tasks: "_add_src_diskinfo_to_cluster_hosts_target__{{cluster_vars.type}}.yml"
+      include_tasks: "{{ item__include_tasks }}"
+      loop: "{{ query('first_found', params) }}"
+      loop_control: { loop_var: item__include_tasks }   #This mechanism (to include_tasks only when the file exists), also creates a loop iterator 'item' that it sends to the included tasks.  If they also have loops, we otherwise get the warning: "The loop variable 'item' is already in use".
+      vars: { params: { files: ["_add_src_diskinfo_to_cluster_hosts_target__{{cluster_vars.type}}.yml"], skip: true } }
 
     - name: Run redeploy per hosttype.  Create one at a time, then stop previous.
       include_tasks: by_hosttype.yml
@@ -112,4 +115,4 @@
       when: hosts_to_clean | length == 0
   vars:
     hosts_to_clean: "{{ cluster_hosts_state | json_query(\"[?tagslabels.lifecycle_state!='current' && !(contains('RUNNING,running,poweredOn', instance_state)) && ('\"+ canary + \"' == 'tidy'  ||  '\"+ myhosttypes|default('') + \"' == ''  ||  contains(['\"+ myhosttypes|default('') + \"'], tagslabels.hosttype)) ]\") }}"
-  when: canary=="tidy" or  ((canary=="none" or canary=="finish" or canary=="filter") and canary_tidy_on_success is defined and canary_tidy_on_success|bool)
+  when: canary=="tidy" or  ((canary in ["none", "finish", "filter"]) and canary_tidy_on_success is defined and canary_tidy_on_success|bool)

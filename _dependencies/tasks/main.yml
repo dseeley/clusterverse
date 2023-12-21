@@ -1,5 +1,14 @@
 ---
 
+- name: Preflight assertions (early)
+  block:
+    - name: preflight | Ansible minimum version requirement
+      assert: { that: "ansible_version.full is version('2.12.4', '>=')", fail_msg: "ansible-core 2.12.4 (pypi v5.6.0) is required." }
+
+    - name: preflight | Ansible unsupported version >2.16.0 requirement
+      assert: { that: "ansible_version.full is version('2.16.0', '<')", fail_msg: "ansible-core >= 2.16.0 (pypi >= v9.0) is not supported due to https://github.com/ansible/ansible/issues/82239.  Latest supported pypi release is ansible==8.7.0" }
+
+
 - name: Load cluster definitions
   block:
     - block:
@@ -66,26 +75,22 @@
       debug: msg="{{cluster_vars}}"
   when: (cluster_vars.type == "aws" and cluster_vars[buildenv].aws_sts_assume_role_arn is defined and cluster_vars[buildenv].aws_sts_assume_role_arn != '')
 
-- name: Preflight check
-  block:
-    - name: Ansible requirement
-      assert:
-        that: "ansible_version.full is version('2.12.4', '>=')"
-        fail_msg: "ansible-core 2.12.4 (pypi v5.6.0) is required."
 
-    - name: assertions based on required collections
+- name: Preflight assertions (late - based on loaded vars)
+  block:
+    - name: preflight | assertions based on required collections
       block:
-        - name: dseeley.nested_playbook is required for redeploys
+        - name: preflight | dseeley.nested_playbook is required for redeploys
           assert: { that: "'dseeley.nested_playbook' in galaxy_collections", fail_msg: "Please ensure the dseeley.nested_playbook collection is installed:  ansible-galaxy collection install dseeley.nested_playbook (or ansible-galaxy collection install --ignore-errors -fr requirements.yml)" }
 
-        - name: libvirt collection requirements
+        - name: preflight | libvirt collection requirements
           block:
             - assert: { that: "galaxy_collections['community.libvirt'].version is version('1.2.0', '>=')", fail_msg: "community.libvirt > 1.2.0 required for libvirt support (default in Ansible >= 6.3.0)." }
             - assert: { that: "'dseeley.libvirt' in galaxy_collections", fail_msg: "Please ensure the dseeley.libvirt collection is installed:  ansible-galaxy collection install git+https://github.com/dseeley/libvirt.git (or ansible-galaxy collection install --ignore-errors -fr requirements.yml)" }
             - assert: { that: "'dseeley.inventory_lookup' in galaxy_collections", fail_msg: "Please ensure the dseeley.inventory_lookup collection is installed:  ansible-galaxy collection install dseeley.inventory_lookup (or ansible-galaxy collection install --ignore-errors -fr requirements.yml)" }
           when: cluster_vars.type == "libvirt"
 
-        - name: esxifree collection requirements
+        - name: preflight | esxifree collection requirements
           assert: { that: "'dseeley.esxifree_guest' in galaxy_collections", fail_msg: "Please ensure the dseeley.esxifree_guest collection is installed:  ansible-galaxy collection install dseeley.esxifree_guest (or ansible-galaxy collection install --ignore-errors -fr requirements.yml)" }
           when: cluster_vars.type == "esxifree"
       vars:
@@ -101,9 +106,9 @@
       when: release_version is defined
     - assert: { that: "cluster_suffix is regex('^[a-z\\d\\-_]{0,63}$')", fail_msg: "Please ensure cluster_suffix ({{cluster_suffix}}) is in the set[a-z\\d\\-_], and <63 characters long." }
       when: cluster_suffix is defined
-    - assert: { that: "'{%- for label in cluster_vars.custom_tagslabels -%}{% if not cluster_vars.custom_tagslabels[label] is regex('^[a-z\\d\\-_]{0,63}$') %}{{label}}: {{cluster_vars.custom_tagslabels[label]}}{% endif %}{%- endfor -%}' == ''", fail_msg: "Please ensure all cluster_vars.custom_tagslabels are in the set [a-z\\d\\-_], and <63 characters long." }
+    - assert: { that: "cluster_vars.custom_tagslabels.values() | map('regex_search', '^[a-z\\d\\-_]{0,63}$') | select | length ==  cluster_vars.custom_tagslabels | length", fail_msg: "Please ensure all cluster_vars.custom_tagslabels are in the set [a-z\\d\\-_], and <63 characters long." }
       when: "'custom_tagslabels' in cluster_vars"
-    - assert: { that: "'{%- for hosttype in cluster_vars[buildenv].hosttype_vars -%}{% if ('version' in cluster_vars[buildenv].hosttype_vars[hosttype]) and (not cluster_vars[buildenv].hosttype_vars[hosttype].version is regex('^[a-z\\d\\-_]{0,63}$')) %}{{cluster_vars[buildenv].hosttype_vars[hosttype].version}}{% endif %}{%- endfor -%}' == ''", fail_msg: "Please ensure cluster_vars[{{buildenv}}].hosttype_vars[hosttype].version is in the set [a-z\\d\\-_], and <63 characters long." }
+    - assert: { that: "cluster_vars[buildenv].hosttype_vars | json_query('*.version') | map('regex_search', '^[a-z\\d\\-_]{0,63}$') | select('ne', None) | length == cluster_vars[buildenv].hosttype_vars | length", fail_msg: "Please ensure cluster_vars[{{buildenv}}].hosttype_vars[hosttype].version is in the set [a-z\\d\\-_], and <63 characters long." }
 
     - assert: { that: "(cluster_vars.inventory_ip == 'private')  or  (cluster_vars.assign_public_ip in [true, 'dynamic', 'static'] and cluster_vars.inventory_ip == 'public')", fail_msg: "If inventory_ip=='public', 'assign_public_ip' must be [true, 'dynamic', 'static']" }
       when: cluster_vars.type == "gcp" or cluster_vars.type == "aws"
@@ -112,8 +117,10 @@
       when: cluster_vars.type == "aws"
 
     - assert:
-        that: "'{%- for hosttype in cluster_vars[buildenv].hosttype_vars | dict2items -%}{%- if ('lvmparams' not in hosttype.value and (hosttype.value.auto_volumes | length) == (hosttype.value.auto_volumes | map(attribute='mountpoint') | list | unique | count))  or  ('lvmparams' in hosttype.value and (hosttype.value.auto_volumes | selectattr('mountpoint', '!=', '/') | map(attribute='mountpoint') | list | unique | count == 1)) -%}{%- else -%}{{hosttype.key}}{%- endif -%}{%- endfor -%}' == ''"
+        that: assertcheck_templated == ''
         fail_msg: "All non-root volume mountpoints must either be all different (in which case 'lvmparams' must not be set), or all the same (in which case, 'lvmparams' must be set)"
+      vars:
+        assertcheck_templated: "{%- for hosttype in cluster_vars[buildenv].hosttype_vars | dict2items -%}{%- if ('lvmparams' not in hosttype.value and (hosttype.value.auto_volumes | length) == (hosttype.value.auto_volumes | map(attribute='mountpoint') | list | unique | count))  or  ('lvmparams' in hosttype.value and (hosttype.value.auto_volumes | selectattr('mountpoint', '!=', '/') | map(attribute='mountpoint') | list | unique | count == 1)) -%}{%- else -%}{{hosttype.key}}{%- endif -%}{%- endfor -%}"
 
     - assert: { that: "cluster_vars[buildenv] | json_query(\"hosttype_vars.*.auto_volumes[] | [?iops > `16000`] && [?starts_with(volume_type, `gp`)]\") | length == 0", fail_msg: "Volume iops is too high; maximum is 16000" }
       when: cluster_vars.type == "aws"
