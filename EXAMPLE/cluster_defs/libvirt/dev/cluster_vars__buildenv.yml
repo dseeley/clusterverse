@@ -60,56 +60,56 @@ cluster_vars:
 #        flavor: { num_cpus: "2", memory_mb: "2048" }
 #        version: "{{sys_version | default('')}}"
 #        networks:
-#          - &systestnets_NET1 { interface_type: "bridge", source_dev: "br0" }
+#          - &sysnets_cloudinit1_NET1 { interface_type: "bridge", source_dev: "br0" }
 #        vms_by_az:
 #          a:
 #            - networks:
-#                - <<: *systestnets_NET1
+#                - <<: *sysnets_cloudinit1_NET1
 #                  cloudinit_netplan:
-#                    ethernets: { eth0: { dhcp-identifier: "mac", addresses: ["192.168.1.32/25"], gateway4: 192.168.1.1, nameservers: { addresses: ["192.168.1.2", "8.8.8.8", "8.8.4.4"], search: ["{{_dns_nameserver_zone}}"] } } }
-#                    vlans: {vlan25: {id: 25, link: eth0, addresses: ["192.168.1.195/26"]}}
+#                    ethernets: { eth0: { dhcp4: false, addresses: ["192.168.1.35/24"], gateway4: 192.168.1.1, nameservers: { addresses: ["192.168.1.2", "8.8.8.8", "8.8.4.4"], search: ["{{_dns_nameserver_zone}}"] } } }
+#                    vlans: {vlan25: {id: 25, link: eth0, addresses: ["192.168.2.132/25"]}}
 #
 #      sysnetscloudinit2:
 #        auto_volumes: [ ]
 #        flavor: { num_cpus: "2", memory_mb: "2048" }
 #        version: "{{sys_version | default('')}}"
 #        networks:
-#          - &systestnets_NET1 { interface_type: "direct", source_dev: "br0" }
-#          - &systestnets_NET2 { interface_type: "bridge", source_dev: "br0.25" }
+#          - &sysnets_cloudinit2_NET1 { interface_type: "direct", source_dev: "br0" }
+#          - &sysnets_cloudinit2_NET2 { interface_type: "bridge", source_dev: "br0.25" }
 #        vms_by_az:
 #          a:
 #            - networks:
-#                - <<: *systestnets_NET1
+#                - <<: *sysnets_cloudinit2_NET1
 #                  cloudinit_netplan:
-#                    ethernets: { eth0: { dhcp-identifier: "mac", addresses: ["192.168.1.33/25"], gateway4: 192.168.1.1, nameservers: { addresses: ["192.168.1.2", "8.8.8.8", "8.8.4.4"], search: ["{{_dns_nameserver_zone}}"] } } }
-#                - <<: *systestnets_NET2
+#                    ethernets: { eth0: { dhcp4: false, addresses: ["192.168.1.36/24"], gateway4: 192.168.1.1, nameservers: { addresses: ["192.168.1.2", "8.8.8.8", "8.8.4.4"], search: ["{{_dns_nameserver_zone}}"] } } }
+#                - <<: *sysnets_cloudinit2_NET2
 #                  cloudinit_netplan:
-#                    vlans: {vlan25: {id: 25, link: eth0, addresses: ["192.168.1.196/26"]}}
+#                    vlans: {vlan25: {id: 25, link: eth0, addresses: ["192.168.1.133/25"]}}
 #
 #      sysnetscloudinit3:
 #        auto_volumes: [ ]
 #        flavor: { num_cpus: "2", memory_mb: "2048" }
 #        version: "{{sys_version | default('')}}"
 #        networks:
-#          - &systestnets_NET1 { interface_type: "direct", source_dev: "br0" }
-#          - &systestnets_NET2 { interface_type: "bridge", source_dev: "br0.25" }
+#          - &sysnets_cloudinit3_NET1 { interface_type: "direct", source_dev: "br0" }
+#          - &sysnets_cloudinit3_NET2 { interface_type: "bridge", source_dev: "br0.25" }
 #        vms_by_az:
 #          a:
 #            - networks:
-#                - <<: *systestnets_NET1
+#                - <<: *sysnets_cloudinit3_NET1
 #                  cloudinit_netplan:
 #                    ethernets: { eth0: { dhcp4: true } }
-#                - <<: *systestnets_NET2
+#                - <<: *sysnets_cloudinit3_NET2
 #                  cloudinit_netplan:
 #                    ethernets: { eth1: { dhcp4: true } }
 #            - networks:
-#                - <<: *systestnets_NET1
+#                - <<: *sysnets_cloudinit3_NET1
 #                  cloudinit_netplan:
-#                    ethernets: { eth0: { dhcp4: false, addresses: ["192.168.1.34/25"], gateway4: 192.168.1.1, nameservers: { addresses: ["192.168.1.2", "8.8.8.8", "8.8.4.4"], search: ["{{_dns_nameserver_zone}}"] } } }
-#                    vlans: {vlan25: {id: 25, link: eth0, addresses: ["192.168.1.197/26"]}}
+#                    ethernets: { eth0: { dhcp4: false, addresses: ["192.168.1.37/24"], gateway4: 192.168.1.1, nameservers: { addresses: ["192.168.1.2", "8.8.8.8", "8.8.4.4"], search: ["{{_dns_nameserver_zone}}"] } } }
+#                    vlans: {vlan25: {id: 25, link: eth0, addresses: ["192.168.1.134/25"]}}
 #          b:
 #            - networks:
-#                - <<: *systestnets_NET1
+#                - <<: *sysnets_cloudinit3_NET1
 #                  macAddress: "00:0c:29:2d:cd:7d"
 #                  cloudinit_netplan:
 #                    ethernets: { eth0: { dhcp4: true } }

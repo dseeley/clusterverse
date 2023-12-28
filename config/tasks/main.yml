@@ -15,7 +15,9 @@
       register: r__systemd__disable_apt_services
       loop:
         - 'apt-daily.timer'
+        - 'apt-daily.service'
         - 'apt-daily-upgrade.timer'
+        - 'apt-daily-upgrade.service'
         - 'unattended-upgrades.service'
 
     - name: r__systemd__disable_apt_services
