@@ -1,13 +1,7 @@
 ---
 
-- name: Preflight assertions (early)
-  block:
-    - name: preflight | Ansible minimum version requirement
-      assert: { that: "ansible_version.full is version('2.12.4', '>=')", fail_msg: "ansible-core 2.12.4 (pypi v5.6.0) is required." }
-
-    - name: preflight | Ansible unsupported version >2.16.0 requirement
-      assert: { that: "ansible_version.full is version('2.16.0', '<')", fail_msg: "ansible-core >= 2.16.0 (pypi >= v9.0) is not supported due to https://github.com/ansible/ansible/issues/82239.  Latest supported pypi release is ansible==8.7.0" }
-
+- name: preflight | Ansible version requirements
+  assert: { that: "(ansible_version.full is version('2.12.4', '>=') and ansible_version.full is version('2.16.0', '<'))  or  (ansible_version.full is version('2.16.4', '>='))", fail_msg: "ansible-core 2.12.4 -> 2.15.7 (pypi v5.6.0 - v8.7.0) or core >= 2.16.4 (pypi 9.3.0) is required.  (9.3.0 > pypi >= 9.0 are not supported due to https://github.com/ansible/ansible/issues/82239.)" }
 
 - name: Load cluster definitions
   block:

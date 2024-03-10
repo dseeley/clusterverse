@@ -29,7 +29,7 @@
       get_url:
         url: "{{ qualys_release_file.location }}"
         dest: "/tmp/{{ cloud_agent.qualys.bin_name }}"
-        mode: 0755
+        mode: '0755'
 
     - name: cloud_agents | Remove existing Qualys cloud agent pkg Debian
       become: true
@@ -113,7 +113,7 @@
       get_url:
         url: "{{ tenable_release_file.location }}"
         dest: "/tmp/{{ cloud_agent.tenable.debpackage }}"
-        mode: 0755
+        mode: '0755'
 
     - name: cloud_agents | Remove existing Tenable Nessus cloud agent pkg Debian
       become: true

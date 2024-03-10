@@ -119,7 +119,7 @@
               sys.exit(1)
 
           print(json.dumps({'_meta': {'hostvars': {}}}))
-        mode: 0755
+        mode: '0755'
         dest: "{{inventory_source}}/00-delete-non-inventory-files.py"
         force: true
 

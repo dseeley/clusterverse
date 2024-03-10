@@ -62,7 +62,7 @@
   file:
     path: "/var/log/journal"
     state: directory
-    mode: 0755
+    mode: '0755'
   when: (static_journal is defined and static_journal|bool)
 
 - name: Create partition table, format and attach volumes - AWS, GCP or Azure
