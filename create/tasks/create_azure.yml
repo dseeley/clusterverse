@@ -144,8 +144,12 @@
       retries: 300
       with_items: "{{r__azure_rm_virtualmachine.results}}"
 
-#    - name: create/azure | r__async_status__azure_rm_virtualmachine.results
-#      debug: msg={{r__async_status__azure_rm_virtualmachine.results}}
+    - name: create/azure | r__async_status__azure_rm_virtualmachine.results
+      debug: msg={{r__async_status__azure_rm_virtualmachine.results}}
+
+    - name: create/azure | r__async_status__azure_rm_virtualmachine.results
+      debug: msg={{r__async_status__azure_rm_virtualmachine.results | json_query(\"[?ansible_facts.azure_vm.name== `\" + item.hostname + \"`].ansible_facts.azure_vm.network_profile.network_interfaces[0].name|[0]\") }}
+      loop: "{{ cluster_hosts_target }}"
 
     - name: create/azure | Update security groups
       azure.azcollection.azure_rm_securitygroup:
@@ -154,7 +158,7 @@
         subscription_id: "{{cluster_vars[buildenv].azure_subscription_id}}"
         tenant: "{{cluster_vars[buildenv].azure_tenant}}"
         resource_group: "{{cluster_vars[buildenv].azure_resource_group}}"
-        name: "{{ r__async_status__azure_rm_virtualmachine.results | json_query(\"[?ansible_facts.azure_vm.name== `\" + item.hostname + \"`].ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].name|[0]\") }}"
+        name: "{{ r__async_status__azure_rm_virtualmachine.results | json_query(\"[?ansible_facts.azure_vm.name== `\" + item.hostname + \"`].ansible_facts.azure_vm.network_profile.network_interfaces[0].name|[0]\") }}"
         purge_rules: true
         rules: "{{ cluster_vars.rules }}"
       loop: "{{ cluster_hosts_target }}"

@@ -1,6 +1,5 @@
 ---
 
-# Use this because the gce_labels command does not replace existing labels.  https://github.com/ansible/ansible/pull/59891
 - name: remove_maintenance_mode/gcp | Set maintenance_mode=false asynchronously
   google.cloud.gcp_compute_instance:
     name: "{{item.name}}"

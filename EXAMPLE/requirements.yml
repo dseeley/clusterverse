@@ -22,3 +22,6 @@ collections:
 
   - name: dseeley.inventory_lookup
     source: https://galaxy.ansible.com
+
+  - name: dseeley.ansible_vault_pipe
+    source: https://galaxy.ansible.com

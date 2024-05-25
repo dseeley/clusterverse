@@ -106,9 +106,12 @@
     uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc&no_verify=1'
     command: create_cidata_cdrom
     config: |-
-      {% if item | json_query('networks[].cloudinit_netplan') | length %}
+      {% if item | json_query('networks[]') | length %}
       {% set cidata_ns = namespace(cidata_network = {"version": 2}) %}
       {% for network in item.networks %}
+      {% if ('cloudinit_netplan' not in network) or ('ethernets' not in network['cloudinit_netplan']) or ('wifis' not in network['cloudinit_netplan']) %}
+      {% set cidata_ns.cidata_network = cidata_ns.cidata_network | combine({'ethernets': {'eth' + loop.index0|string: {'dhcp4': True}}}, recursive=True) %}
+      {% endif %}
       {% if 'cloudinit_netplan' in network %}
       {% set cidata_ns.cidata_network = cidata_ns.cidata_network | combine(network['cloudinit_netplan'], recursive=True) %}
       {% endif %}
@@ -251,6 +254,11 @@
   retries: 36     #3 minutes (24*5s)
   delay: 5
 
+- name: create/libvirt | Assert that netplan was able to run correctly
+  become: true
+  command: "file netplan status"
+  register: r__command_netplan
+  failed_when: r__command_netplan.rc != 0
 
 - name: create/libvirt | remove CIDATA CD, and detach cdrom device on shutdown
   block:
