@@ -175,7 +175,7 @@
         subscription_id: "{{cluster_vars[buildenv].azure_subscription_id}}"
         tenant: "{{cluster_vars[buildenv].azure_tenant}}"
         resource_group: "{{cluster_vars[buildenv].azure_resource_group}}"
-        attach_caching: "{{item.auto_volume.caching | default(omit)}}"
+        attach_caching: "{{item.auto_volume.caching | default('read_only')}}"       #Note - MUST specify a value here, or the idempotency fails (the disk will always be unmounted and remounted, which causes OS errors)
         disk_size_gb: "{{item.auto_volume.disk_size_gb}}"
         lun: "{{item.auto_volume.device_name}}"
         managed_by: "{{item.hostname}}"
@@ -206,7 +206,7 @@
 #            subscription_id: "{{cluster_vars[buildenv].azure_subscription_id}}"
 #            tenant: "{{cluster_vars[buildenv].azure_tenant}}"
 #            resource_group: "{{cluster_vars[buildenv].azure_resource_group}}"
-#            attach_caching: "{{item.auto_volume.caching | default(omit)}}"
+#            attach_caching: "{{item.auto_volume.caching | default('read_only')}}"       #Note - MUST specify a value here, or the idempotency fails (the disk will always be unmounted and remounted, which causes OS errors)
 #            disk_size_gb: "{{item.auto_volume.disk_size_gb}}"
 #            name: "{{_tags.name}}"
 #            storage_account_type: "{{item.auto_volume.storage_account_type}}"
