@@ -168,7 +168,7 @@
 #    - name: create/azure | r__azure_rm_securitygroup
 #      debug: msg={{r__azure_rm_securitygroup}}
 
-    - name: "create/azure | Create and attach managed disk(s) to VM.  NOTE: Cannot do this asynchronously as the API fails when attempting to simultaneously attach multiple disks to a VM."
+    - name: create/azure | Create and attach managed disk(s) to VM.
       azure.azcollection.azure_rm_manageddisk:
         client_id: "{{cluster_vars[buildenv].azure_client_id}}"
         secret: "{{cluster_vars[buildenv].azure_secret}}"
@@ -192,9 +192,19 @@
           release: "{{ release_version }}"
       loop: "{{ cluster_hosts_target_denormalised_by_volume }}"
       register: r__azure_rm_manageddisk
+      async: 7200
+      poll: 0
 
-    - name: create/azure | r__azure_rm_manageddisk
-      debug: msg={{r__azure_rm_manageddisk}}
+    - name: create/azure | Wait for disks to create
+      async_status: { jid: "{{ item.ansible_job_id }}" }
+      register: r__async_status__r__azure_rm_manageddisk
+      until: r__async_status__r__azure_rm_manageddisk.finished
+      delay: 3
+      retries: 300
+      with_items: "{{r__azure_rm_manageddisk.results}}"
+
+    - name: create/azure | r__async_status__r__azure_rm_manageddisk
+      debug: msg={{r__async_status__r__azure_rm_manageddisk}}
 
 ##### NOTE: An alternative to the above.  An attempt to speed up the synchronous create an attach by splitting into async create and synchronous attach, but it turns out that create is very fast (~1 second per disk), but attach is the blocker (~30s per disk), so no advantage to more complex code.  Left for reference.
 #    - name: create/azure | Create (asynchronously) and attach (synchronously) managed disk(s) to VM.
