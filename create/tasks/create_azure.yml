@@ -192,19 +192,12 @@
           release: "{{ release_version }}"
       loop: "{{ cluster_hosts_target_denormalised_by_volume }}"
       register: r__azure_rm_manageddisk
-      async: 7200
-      poll: 0
-
-    - name: create/azure | Wait for disks to create
-      async_status: { jid: "{{ item.ansible_job_id }}" }
-      register: r__async_status__r__azure_rm_manageddisk
-      until: r__async_status__r__azure_rm_manageddisk.finished
+      until: r__azure_rm_manageddisk.state.managed_by
       delay: 3
-      retries: 300
-      with_items: "{{r__azure_rm_manageddisk.results}}"
+      retries: 10
 
-    - name: create/azure | r__async_status__r__azure_rm_manageddisk
-      debug: msg={{r__async_status__r__azure_rm_manageddisk}}
+    - name: create/azure | r__azure_rm_manageddisk
+      debug: msg={{r__azure_rm_manageddisk}}
 
 ##### NOTE: An alternative to the above.  An attempt to speed up the synchronous create an attach by splitting into async create and synchronous attach, but it turns out that create is very fast (~1 second per disk), but attach is the blocker (~30s per disk), so no advantage to more complex code.  Left for reference.
 #    - name: create/azure | Create (asynchronously) and attach (synchronously) managed disk(s) to VM.
