@@ -1,7 +1,7 @@
 ---
 
 - name: preflight | Ansible version requirements
-  assert: { that: "(ansible_version.full is version('2.12.4', '>=') and ansible_version.full is version('2.16.0', '<'))  or  (ansible_version.full is version('2.16.4', '>='))", fail_msg: "ansible-core 2.12.4 -> 2.15.7 (pypi v5.6.0 - v8.7.0) or core >= 2.16.4 (pypi 9.3.0) is required.  (9.3.0 > pypi >= 9.0 are not supported due to https://github.com/ansible/ansible/issues/82239.)" }
+  assert: { that: "(ansible_version.full is version('2.16.4', '>='))", fail_msg: "Ansible core >= 2.16.4 (pypi 9.3.0) is required.  (9.3.0 > pypi >= 9.0 are not supported due to https://github.com/ansible/ansible/issues/82239.)" }
 
 - name: Load cluster definitions
   block:
@@ -45,7 +45,7 @@
       when: cluster_vars.type == "aws"
 
     - name: sts_assume_role
-      community.aws.sts_assume_role:
+      amazon.aws.sts_assume_role:
         role_arn: "{{cluster_vars[buildenv].aws_sts_assume_role_arn}}"
         role_session_name: "ansible__{{cluster_vars[buildenv].aws_sts_assume_role_arn | basename }}__{{cluster_name}}"
       delegate_to: localhost
