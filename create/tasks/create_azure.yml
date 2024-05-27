@@ -147,10 +147,6 @@
     - name: create/azure | r__async_status__azure_rm_virtualmachine.results
       debug: msg={{r__async_status__azure_rm_virtualmachine.results}}
 
-    - name: create/azure | r__async_status__azure_rm_virtualmachine.results
-      debug: msg={{r__async_status__azure_rm_virtualmachine.results | json_query(\"[?ansible_facts.azure_vm.name== `\" + item.hostname + \"`].ansible_facts.azure_vm.network_profile.network_interfaces[0].name|[0]\") }}
-      loop: "{{ cluster_hosts_target }}"
-
     - name: create/azure | Update security groups
       azure.azcollection.azure_rm_securitygroup:
         client_id: "{{cluster_vars[buildenv].azure_client_id}}"
@@ -198,6 +194,28 @@
 
     - name: create/azure | r__azure_rm_manageddisk
       debug: msg={{r__azure_rm_manageddisk}}
+
+    - name: create/azure | Wait for disk provisioningState==Succeeded
+      azure.azcollection.azure_rm_resource_info:
+        client_id: "{{cluster_vars[buildenv].azure_client_id}}"
+        secret: "{{cluster_vars[buildenv].azure_secret}}"
+        subscription_id: "{{cluster_vars[buildenv].azure_subscription_id}}"
+        tenant: "{{cluster_vars[buildenv].azure_tenant}}"
+        resource_group: "{{cluster_vars[buildenv].azure_resource_group}}"
+        resource_name: "{{ item.state.name }}"
+        resource_type: disks
+        provider: Compute
+      with_items: "{{ r__azure_rm_manageddisk.results }}"
+      register: r__azure_rm_resource_info
+      until: "r__azure_rm_resource_info.failed==false and (r__azure_rm_resource_info.response | json_query(\"[?properties.provisioningState!='Succeeded']\") | type_debug == 'list') and (r__azure_rm_resource_info.response | json_query(\"[?properties.provisioningState!='Succeeded']|length(@)\")) == 0"
+      retries: 6   #1 min
+      delay: 10
+      delegate_to: localhost
+      run_once: true
+
+    - name: create/azure | r__azure_rm_resource_info
+      debug: msg={{r__azure_rm_resource_info}}
+
 
 ##### NOTE: An alternative to the above.  An attempt to speed up the synchronous create an attach by splitting into async create and synchronous attach, but it turns out that create is very fast (~1 second per disk), but attach is the blocker (~30s per disk), so no advantage to more complex code.  Left for reference.
 #    - name: create/azure | Create (asynchronously) and attach (synchronously) managed disk(s) to VM.

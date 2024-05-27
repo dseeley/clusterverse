@@ -31,7 +31,7 @@
     tenant: "{{cluster_vars[buildenv].azure_tenant}}"
     resource_group: "{{cluster_vars[buildenv].azure_resource_group}}"
     name: "{{ item.networkInterface }}"
-  with_items: "{{ r__azure_rm_virtualmachine_info.vms | json_query(\"[].{name: name, regionzone: join('-',[location,zones[0]]), tagslabels: tags, instance_id: id, instance_state: power_state, networkInterface: response[0].properties.networkProfile.networkInterfaces[0].id, image: item.image}\") }}"
+  with_items: "{{ r__azure_rm_virtualmachine_info.vms | json_query(\"[].{name: name, regionzone: join('-',[location,zones[0]]), tagslabels: tags, instance_id: id, instance_state: power_state, networkInterface: network_interface_names[0], image: item.image}\") }}"
   register: r__azure_rm_networkinterface_info
   delegate_to: localhost
   run_once: true
@@ -62,7 +62,7 @@
     tenant: "{{cluster_vars[buildenv].azure_tenant}}"
     resource_group: "{{cluster_vars[buildenv].azure_resource_group}}"
     name: "{{ item.networkinterfaces[0].ip_configurations[0].public_ip_address | basename }}"
-  with_items: "{{ r__async_status__azure_rm_networkinterface_info.results  }}"
+  with_items: "{{ r__async_status__azure_rm_networkinterface_info.results }}"
   register: r__azure_rm_publicipaddress_info
   delegate_to: localhost
   run_once: true
