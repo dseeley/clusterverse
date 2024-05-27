@@ -136,7 +136,6 @@
           cluster_name: "{{cluster_name}}"
           cluster_suffix: "{{cluster_suffix}}"
           owner: "{{ lookup('env','USER') | lower }}"
-          maintenance_mode: "true"
           release: "{{ release_version }}"
           lifecycle_state: "current"
       register: r__gcp_compute_instance

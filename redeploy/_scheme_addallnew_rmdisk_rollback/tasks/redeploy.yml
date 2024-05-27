@@ -53,7 +53,7 @@
   block:
     - assert: { that: "'retiring' in (cluster_hosts_state | map(attribute='tagslabels.lifecycle_state'))", msg: "ERROR - There are no machines in the 'retiring' state." }
 
-    - name: "Run {{mainclusteryml}} to perform readiness steps on new cluster (maintenance_mode, CNAME)"
+    - name: "Run {{mainclusteryml}} to perform readiness steps on new cluster (CNAME)"
       dseeley.nested_playbook.nested_playbook:
         playbook_cmdline: "{{ (argv[1:] | join(' ')) | regex_replace('redeploy.yml', mainclusteryml) }} {{ redeploy_extra_vars | extravars_from_dict }} --tags=clusterverse_dynamic_inventory,clusterverse_readiness"
 

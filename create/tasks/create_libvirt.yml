@@ -139,7 +139,7 @@
         <name>{{item.hostname}}</name>
         <metadata>
           <clusterverse:cdata xmlns:clusterverse='https://github.com/dseeley/clusterverse'>
-          <![CDATA[{"Name": "{{item.hostname}}", "hosttype": "{{item.hosttype}}", "env": "{{buildenv}}", "cluster_name": "{{cluster_name}}", "owner": "{{lookup('env','USER')}}", "cluster_suffix": "{{cluster_suffix}}", "regionzone": "{{cluster_vars.region}}-{{item.az_name}}", "lifecycle_state": "current", "maintenance_mode": "false"}]]>
+          <![CDATA[{"Name": "{{item.hostname}}", "hosttype": "{{item.hosttype}}", "env": "{{buildenv}}", "cluster_name": "{{cluster_name}}", "owner": "{{lookup('env','USER')}}", "cluster_suffix": "{{cluster_suffix}}", "regionzone": "{{cluster_vars.region}}-{{item.az_name}}", "lifecycle_state": "current"}]]>
           </clusterverse:cdata>
         </metadata>
         <memory unit='KiB'>{{item.flavor['memory_mb']|int * 1024}}</memory>

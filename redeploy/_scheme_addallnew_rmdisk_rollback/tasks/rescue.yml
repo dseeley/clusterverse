@@ -31,7 +31,7 @@
   import_role:
     name: clusterverse/cluster_hosts
 
-- name: "rescue | Run {{mainclusteryml}} to perform readiness steps on old cluster (maintenance_mode, CNAME).  Send cluster_hosts_target that maps to cluster_hosts_state, because the topology might have changed, and should only set CNAMEs back for original hosts, not those in cluster_vars."
+- name: "rescue | Run {{mainclusteryml}} to perform readiness steps on old cluster (CNAME).  Send cluster_hosts_target that maps to cluster_hosts_state, because the topology might have changed, and should only set CNAMEs back for original hosts, not those in cluster_vars."
   dseeley.nested_playbook.nested_playbook:
     playbook_cmdline: "{{ (argv[1:] | join(' ')) | regex_replace('redeploy.yml', mainclusteryml) }} -e '{'cluster_hosts_target': {{_cluster_hosts_target_prev | to_json}}}' {{ redeploy_extra_vars | extravars_from_dict }} --tags=clusterverse_dynamic_inventory,clusterverse_readiness"
   vars:
