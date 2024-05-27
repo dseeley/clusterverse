@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright 2022 Dougal Seeley <github@dougalseeley.com>
+# Copyright 2022 Dougal Seeley <git@dougalseeley.com>
 # BSD 3-Clause License
 # https://github.com/dseeley/blockdevmap
 
@@ -273,7 +273,7 @@ except NameError:
     FileNotFoundError = IOError
 
 try:
-    from urllib.request import urlopen
+    from urllib.request import urlopen, Request
 except ImportError:
     from urllib2 import urlopen
 
@@ -440,10 +440,12 @@ class cAwsMapper(cBlockDevMap):
         # For this scenario, we can only return the instance stores in the order that they are defined.  Because instance stores do not survive a poweroff and cannot be detached and reattached, the order doesn't matter as much.
         instance_store_map = []
 
-        response__block_device_mapping = urlopen('http://169.254.169.254/latest/meta-data/block-device-mapping/')
+        imdsv2_token_resp = urlopen(Request(url='http://169.254.169.254/latest/api/token', method="PUT", headers={"X-aws-ec2-metadata-token-ttl-seconds": "30"}))
+        imdsv2_token = imdsv2_token_resp.read().decode('utf-8')
+        response__block_device_mapping = urlopen(Request(url='http://169.254.169.254/latest/meta-data/block-device-mapping/', method="GET", headers={"X-aws-ec2-metadata-token": imdsv2_token}))
         block_device_mappings = response__block_device_mapping.read().decode().split("\n")
         for block_device_mappings__ephemeral_id in [dev for dev in block_device_mappings if dev.startswith('ephemeral')]:
-            response__ephemeral_device = urlopen("http://169.254.169.254/latest/meta-data/block-device-mapping/" + block_device_mappings__ephemeral_id)
+            response__ephemeral_device = urlopen(Request(url="http://169.254.169.254/latest/meta-data/block-device-mapping/" + block_device_mappings__ephemeral_id, method="GET", headers={"X-aws-ec2-metadata-token": imdsv2_token}))
             block_device_mappings__ephemeral_mapped = response__ephemeral_device.read().decode()
             instance_store_map.append({'ephemeral_id': block_device_mappings__ephemeral_id, 'ephemeral_map': block_device_mappings__ephemeral_mapped})
 

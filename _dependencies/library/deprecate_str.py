@@ -1,4 +1,4 @@
-# Copyright 2020 Dougal Seeley <github@dougalseeley.com>
+# Copyright 2020 Dougal Seeley <git@dougalseeley.com>
 # BSD 3-Clause License
 
 from __future__ import (absolute_import, division, print_function)
@@ -12,7 +12,7 @@ version_added: 1.0.0
 description:
     - Print a deprecation warning to the console on demand
 authors:
-    - Dougal Seeley <github@dougalseeley.com>
+    - Dougal Seeley <git@dougalseeley.com>
 '''
 
 EXAMPLES = '''

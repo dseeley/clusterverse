@@ -3,6 +3,14 @@
 - name: Debug role path
   debug: msg="{{role_path}}"
 
+- name: Test vault-encrypt
+  dseeley.ansible_vault_pipe.ansible_vault_pipe:
+    plaintext: "hello"
+    action: encrypt
+  register: r__ansible_vault_encrypt_hello
+
+- debug: msg={{r__ansible_vault_encrypt_hello}}
+
 - name: Test dseeley.tasks_serial
   dseeley.tasks_serial.tasks_serial:
     tasks:
@@ -15,6 +23,10 @@
       - name: ansible.builtin.shell
         args:
           cmd: echo "Task 3 - shell echo"
+      - name: dseeley.ansible_vault_pipe.ansible_vault_pipe
+        args:
+          vaulttext: "{{r__ansible_vault_encrypt_hello.vaulttext}}"
+          action: decrypt
       - name: command
         args:
           cmd: "ls -l"

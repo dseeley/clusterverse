@@ -154,7 +154,7 @@
         subscription_id: "{{cluster_vars[buildenv].azure_subscription_id}}"
         tenant: "{{cluster_vars[buildenv].azure_tenant}}"
         resource_group: "{{cluster_vars[buildenv].azure_resource_group}}"
-        name: "{{ r__async_status__azure_rm_virtualmachine.results | json_query(\"[?ansible_facts.azure_vm.name== `\" + item.hostname + \"`].ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].name|[0]\") }}"
+        name: "{{ r__async_status__azure_rm_virtualmachine.results | json_query(\"[?ansible_facts.azure_vm.name== `\" + item.hostname + \"`].ansible_facts.azure_vm.network_profile.network_interfaces[0].name|[0]\") }}"
         purge_rules: true
         rules: "{{ cluster_vars.rules }}"
       loop: "{{ cluster_hosts_target }}"
@@ -171,7 +171,7 @@
         subscription_id: "{{cluster_vars[buildenv].azure_subscription_id}}"
         tenant: "{{cluster_vars[buildenv].azure_tenant}}"
         resource_group: "{{cluster_vars[buildenv].azure_resource_group}}"
-        attach_caching: "{{item.auto_volume.caching | default(omit)}}"
+        attach_caching: "{{item.auto_volume.caching | default('read_only')}}"       #Note - MUST specify a value here, or the idempotency fails (the disk will always be unmounted and remounted, which causes OS errors)
         disk_size_gb: "{{item.auto_volume.disk_size_gb}}"
         lun: "{{item.auto_volume.device_name}}"
         managed_by: "{{item.hostname}}"
@@ -188,9 +188,34 @@
           release: "{{ release_version }}"
       loop: "{{ cluster_hosts_target_denormalised_by_volume }}"
       register: r__azure_rm_manageddisk
+      until: r__azure_rm_manageddisk.state.managed_by
+      delay: 3
+      retries: 10
 
     - name: create/azure | r__azure_rm_manageddisk
       debug: msg={{r__azure_rm_manageddisk}}
+
+    - name: create/azure | Wait for disk provisioningState==Succeeded
+      azure.azcollection.azure_rm_resource_info:
+        client_id: "{{cluster_vars[buildenv].azure_client_id}}"
+        secret: "{{cluster_vars[buildenv].azure_secret}}"
+        subscription_id: "{{cluster_vars[buildenv].azure_subscription_id}}"
+        tenant: "{{cluster_vars[buildenv].azure_tenant}}"
+        resource_group: "{{cluster_vars[buildenv].azure_resource_group}}"
+        resource_name: "{{ item.state.name }}"
+        resource_type: disks
+        provider: Compute
+      with_items: "{{ r__azure_rm_manageddisk.results }}"
+      register: r__azure_rm_resource_info
+      until: "r__azure_rm_resource_info.failed==false and (r__azure_rm_resource_info.response | json_query(\"[?properties.provisioningState!='Succeeded']\") | type_debug == 'list') and (r__azure_rm_resource_info.response | json_query(\"[?properties.provisioningState!='Succeeded']|length(@)\")) == 0"
+      retries: 6   #1 min
+      delay: 10
+      delegate_to: localhost
+      run_once: true
+
+    - name: create/azure | r__azure_rm_resource_info
+      debug: msg={{r__azure_rm_resource_info}}
+
 
 ##### NOTE: An alternative to the above.  An attempt to speed up the synchronous create an attach by splitting into async create and synchronous attach, but it turns out that create is very fast (~1 second per disk), but attach is the blocker (~30s per disk), so no advantage to more complex code.  Left for reference.
 #    - name: create/azure | Create (asynchronously) and attach (synchronously) managed disk(s) to VM.
@@ -202,7 +227,7 @@
 #            subscription_id: "{{cluster_vars[buildenv].azure_subscription_id}}"
 #            tenant: "{{cluster_vars[buildenv].azure_tenant}}"
 #            resource_group: "{{cluster_vars[buildenv].azure_resource_group}}"
-#            attach_caching: "{{item.auto_volume.caching | default(omit)}}"
+#            attach_caching: "{{item.auto_volume.caching | default('read_only')}}"       #Note - MUST specify a value here, or the idempotency fails (the disk will always be unmounted and remounted, which causes OS errors)
 #            disk_size_gb: "{{item.auto_volume.disk_size_gb}}"
 #            name: "{{_tags.name}}"
 #            storage_account_type: "{{item.auto_volume.storage_account_type}}"
