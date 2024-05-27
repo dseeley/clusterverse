@@ -4,39 +4,6 @@ redeploy_schemes_supported: ['_scheme_addallnew_rmdisk_rollback', '_scheme_addne
 
 test_touch_disks: false
 
-prometheus_node_exporter_install: false
-filebeat_install: false
-metricbeat_install: false
-
-#beats_config:
-#  filebeat:
-#    output_logstash_hosts: ["localhost:5044"]        # The destination hosts for filebeat-gathered logs
-#    extra_logs_paths:                                # The array is optional, if you need to add more paths or files to scrape for logs
-#      - /var/log/myapp/*.log
-#  metricbeat:
-#    output_logstash_hosts: ["localhost:5044"]        # The destination hosts for metricbeat-gathered metrics
-#    diskio:                                          # Diskio retrieves metrics for all disks partitions by default. When diskio.include_devices is defined, only look for defined partitions
-#      include_devices: ["sda", "sdb", "nvme0n1", "nvme1n1", "nvme2n1"]
-
-## Vulnerability scanners - Tenable and/ or Qualys cloud agents:
-#cloud_agent:
-#  tenable:
-#    service: "nessusagent"
-#    debpackage: ""
-#    bin_path: "/opt/nessus_agent/sbin"
-#    nessus_key_id: ""
-#    nessus_group_id: ""
-#    proxy: {host: "", port: ""}
-#  qualys:
-#    service: "qualys-cloud-agent"
-#    github_release: ""
-#    bin_name: ""
-#    bin_path: "/usr/local/qualys/cloud-agent/bin"
-#    config_path: "/etc/default/qualys-cloud-agent"
-#    activation_id: ""
-#    customer_id: ""
-#    proxy: {host: "", port: ""}
-
 app_name: "{{lookup('pipe', 'whoami') | lower}}-test"   # The name of the application cluster (e.g. 'couchbase', 'nginx'); becomes part of cluster_name.  Provided is a default to ensure no accidental overwriting.
 app_class: "test"                                       # The class of application (e.g. 'database', 'webserver'); becomes part of the fqdn
 

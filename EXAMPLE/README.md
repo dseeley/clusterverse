@@ -56,10 +56,7 @@ ansible-playbook cluster.yml -e buildenv=sandbox -e cloud_type=esxifree --vault-
 + `-e clean=[current|retiring|redeployfail|_all_]` - Deletes VMs in `lifecycle_state`, or `_all_`, as well as networking and security groups
 + `-e pkgupdate=[always|onCreate]` - Upgrade the OS packages (not good for determinism).  `onCreate` only upgrades when creating the VM for the first time.
 + `-e reboot_on_package_upgrade=true` - After updating packages, performs a reboot on all nodes.
-+ `-e prometheus_node_exporter_install=false` - Does not install the prometheus node_exporter
 + `-e static_journal=true` - Creates /var/log/journal directory, which will keep a permanent record of journald logs in systemd machines (normally ephemeral)
-+ `-e filebeat_install=false` - Does not install filebeat
-+ `-e metricbeat_install=false` - Does not install metricbeat
 + `-e wait_for_dns=false` - Does not wait for DNS resolution
 + `-e create_gcp_network=true` - Create GCP network and subnetwork (probably needed if creating from scratch and using public network)
 + `-e delete_gcp_network_on_clean=true` - Delete GCP network and subnetwork when run with `-e clean=_all_`
