@@ -130,14 +130,9 @@
         _autodisks: "{{item.auto_volumes | json_query(\"[].{auto_delete: auto_delete, interface: interface, device_name: device_name, initialize_params: initialize_params, source: {selfLink: src.source_url}}\") }}"
         _labels:
           name: "{{item.hostname}}"
-          inv_node_version: "{{cluster_vars[buildenv].hosttype_vars[item.hosttype].version | default(omit)}}"
-          inv_node_type: "{{item.hosttype}}"
-          hosttype: "{{item.hosttype}}"
-          cluster_name: "{{cluster_name}}"
-          cluster_suffix: "{{cluster_suffix}}"
-          owner: "{{ lookup('env','USER') | lower }}"
-          release: "{{ release_version }}"
-          lifecycle_state: "current"
+          cv__app_version: "{{cluster_vars[buildenv].hosttype_vars[item.hosttype].version | default(omit)}}"
+          cv__cluster_suffix: "{{cluster_suffix}}"
+          cv__lifecycle_state: "current"
       register: r__gcp_compute_instance
       with_items: "{{cluster_hosts_target}}"
       async: 7200
@@ -174,13 +169,9 @@
           {% set res = [] -%}
           {%- for host_instance in r__async_status__gcp_compute_instance.results -%}
             {%- for disk in host_instance.disks -%}
-              {% set _ = res.append({'hostname': host_instance.name , 'hosttype': host_instance.labels.hosttype, 'device_name': disk.deviceName, 'disk_name': disk.source | basename, 'disk_type': disk.type | basename, 'resource_url': disk.source, 'regionzone': host_instance.invocation.module_args.zone}) -%}
+              {% set _ = res.append({'hostname': host_instance.name , 'hosttype': host_instance.labels.cv__hosttype, 'device_name': disk.deviceName, 'disk_name': disk.source | basename, 'disk_type': disk.type | basename, 'resource_url': disk.source, 'regionzone': host_instance.invocation.module_args.zone}) -%}
             {%- endfor %}
           {%- endfor %}
           {{ res }}
         _labels:
           name: "{{ item.device_name }}"
-          inv_node_version: "{{cluster_vars[buildenv].hosttype_vars[item.hosttype].version | default(omit)}}"
-          inv_node_type: "{{item.hosttype}}"
-          owner: "{{ lookup('env','USER') | lower }}"
-          release: "{{ release_version }}"

@@ -11,16 +11,9 @@ A full-lifecycle, immutable cloud infrastructure cluster management **role**, us
 Contributions are welcome and encouraged.  Please see [CONTRIBUTING.md](https://github.com/sky-uk/clusterverse/blob/master/CONTRIBUTING.md) for details.
 
 ## Requirements
-+ Ansible >= 5.6.0  (**Ansible >= 7.0.0 _strongly recommended_**)
-+ Python >= 3.8
++ Ansible >= 9.3.0
++ Python >= 3.10
 
-### Python dependencies
-Dependencies are managed via pipenv:
-+ `pipenv install`  will create a Python virtual environment with dependencies specified in the Pipfile
-
-To active the pipenv:
-+ `pipenv shell`
-+ or prepend the ansible-playbook commands with: `pipenv run`
 
 ### AWS
 + AWS account with IAM rights to create EC2 VMs and security groups in the chosen VPCs/subnets.  Place the credentials in:

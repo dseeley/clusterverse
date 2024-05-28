@@ -20,7 +20,7 @@
         powerchange_new_state: "stop"
   vars:
     _host_to_redeploy_nosuffix: "{{host_to_redeploy.hostname | regex_replace('-(?!.*-).*')}}"   #Remove the cluster_suffix from the hostname
-    hosts_to_change: "{{ cluster_hosts_state | to_json | from_json | json_query(\"[?tagslabels.lifecycle_state!='current' && starts_with(name, '\" + _host_to_redeploy_nosuffix + \"')]\") }}"
+    hosts_to_change: "{{ cluster_hosts_state | to_json | from_json | json_query(\"[?tagslabels.cv__lifecycle_state!='current' && starts_with(name, '\" + _host_to_redeploy_nosuffix + \"')]\") }}"
 
 - name: "by_hosttype_by_host | Run {{mainclusteryml}} to add {{host_to_redeploy.hostname}} to cluster"
   dseeley.nested_playbook.nested_playbook:

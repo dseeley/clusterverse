@@ -1,8 +1,5 @@
 ---
 
-# Identifies the application version that is being deployed (optional)
-release_version: ""
-
 # If set true, will prevent the playbook from failing in case any of the existing VM has a deprecated AMI.
 override_deprecated_ami: true
 

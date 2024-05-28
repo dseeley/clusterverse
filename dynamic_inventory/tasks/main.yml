@@ -50,10 +50,10 @@
           {%- for item in cluster_hosts_state | json_query('[?contains([\'RUNNING\',\'running\',\'poweredOn\'], instance_state)]') | sort(attribute='name') -%}
             {%- set _dummy = res.append({
                 'name': item.name,
-                'groups': [item.tagslabels.hosttype] + [cluster_name] + ([clusterid] if clusterid is defined and clusterid else []) + ([item.regionzone] if item.regionzone is defined and item.regionzone else []) + (['not_target_hosts'] if cluster_hosts_target is defined and item.name not in (cluster_hosts_target | default({}) | map(attribute='hostname')) else []),
+                'groups': [item.tagslabels.cv__hosttype] + [cluster_name] + ([clusterid] if clusterid is defined and clusterid else []) + ([item.regionzone] if item.regionzone is defined and item.regionzone else []) + (['not_target_hosts'] if cluster_hosts_target is defined and item.name not in (cluster_hosts_target | default({}) | map(attribute='hostname')) else []),
                 'ansible_host': item.ipv4.public if cluster_vars.inventory_ip=='public' else item.ipv4.private,
                 'ipv4_private': item.ipv4.private,
-                'hosttype': item.tagslabels.hosttype
+                'hosttype': item.tagslabels.cv__hosttype
               }) -%}
             {%- set _dummy = res[res | length-1].update({'regionzone': item.regionzone})  if item.regionzone else '' -%}
             {%- set _dummy = res[res | length-1].update({'ansible_user': cluster_vars[buildenv].ssh_connection_cfg.host.ansible_user})  if cluster_vars[buildenv].ssh_connection_cfg.host.ansible_user else '' -%}
