@@ -7,8 +7,8 @@ _**Please refer to the full [README.md](https://github.com/dseeley/clusterverse/
 Contributions are welcome and encouraged.  Please see [CONTRIBUTING.md](https://github.com/dseeley/clusterverse/blob/master/CONTRIBUTING.md) for details.
 
 ## Requirements
-+ Ansible >= 5.6.0
-+ Python >= 3.8
++ Ansible >= 9.3.0
++ Python >= 3.10
 
 
 ---
@@ -52,7 +52,6 @@ ansible-playbook cluster.yml -e buildenv=sandbox -e cloud_type=esxifree --vault-
 ### Optional extra variables:
 + `-e app_name=<nginx>` - Normally defined in `/cluster_defs/`.  The name of the application cluster (e.g. 'couchbase', 'nginx'); becomes part of cluster_name
 + `-e app_class=<proxy>` - Normally defined in `/cluster_defs/`.  The class of application (e.g. 'database', 'webserver'); becomes part of the fqdn
-+ `-e release_version=<v1.0.1>` - Identifies the application version that is being deployed.
 + `-e clean=[current|retiring|redeployfail|_all_]` - Deletes VMs in `lifecycle_state`, or `_all_`, as well as networking and security groups
 + `-e pkgupdate=[always|onCreate]` - Upgrade the OS packages (not good for determinism).  `onCreate` only upgrades when creating the VM for the first time.
 + `-e reboot_on_package_upgrade=true` - After updating packages, performs a reboot on all nodes.

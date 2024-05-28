@@ -13,7 +13,6 @@ cluster_vars:
   type: "{{cloud_type}}"
   region: "{{region}}"
   custom_tagslabels:
-    inv_environment_id: "{{buildenv}}"
-    inv_service_id: "{{app_class}}"
-    inv_cluster_id: "{{cluster_name}}"
-    inv_cluster_type: "{{app_name}}"
+    cv__cluster_name: "{{cluster_name}}"
+    cv__environment: "{{buildenv}}"
+    cv__owner: "{{ lookup('env','USER') | lower }}"

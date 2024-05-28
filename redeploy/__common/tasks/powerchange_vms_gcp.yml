@@ -13,6 +13,7 @@
         auth_kind: "serviceaccount"
         service_account_file: "{{gcp_credentials_file}}"
         deletion_protection: "{{cluster_vars[buildenv].deletion_protection}}"
+        labels: "{{ item.tagslabels }}"
         status: "{% if powerchange_new_state == 'stop' %}TERMINATED{% else %}RUNNING{% endif %}"
       with_items: "{{ hosts_to_powerchange }}"
       register: r__gcp_compute_instance

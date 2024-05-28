@@ -3,7 +3,7 @@
 - name: set_lifecycle_state_label/azure | hosts_to_relabel
   debug: msg="{{hosts_to_relabel}}"
 
-- name: "set_lifecycle_state_label/azure | Change lifecycle_state label to {{new_state}}"
+- name: "set_lifecycle_state_label/azure | Change cv__lifecycle_state label to {{new_state}}"
   azure.azcollection.azure_rm_virtualmachine:
     client_id: "{{cluster_vars[buildenv].azure_client_id}}"
     secret: "{{cluster_vars[buildenv].azure_secret}}"
@@ -13,6 +13,6 @@
     append_tags: true
     name: "{{ item.name }}"
     tags:
-      lifecycle_state: "{{ new_state }}"
+      cv__lifecycle_state: "{{ new_state }}"
     zones: ["{{ (item.regionzone.split('-'))[1] }}"]
   with_items: "{{ hosts_to_relabel | default([]) }}"
