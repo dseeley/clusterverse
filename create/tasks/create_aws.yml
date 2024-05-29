@@ -132,7 +132,7 @@
         secret_key: "{{cluster_vars[buildenv].aws_secret_key}}"
         session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
         region: "{{cluster_vars.region}}"
-        instance: "{{ cluster_hosts_state | json_query(\"[?tagslabels.Name==`\" + item.hostname + \"`].instance_id[] | [0]\") | default(omit) }}"
+        instance: "{{ cluster_hosts_state | json_query(\"[?name==`\" + item.hostname + \"`].instance_id[] | [0]\") | default(omit) }}"
         id: "{{item.auto_volume.src.volume_id | default(omit)}}"
         snapshot: "{{item.auto_volume.snapshot | default(omit)}}"
         device_name: "{{item.auto_volume.device_name}}"
@@ -172,7 +172,7 @@
           {% set res = [] -%}
           {%- for cluster_host in cluster_hosts_state -%}
             {%- for block_device in cluster_host.disk_info_cloud -%}
-              {% set _ = res.append({'hostname': cluster_host.tagslabels.Name, 'hosttype': cluster_host.tagslabels.cv__hosttype, 'device_name': block_device.device_name, 'volume_id': block_device.ebs.volume_id}) -%}
+              {% set _ = res.append({'hostname': cluster_host.name, 'hosttype': cluster_host.tagslabels.cv__hosttype, 'device_name': block_device.device_name, 'volume_id': block_device.ebs.volume_id}) -%}
             {%- endfor %}
           {%- endfor %}
           {{ res }}
