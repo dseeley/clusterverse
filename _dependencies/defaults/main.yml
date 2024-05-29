@@ -1,27 +1,7 @@
 ---
 
-# Identifies the application version that is being deployed (optional)
-release_version: ""
-
 # If set true, will prevent the playbook from failing in case any of the existing VM has a deprecated AMI.
 override_deprecated_ami: true
-
-# The inverse ping/delegate_to method for detecting connections doesn't work and was deprecated in 5c8f574de7ef87787bc64c8f50cd412186c740e0 (25/01/2021)
-skip_dynamic_inventory_sshwait: true
-
-# Default Prometheus node exporter configurations
-prometheus_node_exporter_install: true                    # Whether to install the prometheus node_exporter tool
-prometheus_node_exporter_port: "19100"                    # Port to export metrics to.  The default (9100), conflicts with a Couchbase port, and prevents couchbase working.
-prometheus_node_exporter_version: 1.3.1                   # Version of prometheus node_exporter tool to install
-prometheus_node_exporter_options: "--collector.systemd "  # Extra options for node_exporter
-
-# Default Filebeat agent settings - specifics to be provided by app playbooks
-filebeat_install: true
-filebeat_version: 7.12.1          # 7.12.0 first version to support ARM architecture
-
-# Default Metricbeat agent settings - specifics to be provided by app playbooks
-metricbeat_install: true
-metricbeat_version: 7.12.1
 
 # Default packages configurations
 pkgupdate: ""                                             # "always" or "onCreate".  Leave empty to prevent updating packages.

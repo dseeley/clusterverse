@@ -1,7 +1,7 @@
 
 - debug: msg="Removing {{host_to_del}}"
 
-- name: Change lifecycle_state label from 'current' to 'retiring'
+- name: Change cv__lifecycle_state label from 'current' to 'retiring'
   include_role:
     name: clusterverse/redeploy/__common
     tasks_from: "set_lifecycle_state_label_{{cluster_vars.type}}.yml"

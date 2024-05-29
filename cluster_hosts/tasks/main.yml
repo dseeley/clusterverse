@@ -11,9 +11,9 @@
 
 - assert:
     that:
-      - "cluster_hosts_state | json_query('[?tagslabels.lifecycle_state]') | list | length"
-      - "cluster_hosts_state | json_query('[?tagslabels.cluster_suffix]') | list | length"
-    msg: "ERROR - A cluster exists, but does not contain the labels 'cluster_suffix' or 'lifecycle_state'.  If this was created using a previous version of clusterverse, please run 'clusterverse_label_upgrade_v1-v2.yml'."
+      - "cluster_hosts_state | json_query('[?tagslabels.cv__lifecycle_state]') | list | length"
+      - "cluster_hosts_state | json_query('[?tagslabels.cv__cluster_suffix]') | list | length"
+    msg: "ERROR - A cluster exists, but does not contain the labels 'cv__cluster_suffix' or 'cv__lifecycle_state'.  If this was created using a previous version of clusterverse, please run 'clusterverse_label_upgrade_v1-v2.yml'."
   when: cluster_hosts_state | length
 
 
@@ -33,7 +33,7 @@
 
     - debug: msg="cluster_suffix = {{cluster_suffix}}"
   vars:
-    cluster_suffixes_current: "{{ cluster_hosts_state | json_query(\"[?tagslabels.lifecycle_state=='current'].tagslabels.cluster_suffix\") }}"
+    cluster_suffixes_current: "{{ cluster_hosts_state | json_query(\"[?tagslabels.cv__lifecycle_state=='current'].tagslabels.cv__cluster_suffix\") }}"
 
 
 - name: Create cluster_hosts_target from the cluster definition in cluster_vars, and add cloud-specific modifications

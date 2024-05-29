@@ -13,7 +13,7 @@
     tenant: "{{cluster_vars[buildenv].azure_tenant}}"
     resource_group: "{{cluster_vars[buildenv].azure_resource_group}}"
     tags:
-      - "cluster_name:{{cluster_name}}"
+      - "cv__cluster_name:{{cluster_name}}"
   register: r__azure_rm_virtualmachine_info
   delegate_to: localhost
   run_once: true

@@ -16,7 +16,7 @@
       {%- if clean == '_all_' -%}
       {{ cluster_hosts_state | json_query('[]') }}
       {%- else -%}
-      {{ cluster_hosts_state | json_query('[?tagslabels.lifecycle_state==`' + clean + '`]') }}
+      {{ cluster_hosts_state | json_query('[?tagslabels.cv__lifecycle_state==`' + clean + '`]') }}
       {%- endif -%}
 
 

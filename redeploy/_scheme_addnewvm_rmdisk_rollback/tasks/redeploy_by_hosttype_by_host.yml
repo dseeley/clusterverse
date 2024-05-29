@@ -42,4 +42,4 @@
       when: testfail is defined and testfail == "fail_2"
   vars:
     _root_cluster_host_redeploying: "{{cluster_host_redeploying.hostname | regex_replace('-(?!.*-).*')}}"
-    hosts_to_remove: "{{ cluster_hosts_state | to_json | from_json | json_query(\"[?tagslabels.lifecycle_state=='retiring' && starts_with(name, '\" + _root_cluster_host_redeploying + \"')]\") }}"
+    hosts_to_remove: "{{ cluster_hosts_state | to_json | from_json | json_query(\"[?tagslabels.cv__lifecycle_state=='retiring' && starts_with(name, '\" + _root_cluster_host_redeploying + \"')]\") }}"

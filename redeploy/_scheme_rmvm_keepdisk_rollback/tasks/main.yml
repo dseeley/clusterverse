@@ -7,21 +7,21 @@
   block:
     - name: Redeploy setup
       block:
-        - name: Change lifecycle_state label from 'current' to 'retiring'
+        - name: Change cv__lifecycle_state label from 'current' to 'retiring'
           include_role:
             name: clusterverse/redeploy/__common
             tasks_from: "set_lifecycle_state_label_{{cluster_vars.type}}.yml"
           vars:
-            hosts_to_relabel: "{{ cluster_hosts_state | json_query(\"[?tagslabels.lifecycle_state=='current']\") }}"
+            hosts_to_relabel: "{{ cluster_hosts_state | json_query(\"[?tagslabels.cv__lifecycle_state=='current']\") }}"
             new_state: "retiring"
-          when: ('retiring' not in (cluster_hosts_state | map(attribute='tagslabels.lifecycle_state')))
+          when: ('retiring' not in (cluster_hosts_state | map(attribute='tagslabels.cv__lifecycle_state')))
 
         - name: re-acquire cluster_hosts_target and cluster_hosts_state
           include_role:
             name: clusterverse/cluster_hosts
             public: true
 
-        - assert: { that: "cluster_hosts_state | json_query(\"[?tagslabels.cluster_suffix == '\"+ cluster_suffix +\"' && ('\"+ myhosttypes|default('') + \"' == ''  ||  contains(['\"+ myhosttypes|default('') + \"'], tagslabels.hosttype))]\") | length == 0", msg: "Please ensure cluster_suffix ({{cluster_suffix}}) is not already set on the cluster" }
+        - assert: { that: "cluster_hosts_state | json_query(\"[?tagslabels.cv__cluster_suffix == '\"+ cluster_suffix +\"' && ('\"+ myhosttypes|default('') + \"' == ''  ||  contains(['\"+ myhosttypes|default('') + \"'], tagslabels.cv__hosttype))]\") | length == 0", msg: "Please ensure cluster_suffix ({{cluster_suffix}}) is not already set on the cluster" }
           when: cluster_suffix is defined
       when: canary in ["start", "none"]
 
@@ -55,20 +55,20 @@
       import_role:
         name: clusterverse/cluster_hosts
 
-    - name: rescue | Change lifecycle_state label from 'current' to 'redeployfail'
+    - name: rescue | Change cv__lifecycle_state label from 'current' to 'redeployfail'
       include_role:
         name: clusterverse/redeploy/__common
         tasks_from: "set_lifecycle_state_label_{{cluster_vars.type}}.yml"
       vars:
-        hosts_to_relabel: "{{ cluster_hosts_state | json_query(\"[?tagslabels.lifecycle_state=='current']\") }}"
+        hosts_to_relabel: "{{ cluster_hosts_state | json_query(\"[?tagslabels.cv__lifecycle_state=='current']\") }}"
         new_state: "redeployfail"
 
-    - name: rescue | Change lifecycle_state label from 'retiring' to 'current'
+    - name: rescue | Change cv__lifecycle_state label from 'retiring' to 'current'
       include_role:
         name: clusterverse/redeploy/__common
         tasks_from: "set_lifecycle_state_label_{{cluster_vars.type}}.yml"
       vars:
-        hosts_to_relabel: "{{ cluster_hosts_state | json_query(\"[?tagslabels.lifecycle_state=='retiring']\") }}"
+        hosts_to_relabel: "{{ cluster_hosts_state | json_query(\"[?tagslabels.cv__lifecycle_state=='retiring']\") }}"
         new_state: "current"
 
     - name: rescue | re-acquire cluster_hosts_target and cluster_hosts_state
@@ -98,7 +98,7 @@
 
 - name: "Tidy up powered-down, non-current instances.  NOTE: Must do clean_dns first, because both clean_dns and clean_vms have the cluster_hosts role as a dependency, which when run after clean_vms, will be empty."
   block:
-    - assert: { that: "'current' in (cluster_hosts_state | map(attribute='tagslabels.lifecycle_state'))", msg: "ERROR - Cannot tidy when there are no machines in the 'current' lifecycle_state.  Please use '-e clean=_all_'." }
+    - assert: { that: "'current' in (cluster_hosts_state | map(attribute='tagslabels.cv__lifecycle_state'))", msg: "ERROR - Cannot tidy when there are no machines in the 'current' lifecycle_state.  Please use '-e clean=_all_'." }
 
     - include_role:
         name: clusterverse/clean
@@ -114,5 +114,5 @@
         msg: "tidy | No hosts to tidy.  Only powered-down, non-current machines with be tidied; to clean other machines, please use the '-e clean=<state>' extra variable."
       when: hosts_to_clean | length == 0
   vars:
-    hosts_to_clean: "{{ cluster_hosts_state | json_query(\"[?tagslabels.lifecycle_state!='current' && !(contains('RUNNING,running,poweredOn', instance_state)) && ('\"+ canary + \"' == 'tidy'  ||  '\"+ myhosttypes|default('') + \"' == ''  ||  contains(['\"+ myhosttypes|default('') + \"'], tagslabels.hosttype)) ]\") }}"
+    hosts_to_clean: "{{ cluster_hosts_state | json_query(\"[?tagslabels.cv__lifecycle_state!='current' && !(contains('RUNNING,running,poweredOn', instance_state)) && ('\"+ canary + \"' == 'tidy'  ||  '\"+ myhosttypes|default('') + \"' == ''  ||  contains(['\"+ myhosttypes|default('') + \"'], tagslabels.cv__hosttype)) ]\") }}"
   when: canary=="tidy" or  ((canary in ["none", "finish", "filter"]) and canary_tidy_on_success is defined and canary_tidy_on_success|bool)

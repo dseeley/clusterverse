@@ -7,7 +7,7 @@
     session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
     region: "{{cluster_vars.region}}"
     filters:
-      "tag:cluster_name": "{{cluster_name}}"
+      "tag:cv__cluster_name": "{{cluster_name}}"
       "instance-state-name": ["running", "pending", "stopped"]
   register: r__ec2_instance_info
   delegate_to: localhost

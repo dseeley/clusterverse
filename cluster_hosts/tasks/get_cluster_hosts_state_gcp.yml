@@ -3,7 +3,7 @@
 - name: get_cluster_hosts_state/gcp | Get existing instance info (per AZ)
   google.cloud.gcp_compute_instance_info:
     zone: "{{cluster_vars.region}}-{{item}}"
-    filters: [ "labels.cluster_name = {{cluster_name}}" ]
+    filters: [ "labels.cv__cluster_name = {{cluster_name}}" ]
     project: "{{cluster_vars[buildenv].vpc_project_id}}"
     auth_kind: "serviceaccount"
     service_account_file: "{{gcp_credentials_file}}"

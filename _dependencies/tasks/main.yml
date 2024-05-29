@@ -1,7 +1,7 @@
 ---
 
 - name: preflight | Ansible version requirements
-  assert: { that: "(ansible_version.full is version('2.12.4', '>=') and ansible_version.full is version('2.16.0', '<'))  or  (ansible_version.full is version('2.16.4', '>='))", fail_msg: "ansible-core 2.12.4 -> 2.15.7 (pypi v5.6.0 - v8.7.0) or core >= 2.16.4 (pypi 9.3.0) is required.  (9.3.0 > pypi >= 9.0 are not supported due to https://github.com/ansible/ansible/issues/82239.)" }
+  assert: { that: "(ansible_version.full is version('2.16.4', '>='))", fail_msg: "Ansible core >= 2.16.4 (pypi 9.3.0) is required.  (9.3.0 > pypi >= 9.0 are not supported due to https://github.com/ansible/ansible/issues/82239.)" }
 
 - name: Load cluster definitions
   block:
@@ -45,7 +45,7 @@
       when: cluster_vars.type == "aws"
 
     - name: sts_assume_role
-      community.aws.sts_assume_role:
+      amazon.aws.sts_assume_role:
         role_arn: "{{cluster_vars[buildenv].aws_sts_assume_role_arn}}"
         role_session_name: "ansible__{{cluster_vars[buildenv].aws_sts_assume_role_arn | basename }}__{{cluster_name}}"
       delegate_to: localhost
@@ -96,12 +96,16 @@
     - assert: { that: "buildenv is defined and cluster_vars[buildenv] is defined", fail_msg: "Please define buildenv" }
 
       ## Tags/ labels must be compatible with GCP and AWS - check everything that goes into a label.
-    - assert: { that: "release_version is regex('^[a-z\\d\\-_]{0,63}$')", fail_msg: "Please ensure release_version ({{release_version}}) is in the set [a-z\\d\\-_], and <63 characters long." }
-      when: release_version is defined
     - assert: { that: "cluster_suffix is regex('^[a-z\\d\\-_]{0,63}$')", fail_msg: "Please ensure cluster_suffix ({{cluster_suffix}}) is in the set[a-z\\d\\-_], and <63 characters long." }
       when: cluster_suffix is defined
-    - assert: { that: "cluster_vars.custom_tagslabels.values() | map('regex_search', '^[a-z\\d\\-_]{0,63}$') | select | length ==  cluster_vars.custom_tagslabels | length", fail_msg: "Please ensure all cluster_vars.custom_tagslabels are in the set [a-z\\d\\-_], and <63 characters long." }
+
+    - assert:
+        that: cluster_vars_assertcheck_templated == ''
+        fail_msg: "Please ensure all cluster_vars.custom_tagslabels are in the set [a-z\\d\\-_], and <63 characters long.  Failed on: {{cluster_vars_assertcheck_templated}}"
+      vars:
+        cluster_vars_assertcheck_templated: "{%- for k, v in cluster_vars.custom_tagslabels.items() -%}{%- if v is not regex('^[a-z\\d\\-_]{0,63}$') -%}{{k + '(' + v + '), '}}{%- endif -%}{%- endfor -%}"
       when: "'custom_tagslabels' in cluster_vars"
+
     - assert: { that: "cluster_vars[buildenv].hosttype_vars | json_query('*.version') | map('regex_search', '^[a-z\\d\\-_]{0,63}$') | select('ne', None) | length == cluster_vars[buildenv].hosttype_vars | length", fail_msg: "Please ensure cluster_vars[{{buildenv}}].hosttype_vars[hosttype].version is in the set [a-z\\d\\-_], and <63 characters long." }
 
     - assert: { that: "(cluster_vars.inventory_ip == 'private')  or  (cluster_vars.assign_public_ip in [true, 'dynamic', 'static'] and cluster_vars.inventory_ip == 'public')", fail_msg: "If inventory_ip=='public', 'assign_public_ip' must be [true, 'dynamic', 'static']" }
@@ -112,7 +116,7 @@
 
     - assert:
         that: assertcheck_templated == ''
-        fail_msg: "All non-root volume mountpoints must either be all different (in which case 'lvmparams' must not be set), or all the same (in which case, 'lvmparams' must be set)"
+        fail_msg: "All non-root volume mountpoints must either be all different (in which case 'lvmparams' must not be set), or all the same (in which case, 'lvmparams' must be set). [Failure: {{assertcheck_templated}}"
       vars:
         assertcheck_templated: "{%- for hosttype in cluster_vars[buildenv].hosttype_vars | dict2items -%}{%- if ('lvmparams' not in hosttype.value and (hosttype.value.auto_volumes | length) == (hosttype.value.auto_volumes | map(attribute='mountpoint') | list | unique | count))  or  ('lvmparams' in hosttype.value and (hosttype.value.auto_volumes | selectattr('mountpoint', '!=', '/') | map(attribute='mountpoint') | list | unique | count == 1)) -%}{%- else -%}{{hosttype.key}}{%- endif -%}{%- endfor -%}"
 
