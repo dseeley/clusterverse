@@ -142,6 +142,10 @@
 #    - name: create/azure | r__async_status__azure_rm_virtualmachine.results
 #      debug: msg={{r__async_status__azure_rm_virtualmachine.results}}
 
+    - name: create/azure | Set a fact containing the newly-created hosts
+      set_fact:
+        cluster_hosts_created: "{{ r__async_status__azure_rm_virtualmachine.results | json_query(\"[?changed==`true`].item.item\") }}"
+
     - name: create/azure | Update security groups
       azure.azcollection.azure_rm_securitygroup:
         client_id: "{{cluster_vars[buildenv].azure_client_id}}"
