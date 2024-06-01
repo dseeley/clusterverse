@@ -28,6 +28,6 @@
   dseeley.nested_playbook.nested_playbook:
     playbook_cmdline: "{{ (argv[1:] | join(' ')) | regex_replace('redeploy.yml', mainclusteryml) }} {{ redeploy_extra_vars | extravars_from_dict }}"
 
-- name: re-acquire the dynamic inventory
+- name: re-acquire the dynamic inventory (includes cluster_hosts_state)
   include_role:
     name: clusterverse/dynamic_inventory

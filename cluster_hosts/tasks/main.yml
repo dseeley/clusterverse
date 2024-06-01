@@ -1,40 +1,7 @@
 ---
 
-- name: Get the state of the VMs in the cluster
-  include_tasks: "get_cluster_hosts_state_{{cluster_vars.type}}.yml"
-
-- name: get_cluster_hosts_state | cluster_hosts_state
-  debug: msg="{{cluster_hosts_state}}"
-  delegate_to: localhost
-  run_once: true
-  when: cluster_hosts_state is defined
-
-- assert:
-    that:
-      - "cluster_hosts_state | json_query('[?tagslabels.cv__lifecycle_state]') | list | length"
-      - "cluster_hosts_state | json_query('[?tagslabels.cv__cluster_suffix]') | list | length"
-    msg: "ERROR - A cluster exists, but does not contain the labels 'cv__cluster_suffix' or 'cv__lifecycle_state'.  If this was created using a previous version of clusterverse, please run 'clusterverse_label_upgrade_v1-v2.yml'."
-  when: cluster_hosts_state | length
-
-
-- name: Set the cluster_suffix based on the existing cluster; if there is no existing cluster, create cluster_suffix anew.  Overridden by command line for some redeploy schemes, e.g. '-e cluster_suffix=1234'
-  block:
-    - assert: { that: "cluster_suffixes_current | unique | length <= 1", msg: "Multiple 'current' suffixes running ({{cluster_suffixes_current | join(',')}}) - abort" }
-
-    - name: Set cluster_suffix to suffix of current live VMs
-      set_fact:
-        cluster_suffix: "{{cluster_suffixes_current[0]}}"
-      when: cluster_suffixes_current | unique | length==1
-
-    - name: Create new cluster_suffix (epoch time)
-      set_fact:
-        cluster_suffix: "{{ lookup('pipe', 'date +%s') }}"
-      when: cluster_suffixes_current | unique | length==0
-
-    - debug: msg="cluster_suffix = {{cluster_suffix}}"
-  vars:
-    cluster_suffixes_current: "{{ cluster_hosts_state | json_query(\"[?tagslabels.cv__lifecycle_state=='current'].tagslabels.cv__cluster_suffix\") }}"
-
+- name: Get the state (cluster_hosts_state) of the VMs in the cluster
+  include_tasks: get_cluster_hosts_state.yml
 
 - name: Create cluster_hosts_target from the cluster definition in cluster_vars, and add cloud-specific modifications
   include_tasks: get_cluster_hosts_target.yml

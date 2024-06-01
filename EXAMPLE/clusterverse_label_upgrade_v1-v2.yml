@@ -51,19 +51,19 @@
 
     - block:
         - block:
-          - name: get_cluster_hosts_state/libvirt | Copy libvirt ssh private key file
-            copy: { content: "{{cluster_vars.libvirt.private_key}}", dest: '{{ playbook_dir }}/id_rsa__libvirt_svc', mode: '0600' }
-            no_log: true
-            delegate_to: localhost
-            run_once: true
-            when: "cluster_vars.type == 'libvirt'  and  cluster_vars.libvirt.private_key is defined"
+            - name: get_cluster_hosts_state/libvirt | Copy libvirt ssh private key file
+              copy: { content: "{{cluster_vars.libvirt.private_key}}", dest: '{{ playbook_dir }}/id_rsa__libvirt_svc', mode: '0600' }
+              no_log: true
+              delegate_to: localhost
+              run_once: true
+              when: "cluster_vars.type == 'libvirt'  and  cluster_vars.libvirt.private_key is defined"
 
-          - name: get_cluster_hosts_state/libvirt | Get basic instance info of all vms
-            set_fact:
-              libvirt_inventory: "{{ lookup('dseeley.inventory_lookup.inventory', 'community.libvirt.libvirt', plugin_options=params) }}"
-            vars:
-              params:
-                uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc&no_verify=1'
+            - name: get_cluster_hosts_state/libvirt | Get basic instance info of all vms
+              set_fact:
+                libvirt_inventory: "{{ lookup('dseeley.inventory_lookup.inventory', 'community.libvirt.libvirt', plugin_options=params) }}"
+              vars:
+                params:
+                  uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc&no_verify=1'
 
 #        - name: get_cluster_hosts_state/libvirt | debug libvirt_inventory
 #          debug: msg={{libvirt_inventory | json_query('[].all[].*[]') }}
@@ -97,9 +97,10 @@
               {%- if 'lifecycle_state' in inventory_tagslabels -%}
                 {%- set _ = res.update({'cv__lifecycle_state': inventory_tagslabels.lifecycle_state}) -%}
               {%- endif -%}
+              {%- if 'regionzone' in inventory_tagslabels -%}
+                {%- set _ = res.update({'cv__regionzone': inventory_tagslabels.regionzone}) -%}
+              {%- endif -%}
               {{ res }}
-
-        - pause:
 
         - name: "upgrade/libvirt | upgrade tags"
           dseeley.libvirt.virt:
@@ -131,6 +132,9 @@
               {%- endif -%}
               {%- if 'lifecycle_state' in inventory_tagslabels -%}
                 {%- set _ = res.update({'cv__lifecycle_state': inventory_tagslabels.lifecycle_state}) -%}
+              {%- endif -%}
+              {%- if 'regionzone' in inventory_tagslabels -%}
+                {%- set _ = res.update({'cv__regionzone': inventory_tagslabels.regionzone}) -%}
               {%- endif -%}
               {{ res }}
       when: cluster_vars.type == "libvirt"

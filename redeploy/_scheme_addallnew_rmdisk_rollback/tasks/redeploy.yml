@@ -40,13 +40,14 @@
   when: canary=="start" or canary=="none"
 
 - block:
-    - name: re-acquire cluster_hosts_target and cluster_hosts_state
-      import_role:
-        name: clusterverse/cluster_hosts
-
-    - name: re-acquire the dynamic inventory
+    - name: re-acquire the dynamic inventory (includes cluster_hosts_state)
       include_role:
         name: clusterverse/dynamic_inventory
+
+    - name: re-acquire cluster_hosts_target (dynamic_inventory already acquires the state)
+      include_role:
+        name: clusterverse/cluster_hosts
+        tasks_from: "get_cluster_hosts_target.yml"
   when: canary=="none"
 
 - name: canary==finish or canary==none

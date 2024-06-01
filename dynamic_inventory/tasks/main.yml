@@ -2,8 +2,8 @@
 
 - name: "dynamic_inventory | Get cluster_hosts_state for {{cluster_vars.type}} cluster"
   include_role:
-    name: 'clusterverse/cluster_hosts'
-    tasks_from: "get_cluster_hosts_state_{{cluster_vars.type}}.yml"
+    name: clusterverse/cluster_hosts
+    tasks_from: "get_cluster_hosts_state.yml"
 
 - name: dynamic_inventory | assert that cluster_hosts_state is defined
   assert: { that: "cluster_hosts_state is defined", msg: "cluster_hosts_state is not defined" }
