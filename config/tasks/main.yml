@@ -90,7 +90,7 @@
 
 - name: Update packages (when pkgupdate is defined)
   include_tasks: pkgupdate.yml
-  when: pkgupdate is defined and (pkgupdate == 'always' or (pkgupdate == 'onCreate' and inventory_hostname in (hostvars['localhost'].cluster_hosts_created | json_query('[].hostname'))))
+  when: pkgupdate is defined and (pkgupdate == 'always' or (pkgupdate in ['onCreate', 'on_create'] and inventory_hostname in (hostvars['localhost'].cluster_hosts_created | json_query('[].hostname'))))
 
 - name: Set hostname (e.g. AWS doesn't set it automatically)
   become: true

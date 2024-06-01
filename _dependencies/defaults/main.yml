@@ -4,7 +4,7 @@
 override_deprecated_ami: true
 
 # Default packages configurations
-pkgupdate: ""                                             # "always" or "onCreate".  Leave empty to prevent updating packages.
+pkgupdate: ""                                             # "always" or "on_create".  Leave empty to prevent updating packages.
 reboot_on_package_upgrade: false                          # when set to true, restart after upgrading packages
 
 # Whether to wait for DNS to resolve.  Useful for applications that rely on the FQDN.  NOTE: The TTL of the SOA must be short enough for this not to time-out.
@@ -16,8 +16,16 @@ canary_tidy_on_success: false
 # External DNS server for lookups when using external IPs (the default AWS resolver will resolve the VPC IPs)
 external_dns_resolver: "8.8.8.8"
 
-# Whether to install chrony (ntp client)
+# Whether to install chrony (ntp client).  Won't be installed if there is already an NTP client running (most recent distros)
 chrony_install: true
 
 # NTP servers for chrony
-ntp_servers: "{{ ['169.254.169.123 prefer iburst minpoll 4 maxpoll 4'] if cluster_vars.type == 'aws' else ['metadata.google.internal'] if cluster_vars.type == 'gcp' else ['pool.ntp.org'] }}"
+chrony_ntp_servers: "{{ ['169.254.169.123 prefer iburst minpoll 4 maxpoll 4'] if cluster_vars.type == 'aws' else ['metadata.google.internal'] if cluster_vars.type == 'gcp' else ['pool.ntp.org'] }}"
+
+# The mandatory set of cluster_vars
+cluster_vars__mandatory:
+  type: "{{cloud_type}}"
+  region: "{{region}}"
+  custom_tagslabels:
+    cv__cluster_name: "{{cluster_name}}"
+

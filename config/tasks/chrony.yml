@@ -25,7 +25,7 @@
     dest: "/etc/{% if ansible_os_family == 'Debian'%}chrony/{% endif %}chrony.conf"
     backup: true
     content: |-
-      {% for ntp_server in ntp_servers %}
+      {% for ntp_server in chrony_ntp_servers %}
       server {{ ntp_server }}
       {% endfor %}
       

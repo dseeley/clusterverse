@@ -7,6 +7,7 @@
         - name: run apt upgrade
           become: true
           ansible.builtin.apt:
+            autoremove: true
             update_cache: true
             upgrade: dist
             force: true
@@ -33,4 +34,4 @@
           ansible.builtin.wait_for_connection:
             timeout: 120
       when: (reboot_on_package_upgrade is defined and reboot_on_package_upgrade|bool) and (apt_packages_update.changed or yum_packages_update.changed)
-  when: pkgupdate is defined and (pkgupdate == 'always' or (pkgupdate == 'onCreate' and inventory_hostname in (hostvars['localhost'].cluster_hosts_created | json_query('[].hostname'))))
+  when: pkgupdate is defined and (pkgupdate == 'always' or (pkgupdate == 'on_create' and inventory_hostname in (hostvars['localhost'].cluster_hosts_created | json_query('[].hostname'))))

@@ -53,7 +53,7 @@ ansible-playbook cluster.yml -e buildenv=sandbox -e cloud_type=esxifree --vault-
 + `-e app_name=<nginx>` - Normally defined in `/cluster_defs/`.  The name of the application cluster (e.g. 'couchbase', 'nginx'); becomes part of cluster_name
 + `-e app_class=<proxy>` - Normally defined in `/cluster_defs/`.  The class of application (e.g. 'database', 'webserver'); becomes part of the fqdn
 + `-e clean=[current|retiring|redeployfail|_all_]` - Deletes VMs in `lifecycle_state`, or `_all_`, as well as networking and security groups
-+ `-e pkgupdate=[always|onCreate]` - Upgrade the OS packages (not good for determinism).  `onCreate` only upgrades when creating the VM for the first time.
++ `-e pkgupdate=[always|on_create]` - Upgrade the OS packages (not good for determinism).  `on_create` only upgrades when creating the VM for the first time.
 + `-e reboot_on_package_upgrade=true` - After updating packages, performs a reboot on all nodes.
 + `-e static_journal=true` - Creates /var/log/journal directory, which will keep a permanent record of journald logs in systemd machines (normally ephemeral)
 + `-e wait_for_dns=false` - Does not wait for DNS resolution

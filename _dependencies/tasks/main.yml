@@ -1,32 +1,29 @@
 ---
 
-- name: preflight | Ansible version requirements
-  assert: { that: "(ansible_version.full is version('2.16.4', '>='))", fail_msg: "Ansible core >= 2.16.4 (pypi 9.3.0) is required.  (9.3.0 > pypi >= 9.0 are not supported due to https://github.com/ansible/ansible/issues/82239.)" }
+- name: Preflight assertions (early)
+  block:
+    - name: preflight | Ansible version requirements
+      assert: { that: "(ansible_version.full is version('2.16.4', '>='))", fail_msg: "Ansible core >= 2.16.4 (pypi 9.3.0) is required.  (9.3.0 > pypi >= 9.0 are not supported due to https://github.com/ansible/ansible/issues/82239.)" }
+
+    - name: preflight | merge_dict_vars_list must be defined
+      assert: { that: "(merge_dict_vars_list is defined and merge_dict_vars_list | length > 0)", fail_msg: "merge_dict_vars_list must be defined" }
 
 - name: Load cluster definitions
   block:
-    - block:
-        - name: Derive cluster definitions by merging tiered configuration files
-          merge_vars:
-            from: "{{ merge_dict_vars_list }}"
-            ignore_missing_files: True
-            replace: True
+    - name: Derive cluster definitions by merging tiered configuration files
+      merge_vars:
+        from: "{{ merge_dict_vars_list }}"
+        ignore_missing_files: true
+        replace: true
 
-#        - name: Loaded/derived/overridden cluster_vars
-#          debug: msg="{{cluster_vars}}"
-      when: merge_dict_vars_list is defined and merge_dict_vars_list | length > 0
-
-    - block:
-        - name: Load native cluster definitions by forcing include of group_vars on localhost (no inventory yet, so cannot import automatically)
-          include_vars: { dir: "{{ playbook_dir }}/group_vars/{{ clusterid }}" }
-
-        - deprecate_str: { msg: "Loading variables via group_vars/clusterid is deprecated.  Please use merge_vars via cluster_defs in future" }
-      when: merge_dict_vars_list is not defined  and  clusterid is defined
+    - name: Ensure the mandatory cluster_vars are defined
+      merge_vars:
+        facts: "{{ cluster_vars__mandatory | dict2items_recursive(key_name='path', value_name='value') | json_query(\"[].{path: join('.', ['cluster_vars', path]), value: value}\") }}"
 
     - name: argv
       debug: msg={{ argv }}
 
-    - name: cluster_vars_override (value and type)
+    - name: cluster_vars_override [value, type]
       debug:
         msg:
           - "{{cluster_vars_override}}"
@@ -35,8 +32,11 @@
 
     - name: Combine command-line cluster_vars_override into the loaded cluster_vars
       merge_vars:
-        facts: "{{ cluster_vars_override | from_yaml | dict2items(key_name='path', value_name='value') | json_query(\"[].{path: join('.', ['cluster_vars', path]), value: value}\") }}"
+        facts: "{{ cluster_vars_override | from_yaml | dict2items_recursive(key_name='path', value_name='value') | json_query(\"[].{path: join('.', ['cluster_vars', path]), value: value}\") }}"
       when: cluster_vars is defined and cluster_vars_override is defined and cluster_vars_override != ''
+
+    - name: Loaded/derived/overridden cluster_vars
+      debug: msg="{{cluster_vars}}"
 
 
 - name: Get AWS STS credentials (if required) for all hosts (but only run on localhost as we cannot run ansible tasks on the remote hosts)
@@ -125,6 +125,7 @@
 
     - assert: { that: "cluster_vars[buildenv] | json_query(\"hosttype_vars.*.auto_volumes[] | [?throughput > `1000`] && [?starts_with(volume_type, `gp3`)]\") | length == 0", fail_msg: "Volume throughput is too high; maximum is 1000" }
       when: cluster_vars.type == "aws"
+
 
 - name: Create gcp service account contents file from cluster_vars[buildenv].gcp_service_account_rawtext (unless already defined by user)
   block:
