@@ -4,14 +4,10 @@
   block:
     - name: upgrade all packages (apt - Debian/Ubuntu)
       block:
-        - name: install aptitude (needed for the Debian upgrade)
-          become: true
-          apt:
-            update_cache: true
-            name: aptitude
         - name: run apt upgrade
           become: true
-          apt:
+          ansible.builtin.apt:
+            update_cache: true
             upgrade: dist
             force: true
           register: apt_packages_update
@@ -19,14 +15,22 @@
 
     - name: upgrade all packages (yum - RedHat/CentOS)
       become: true
-      yum:
+      ansible.builtin.yum:
         name: "*"
         state: latest
       register: yum_packages_update
       when: ansible_os_family == 'RedHat'
 
     - name: reboot and wait (if reboot_on_package_upgrade==true)
-      become: true
-      reboot:
+      block:
+        - name: reboot and wait (if reboot_on_package_upgrade==true) [Revert to shell command because Ubuntu 24.04 has issues with ansible.builtin.reboot - reboot loops and systemd issue (Transaction for systemd-hostnamed.service/start is destructive (systemd-modules-load.service has 'stop' job queued, but 'start' is included in transaction))])]
+          become: true
+          shell: sleep 2 && /sbin/shutdown -r now "Ansible system package upgraded and rebooted" && sleep 5
+          async: 1
+          poll: 0
+
+        - name: Wait for the reboot to complete.
+          ansible.builtin.wait_for_connection:
+            timeout: 120
       when: (reboot_on_package_upgrade is defined and reboot_on_package_upgrade|bool) and (apt_packages_update.changed or yum_packages_update.changed)
   when: pkgupdate is defined and (pkgupdate == 'always' or (pkgupdate == 'onCreate' and inventory_hostname in (hostvars['localhost'].cluster_hosts_created | json_query('[].hostname'))))

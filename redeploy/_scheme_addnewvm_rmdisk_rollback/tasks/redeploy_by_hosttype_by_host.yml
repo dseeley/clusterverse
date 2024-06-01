@@ -7,13 +7,14 @@
 - fail:
   when: testfail is defined and testfail == "fail_1"
 
-- name: re-acquire the dynamic inventory
+- name: re-acquire the dynamic inventory (includes cluster_hosts_state)
   include_role:
     name: clusterverse/dynamic_inventory
 
-- name: re-acquire cluster_hosts_target and cluster_hosts_state
+- name: re-acquire cluster_hosts_target (dynamic_inventory already acquires the state)
   import_role:
     name: clusterverse/cluster_hosts
+    tasks_from: "get_cluster_hosts_target.yml"
 
 - name: stop/ remove previous instance
   block:
@@ -30,13 +31,14 @@
         hosts_to_powerchange: "{{ hosts_to_remove }}"
         powerchange_new_state: "stop"
 
-    - name: re-acquire the dynamic inventory
+    - name: re-acquire the dynamic inventory (includes cluster_hosts_state)
       include_role:
         name: clusterverse/dynamic_inventory
 
-    - name: re-acquire cluster_hosts_target and cluster_hosts_state
+    - name: re-acquire cluster_hosts_target (dynamic_inventory already acquires the state)
       import_role:
         name: clusterverse/cluster_hosts
+        tasks_from: "get_cluster_hosts_target.yml"
 
     - fail:
       when: testfail is defined and testfail == "fail_2"

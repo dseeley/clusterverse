@@ -39,7 +39,7 @@
     hosts_to_powerchange: "{{ cluster_hosts_state | selectattr('name', '==', host_to_redeploy.hostname) | list }}"
     powerchange_new_state: "start"
 
-- name: by_hosttype_by_host | re-acquire the dynamic inventory
+- name: by_hosttype_by_host | re-acquire the dynamic inventory (includes cluster_hosts_state)
   include_role:
     name: clusterverse/dynamic_inventory
 
