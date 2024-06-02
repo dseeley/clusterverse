@@ -46,6 +46,9 @@
               {%- if 'lifecycle_state' in item.tags -%}
                 {%- set _ = res.update({'cv__lifecycle_state': item.tags.lifecycle_state}) -%}
               {%- endif -%}
+              {%- if 'hosttype' in item.tags -%}
+                {%- set _ = res.update({'cv__hosttype': item.tags.hosttype}) -%}
+              {%- endif -%}
               {{ res }}
       when: cluster_vars.type == "aws"
 
@@ -100,6 +103,9 @@
               {%- if 'regionzone' in inventory_tagslabels -%}
                 {%- set _ = res.update({'cv__regionzone': inventory_tagslabels.regionzone}) -%}
               {%- endif -%}
+              {%- if 'hosttype' in inventory_tagslabels -%}
+                {%- set _ = res.update({'cv__hosttype': inventory_tagslabels.hosttype}) -%}
+              {%- endif -%}
               {{ res }}
 
         - name: "upgrade/libvirt | upgrade tags"
@@ -135,6 +141,9 @@
               {%- endif -%}
               {%- if 'regionzone' in inventory_tagslabels -%}
                 {%- set _ = res.update({'cv__regionzone': inventory_tagslabels.regionzone}) -%}
+              {%- endif -%}
+              {%- if 'hosttype' in inventory_tagslabels -%}
+                {%- set _ = res.update({'cv__hosttype': inventory_tagslabels.hosttype}) -%}
               {%- endif -%}
               {{ res }}
       when: cluster_vars.type == "libvirt"
