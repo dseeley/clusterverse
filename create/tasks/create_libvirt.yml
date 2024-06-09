@@ -118,7 +118,7 @@
         <memory unit='KiB'>{{item.flavor['memory_mb']|int * 1024}}</memory>
         <vcpu placement='static'>{{item.flavor['num_cpus']}}</vcpu>
         <os {% if item.flavor['firmware'] is not defined or item.flavor['firmware'] != 'BIOS' %}firmware='efi'{% endif %}>
-          <type arch='x86_64' machine='pc-q35-6.2'>hvm</type>
+          <type arch='x86_64' machine='q35'>hvm</type>
         </os>
         <features>
           <acpi/>
