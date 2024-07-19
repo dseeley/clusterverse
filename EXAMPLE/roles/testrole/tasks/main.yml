@@ -16,8 +16,8 @@
     tasks:
       - name: ansible.builtin.debug
         args:
-          msg: "Task 1 - debug!"
-      - name: ansible.builtin.debug
+          msg: "Task 1 - debug (FQCN)!"
+      - name: debug
         args:
           msg: "Task 2 - debug!"
       - name: ansible.builtin.shell
@@ -27,7 +27,12 @@
         args:
           vaulttext: "{{r__ansible_vault_encrypt_hello.vaulttext}}"
           action: decrypt
-      - name: command
+      - name: ansible.builtin.wait_for
+        args:
+          host: localhost
+          port: 22
+          timeout: 5
+      - name: ansible.builtin.command
         args:
           cmd: "ls -l"
 

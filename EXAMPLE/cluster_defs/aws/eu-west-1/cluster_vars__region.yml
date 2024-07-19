@@ -6,6 +6,7 @@ _ubuntu2404image: "amazon/ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-*"       
 _ubuntu2204image: "amazon/ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-*"           # Latest Ubuntu Jammy Jellyfish (22.04.x) image
 _ubuntu2004image: "amazon/ubuntu/images/hvm-ssd/ubuntu-focal-20.04-*"           # Latest Ubuntu Focal Fossa (20.04.x) image
 _ubuntu1804image: "amazon/ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-*"          # Latest Ubuntu Bionic Beaver (18.04.x) image
+_ubuntu1604image: "amazon/ubuntu-pro-server/images/hvm-ssd/ubuntu-xenial-16.04-*"          # Latest Ubuntu Xenial Xerus (16.04.x) image
 _centos7image: "161831738826/centos-7-pke-*"                                    # Latest 'Banzai Cloud' CentOS 7.x image
 _alma8image: "764336703387/AlmaLinux OS 8.*"                                    # Latest official AlmaLinux 8.x OS image
 

@@ -4,13 +4,12 @@
   block:
     - name: upgrade all packages (apt - Debian/Ubuntu)
       block:
-        - name: run apt upgrade
+        - name: run apt dist-upgrade
           become: true
           ansible.builtin.apt:
             autoremove: true
             update_cache: true
             upgrade: dist
-            force: true
           register: apt_packages_update
       when: ansible_os_family == 'Debian'
 
