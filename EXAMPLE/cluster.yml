@@ -40,7 +40,8 @@
         sudo python3 setup.py install
       register: r__raw__python_install
       until: r__raw__python_install is success
-      retries: 1
+      retries: 2
+      delay: 30
       when: hostvars['localhost']['cluster_vars']['image'] | regex_search('xenial|bionic')
 
 

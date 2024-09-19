@@ -56,11 +56,11 @@
       merge_vars:
         facts:
           - path: "cluster_vars.{{buildenv}}.aws_access_key"
-            value: "{{hostvars['localhost']['r__sts_assume_role']['sts_creds']['access_key']}}"
+            value: "{{r__sts_assume_role.sts_creds.access_key}}"
           - path: "cluster_vars.{{buildenv}}.aws_secret_key"
-            value: "{{hostvars['localhost']['r__sts_assume_role']['sts_creds']['secret_key']}}"
+            value: "{{r__sts_assume_role.sts_creds.secret_key}}"
           - path: "cluster_vars.{{buildenv}}.aws_session_token"
-            value: "{{hostvars['localhost']['r__sts_assume_role']['sts_creds']['session_token']}}"
+            value: "{{r__sts_assume_role.sts_creds.session_token}}"
       delegate_to: "{{ item }}"
       with_items: "{{ play_hosts }}"
       run_once: true

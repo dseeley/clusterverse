@@ -1,15 +1,15 @@
 ---
 
-- name: disks_auto_generic | Get the block device information (pre-filesystem create)
+- name: config/disks_auto_generic | Get the block device information (pre-filesystem create)
   blockdevmap:
     cloud_type: "lsblk"
   become: true
   register: r__blockdevmap
 
-- name: disks_auto_generic | r__blockdevmap
+- name: config/disks_auto_generic | r__blockdevmap
   debug: msg={{ r__blockdevmap }}
 
-- name: disks_auto_generic | Create 'disks_auto_generic__hostvols' fact that contains a list of available host devices (lsblk) mapped to the mountpoints defined in cluster_vars.  Allow for multiple disks with same size.
+- name: config/disks_auto_generic | Create 'disks_auto_generic__hostvols' fact that contains a list of available host devices (lsblk) mapped to the mountpoints defined in cluster_vars.  Allow for multiple disks with same size.
   set_fact:
     disks_auto_generic__hostvols: |
       {% set res = [] -%}
@@ -27,13 +27,13 @@
       {%- endfor -%}
       {{ res }}
 
-- name: disks_auto_generic | disks_auto_generic__hostvols
+- name: config/disks_auto_generic | disks_auto_generic__hostvols
   debug: msg={{disks_auto_generic__hostvols}}
 
-- name: disks_auto_generic | Mount block devices as individual disks
+- name: config/disks_auto_generic | Mount block devices as individual disks
   block:
     # Create partition-less filesystems.
-    - name: disks_auto_generic | Create filesystem(s) on attached volume(s)
+    - name: config/disks_auto_generic | Create filesystem(s) on attached volume(s)
       become: true
       community.general.filesystem:
         fstype: "{{ item.fstype }}"
@@ -41,7 +41,7 @@
         force: false
       with_items: "{{ disks_auto_generic__hostvols }}"
 
-    - name: disks_auto_generic | Mount created filesytem(s) persistently
+    - name: config/disks_auto_generic | Mount created filesytem(s) persistently
       become: true
       ansible.posix.mount:
         path: "{{ item.mountpoint }}"
@@ -51,7 +51,7 @@
         opts: _netdev
       with_items: "{{ disks_auto_generic__hostvols }}"
 
-    - name: disks_auto_generic | change ownership of mountpoint (if set)
+    - name: config/disks_auto_generic | change ownership of mountpoint (if set)
       become: true
       file:
         path: "{{ item.mountpoint }}"
@@ -63,7 +63,7 @@
   when: (disks_auto_generic__hostvols | map(attribute='mountpoint') | list | unique | count == disks_auto_generic__hostvols | map(attribute='mountpoint') | list | count)
 
 # The following block mounts all attached volumes that have a single, common mountpoint, by creating a logical volume
-- name: disks_auto_generic/lvm | Mount block devices in a single LVM mountpoint through LV/VG
+- name: config/disks_auto_generic/lvm | Mount block devices in a single LVM mountpoint through LV/VG
   block:
     - name: disks_auto_cloud/lvm | Install logical volume management tooling. (apt - Debian/Ubuntu)
       become: true
@@ -80,30 +80,30 @@
       when: ansible_os_family == 'RedHat'
 
     - block:
-        - name: disks_auto_generic/lvm | raid_vols_devices
+        - name: config/disks_auto_generic/lvm | raid_vols_devices
           debug: msg={{ raid_vols_devices }}
 
-        - name: disks_auto_generic/lvm | Create a volume group from all block devices
+        - name: config/disks_auto_generic/lvm | Create a volume group from all block devices
           become: true
           community.general.lvg:
             vg: "{{ lvmparams.vg_name }}"
             pvs: "{{ raid_vols_devices | sort | join(',') }}"
 
-        - name: disks_auto_generic/lvm | Create a logical volume from volume group
+        - name: config/disks_auto_generic/lvm | Create a logical volume from volume group
           become: true
           community.general.lvol:
             vg: "{{ lvmparams.vg_name }}"
             lv: "{{ lvmparams.lv_name }}"
             size: "{{ lvmparams.lv_size }}"
 
-        - name: disks_auto_generic/lvm | Create filesystem(s) on attached volume(s)
+        - name: config/disks_auto_generic/lvm | Create filesystem(s) on attached volume(s)
           become: true
           community.general.filesystem:
             fstype: "{{ disks_auto_generic__hostvols[0].fstype }}"
             dev: "/dev/{{ lvmparams.vg_name }}/{{ lvmparams.lv_name }}"
             force: false
 
-        - name: disks_auto_generic/lvm | Mount created filesytem(s) persistently
+        - name: config/disks_auto_generic/lvm | Mount created filesytem(s) persistently
           become: true
           ansible.posix.mount:
             path: "{{ disks_auto_generic__hostvols[0].mountpoint }}"

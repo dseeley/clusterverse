@@ -1,11 +1,11 @@
 ---
 
-- name: Gather only the facts needed
+- name: config | Gather only the facts needed
   ansible.builtin.setup: { gather_subset: ["os_family", "network"] }
 
-- name: Disable unattended-upgrade and apt-daily timers. Wait for in-flight updates to finish.
+- name: config | Disable unattended-upgrade and apt-daily timers. Wait for in-flight updates to finish.
   block:
-    - name: Disable unattended-upgrades and apt-daily timers
+    - name: config | Disable unattended-upgrades and apt-daily timers
       become: true
       systemd:
         name: "{{ item }}"
@@ -20,24 +20,25 @@
         - 'apt-daily-upgrade.service'
         - 'unattended-upgrades.service'
 
-    - name: r__systemd__disable_apt_services
+    - name: config | r__systemd__disable_apt_services
       debug: msg="{{r__systemd__disable_apt_services}}"
 
-    - name: Wait for in-flight updates to finish
+    - name: config | Wait for in-flight updates to finish
       become: true
-      shell: "while fuser /var/lib/dpkg/{{ item }} -v 2>&1; do sleep 5; done;"
+      shell: "while fuser {{ item }} -v 2>&1; do sleep 5; done;"
       loop:
-        - lock
-        - lock-frontend
+        - /var/lib/apt/lists/lock
+        - /var/lib/dpkg/lock
+        - /var/lib/dpkg/lock-frontend
   when: ansible_os_family == 'Debian'
 
-- name: Run cloud-specific config (if defined)
+- name: config | Run cloud-specific config (if defined)
   include_tasks: "{{ item__include_tasks }}"
   loop: "{{ query('first_found', params) }}"
   loop_control: { loop_var: item__include_tasks }   #This mechanism (to include_tasks only when the file exists), also creates a loop iterator 'item' that it sends to the included tasks.  If they also have loops, we get "The loop variable 'item' is already in use" warning.
   vars: { params: { files: ["config_{{cluster_vars.type}}.yml"], skip: true } }
 
-- name: Disable requiretty in sudoers to enable pipelining
+- name: config | Disable requiretty in sudoers to enable pipelining
   become: true
   lineinfile:
     dest: /etc/sudoers
@@ -47,7 +48,7 @@
   vars:
     ansible_ssh_pipelining: false
 
-- name: Add hostname to hosts (gives hostname resolution without calling out to DNS.  Needed on Ubuntu.)
+- name: config | Add hostname to hosts (gives hostname resolution without calling out to DNS.  Needed on Ubuntu.)
   become: true
   lineinfile:
     path: /etc/hosts
@@ -57,7 +58,7 @@
 #    line: '127.0.1.1 {{inventory_hostname}}'
     insertbefore: "BOF"
 
-- name: Create /var/log/journal
+- name: config | Create /var/log/journal
   become: true
   file:
     path: "/var/log/journal"
@@ -65,38 +66,37 @@
     mode: '0755'
   when: (static_journal is defined and static_journal|bool)
 
-- name: Create partition table, format and attach volumes - AWS, GCP or Azure
+- name: config | Create partition table, format and attach volumes - AWS, GCP or Azure
   include_tasks: disks_auto_cloud.yml
   when: cluster_vars.type in ["aws", "gcp", "azure", "libvirt"]
 
-- name: Create partition table, format and attach volumes - generic
+- name: config | Create partition table, format and attach volumes - generic
   include_tasks: disks_auto_generic.yml
   when: cluster_vars.type not in ["aws", "gcp", "azure", "libvirt"]
 
-- name: only install chrony if NTP is not installed already (Ubuntu>20.04 already either install Chrony or systemd-timesyncd)
+- name: config | only install chrony if NTP is not installed already (Ubuntu>20.04 already either install Chrony or systemd-timesyncd)
   block:
-  - name: Check whether timedatectl is already syncing with a preinstalled ntp client
+  - name: config | Check whether timedatectl is already syncing with a preinstalled ntp client
     become: true
     command: "timedatectl show --property=NTP --value"
     ignore_errors: true           #If this command fails, just install chrony (even though it's probably just an old version <=18.04 of timedatectl)
     register: r__command_netplan
 
-  - name: "debug 'timedatectl show --property=NTP --value'"
+  - name: config | "debug 'timedatectl show --property=NTP --value'"
     debug: msg="{{r__command_netplan}}"
 
-  - name: Install chrony (NTP client)
+  - name: config | Install chrony (NTP client)
     include_tasks: chrony.yml
     when: chrony_install|bool  and  r__command_netplan.stdout != "yes"
 
-- name: Update packages (when pkgupdate is defined)
-  include_tasks: pkgupdate.yml
-  when: pkgupdate is defined and (pkgupdate == 'always' or (pkgupdate in ['onCreate', 'on_create'] and inventory_hostname in (hostvars['localhost'].cluster_hosts_created | json_query('[].hostname'))))
+- name: config | Manage (update/add/remove) packages
+  include_tasks: pkgs.yml
 
-- name: Set hostname (e.g. AWS doesn't set it automatically)
+- name: config | Set hostname (e.g. AWS doesn't set it automatically)
   become: true
   hostname:
     name: "{{inventory_hostname.split('.')[0]}}"
 
-- name: create DNS A records
+- name: config | create DNS A records
   include_tasks: create_dns_a.yml
   when: (cluster_vars.dns_server is defined and cluster_vars.dns_server != "") and (cluster_vars.dns_user_domain is defined and cluster_vars.dns_user_domain != "")
