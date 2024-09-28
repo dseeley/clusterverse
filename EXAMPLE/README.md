@@ -52,6 +52,7 @@ ansible-playbook cluster.yml -e buildenv=sandbox -e cloud_type=esxifree --vault-
 ### Optional extra variables:
 + `-e app_name=<nginx>` - Normally defined in `/cluster_defs/`.  The name of the application cluster (e.g. 'couchbase', 'nginx'); becomes part of cluster_name
 + `-e app_class=<proxy>` - Normally defined in `/cluster_defs/`.  The class of application (e.g. 'database', 'webserver'); becomes part of the fqdn
++ `-e allow_empty_hosttype_in_hostname=[true|false]` - Allow empty hosttype in hostname when there is only one hosttype in the cluster.
 + `-e clean=[current|retiring|redeployfail|_all_]` - Deletes VMs in `lifecycle_state`, or `_all_`, as well as networking and security groups
 + `-e pkgupdate=[always|on_create]` - Upgrade the OS packages (not good for determinism).  `on_create` only upgrades when creating the VM for the first time.
 + `-e reboot_on_package_upgrade=true` - After updating packages, performs a reboot on all nodes.

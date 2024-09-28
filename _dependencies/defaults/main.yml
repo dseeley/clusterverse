@@ -22,6 +22,9 @@ chrony_install: true
 # NTP servers for chrony
 chrony_ntp_servers: "{{ ['169.254.169.123 prefer iburst minpoll 4 maxpoll 4'] if cluster_vars.type == 'aws' else ['metadata.google.internal'] if cluster_vars.type == 'gcp' else ['pool.ntp.org'] }}"
 
+# Whether to allow empty hosttype in hostname, when there is only one hosttype in the cluster
+allow_empty_hosttype_in_hostname: true
+
 # remove snapd for ubuntu
 remove_snapd: true
 
