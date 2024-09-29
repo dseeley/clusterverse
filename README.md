@@ -8,11 +8,11 @@ A full-lifecycle, immutable cloud infrastructure cluster management **role**, us
 **clusterverse** is designed to manage base-vm infrastructure that underpins cluster-based infrastructure, for example, Couchbase, Kafka, Elasticsearch, or Cassandra.
 
 ## Contributing
-Contributions are welcome and encouraged.  Please see [CONTRIBUTING.md](https://github.com/sky-uk/clusterverse/blob/master/CONTRIBUTING.md) for details.
+Contributions are welcome and encouraged.  Please see [CONTRIBUTING.md](https://github.com/dseeley/clusterverse/blob/master/CONTRIBUTING.md) for details.
 
 ## Requirements
 + Ansible >= 9.3.0
-+ Python >= 3.10
++ Python >= 3.8
 
 
 ### AWS
@@ -173,32 +173,32 @@ Credentials can be encrypted inline in the playbooks using [ansible-vault](https
 
 ---
 ## Usage
-**clusterverse** is an Ansible _role_, and as such must be imported into your \<project\>/roles directory.  There is a full-featured example in the [/EXAMPLE](https://github.com/sky-uk/clusterverse/tree/master/EXAMPLE) subdirectory.
+**clusterverse** is an Ansible _role_, and as such must be imported into your \<project\>/roles directory.  There is a full-featured example in the [/EXAMPLE](https://github.com/dseeley/clusterverse/tree/master/EXAMPLE) subdirectory.
 
-To import the role into your project, create a [`requirements.yml`](https://github.com/sky-uk/clusterverse/blob/master/EXAMPLE/requirements.yml) file containing:
+To import the role into your project, create a [`requirements.yml`](https://github.com/dseeley/clusterverse/blob/master/EXAMPLE/requirements.yml) file containing:
 ```
 roles:
   - name: clusterverse
-    src: https://github.com/sky-uk/clusterverse
+    src: https://github.com/dseeley/clusterverse
     version: master          ## branch, hash, or tag 
 ```
-+ If you use a `cluster.yml` file similar to the example found in [EXAMPLE/cluster.yml](https://github.com/sky-uk/clusterverse/blob/master/EXAMPLE/cluster.yml), clusterverse will be installed from Ansible Galaxy _automatically_ on each run of the playbook.
++ If you use a `cluster.yml` file similar to the example found in [EXAMPLE/cluster.yml](https://github.com/dseeley/clusterverse/blob/master/EXAMPLE/cluster.yml), clusterverse will be installed _automatically_ on each run of the playbook.
 
 + To install it manually: `ansible-galaxy install -r requirements.yml -p /<project>/roles/`
 
 
 ### Invocation
 
-_**For full invocation examples and command-line arguments, please see the [example README.md](https://github.com/sky-uk/clusterverse/blob/master/EXAMPLE/README.md)**_
+_**For full invocation examples and command-line arguments, please see the [example README.md](https://github.com/dseeley/clusterverse/blob/master/EXAMPLE/README.md)**_
 
 The role is designed to run in two modes:
 #### Deploy (also performs _scaling_ and _repairs_)
-+ A playbook based on the [cluster.yml example](https://github.com/sky-uk/clusterverse/tree/master/EXAMPLE/cluster.yml) will be needed.
++ A playbook based on the [cluster.yml example](https://github.com/dseeley/clusterverse/tree/master/EXAMPLE/cluster.yml) will be needed.
 + The `cluster.yml` sub-role immutably deploys a cluster from the config defined above.  If it is run again (with no changes to variables), it will do nothing.  If the cluster variables are changed (e.g. add a host), the cluster will reflect the new variables (e.g. a new host will be added to the cluster.  Note: it _will not remove_ nodes, nor, usually, will it reflect changes to disk volumes - these are limitations of the underlying cloud modules).
 
 
 #### Redeploy
-+ A playbook based on the [redeploy.yml example](https://github.com/sky-uk/clusterverse/tree/master/EXAMPLE/redeploy.yml) will be needed.
++ A playbook based on the [redeploy.yml example](https://github.com/dseeley/clusterverse/tree/master/EXAMPLE/redeploy.yml) will be needed.
 + The `redeploy.yml` sub-role will completely redeploy the cluster; this is useful for example to upgrade the underlying operating system version.
 + It supports `canary` deploys.  The `canary` extra variable must be defined on the command line set to one of: `start`, `finish`, `filter`, `none` or `tidy`.
 + It contains callback hooks:
