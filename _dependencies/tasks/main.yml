@@ -91,7 +91,6 @@
         galaxy_collections: "{{lookup('pipe', 'ansible-galaxy collection list --format=json', errors='ignore') | from_json | json_query(\"*\") | combine }}"
 
     - assert: { that: "app_name is defined and app_name != ''", fail_msg: "Please define app_name" }
-    - assert: { that: "app_class is defined and app_class != ''", fail_msg: "Please define app_class" }
     - assert: { that: "cluster_vars is defined", fail_msg: "Please define cluster_vars" }
     - assert: { that: "buildenv is defined and cluster_vars[buildenv] is defined", fail_msg: "Please define buildenv" }
 

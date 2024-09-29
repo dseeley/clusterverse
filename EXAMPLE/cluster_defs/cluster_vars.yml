@@ -2,8 +2,6 @@
 
 redeploy_schemes_supported: ['_scheme_addallnew_rmdisk_rollback', '_scheme_addnewvm_rmdisk_rollback', '_scheme_rmvm_rmdisk_only', '_scheme_rmvm_keepdisk_rollback', '_noredeploy_scale_in_only']
 
-test_touch_disks: false
-
 app_name: "{{lookup('pipe', 'whoami') | lower}}-test"   # The name of the application cluster (e.g. 'couchbase', 'nginx'); becomes part of cluster_name.  Provided is a default to ensure no accidental overwriting.
 app_class: "test"                                       # The class of application (e.g. 'database', 'webserver'); becomes part of the fqdn
 
