@@ -1,15 +1,23 @@
 ---
 
-- name: confin/pkgs | remove modemmanager
-  block:
-    - name: config/pkgs | remove modemmanager
-      become: true
-      ansible.builtin.apt:
-        name: ['modemmanager']
-        state: absent
-        allow_change_held_packages: true
-        autoremove: true
-        purge: true
+- name: config/pkgs | remove fwupd
+  become: true
+  ansible.builtin.apt:
+    name: ['fwupd']
+    state: absent
+    allow_change_held_packages: true
+    autoremove: true
+    purge: true
+  when: ansible_os_family == 'Debian'
+
+- name: config/pkgs | remove modemmanager
+  become: true
+  ansible.builtin.apt:
+    name: ['modemmanager']
+    state: absent
+    allow_change_held_packages: true
+    autoremove: true
+    purge: true
   when: ansible_os_family == 'Debian'
 
 - name: confin/pkgs | remove snapd
