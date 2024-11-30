@@ -5,10 +5,10 @@ def PROJECT_URL_DEFAULT = "https://github.com/dseeley/clusterverse"
 def PROJECT_BRANCH_DEFAULT = "master"       //Set the default git branch to use if we're not running an SCM job (e.g. if we're copying/pasting into a pipeline script)
 
 properties([
-        parameters([
-                string(name: 'NEW_VERSION', defaultValue: "", description: "Specify either the version to be created (e.g.: v1.0.0), or 'next' to apply the next patch version."),
-                credentials(name: 'GIT_CREDS', credentialType: 'com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl', defaultValue: 'GITHUB_SVC_USER', description: 'Jenkins username/password credentials for GitHub', required: false)
-        ])
+    parameters([
+        string(name: 'NEW_VERSION', defaultValue: "", description: "Specify either the version to be created (e.g.: v1.0.0), or 'next' to apply the next patch version."),
+        credentials(name: 'GIT_CREDS', credentialType: 'com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl', defaultValue: 'GITHUB_SVC_USER', description: 'Jenkins username/password credentials for GitHub', required: false)
+    ])
 ])
 
 node {

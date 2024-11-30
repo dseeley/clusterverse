@@ -163,4 +163,3 @@
         new_ip: "{{hostvars[item.hostname].ansible_host}}"
       become: false
       run_once: true
-  when: wait_for_dns is defined and wait_for_dns|bool

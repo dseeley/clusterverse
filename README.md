@@ -1,9 +1,14 @@
 # clusterverse  &nbsp; [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) ![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen.svg)
 A full-lifecycle, immutable cloud infrastructure cluster management **role**, using Ansible.
 + **Multi-cloud:** clusterverse can manage cluster lifecycle in AWS, GCP, Azure, libvirt (Qemu) and ESXi (standalone host only, not vCentre).
-+ **Deploy:**  You define your infrastructure as code (in Ansible yaml), and clusterverse will deploy it 
-+ **Scale-up:**  If you change the cluster definitions and rerun the deploy, new nodes will be added.
-+ **Redeploy (e.g. up-version):** If you need to up-version, or replace the underlying OS, (i.e. to achieve fully immutable, zero-patching redeploys), the `redeploy.yml` playbook will replace each node in the cluster (via various redeploy schemes), and rollback if any failures occur. 
++ **DNS:**  clusterverse can create DNS entries for your nodes, and remove them when the nodes are deleted.
++ **_Deploy_:**  You define your infrastructure as code and clusterverse will deploy it.
+  + **Scale-up:**  If you update the cluster definitions with additional nodes and rerun the deploy, new nodes will be added.
+  + **Repair:**  If a node fails, clusterverse can repair it (replacing the node with a new one).
++ **_Redeploy_ (e.g. replace OS, or increment cluster version):** Akin to an cloud-managed service - if you need to up-version, or replace the underlying OS, (i.e. to achieve fully immutable infrastructure), the `redeploy.yml` playbook will replace each node in the cluster (via pluggable redeploy schemes)
+  + **zero-downtime:**  Redeploys can be done with zero-downtime, (assuming the cluster topology supports it).
+  + **canary redeploy:**  Redeploys can be done in a canary fashion, to ensure that the new nodes are working before the old nodes are removed.
+  + **rollback:**  If a deploy or redeploy fails, clusterverse can rollback to the previous state (depending on the scheme used).
 
 **clusterverse** is designed to manage base-vm infrastructure that underpins cluster-based infrastructure, for example, Couchbase, Kafka, Elasticsearch, or Cassandra.
 
@@ -12,8 +17,7 @@ Contributions are welcome and encouraged.  Please see [CONTRIBUTING.md](https://
 
 ## Requirements
 + Ansible >= 9.3.0
-+ Python >= 3.8
-
++ Python >= 3.9
 
 ### AWS
 + AWS account with IAM rights to create EC2 VMs and security groups in the chosen VPCs/subnets.  Place the credentials in:
@@ -66,10 +70,10 @@ DNS is optional.  If unset, no DNS names will be created.  If DNS is required, y
 Credentials to the DNS server will also be required. These are specified in the `cluster_vars` variable described below.
 
 
-### Cluster Definition Variables
+## Cluster Definition Variables
 Clusters are defined as code within Ansible yaml files that are imported at runtime.  Because clusters are built from scratch on the localhost, the automatic Ansible `group_vars` inclusion cannot work with anything except the special `all.yml` group (actual `groups` need to be in the inventory, which cannot exist until the cluster is built).  The `group_vars/all.yml` file is instead used to bootstrap _merge_vars_.
 
-#### merge_vars
+### merge_vars
 Clusterverse is designed to be used to deploy the same clusters in multiple clouds and multiple environments, potentially using similar configurations.  In order to avoid duplicating configuration (adhering to the [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself) principle), a new [action plugin](https://docs.ansible.com/ansible/latest/dev_guide/developing_plugins.html#action-plugins) has been developed (called `merge_vars`) to use in place of the standard `include_vars`, which allows users to define the variables hierarchically, and include (and potentially override) those defined before them.  This plugin is similar to `include_vars`, but when it finds dictionaries that have already been defined, it _combines_ them instead of replacing them. 
 
 ```yaml
@@ -144,9 +148,9 @@ This functionality offers no advantages over simply defining the same cluster ya
 
 <br/>
 
-### Cloud Credential Management
-Credentials can be encrypted inline in the playbooks using [ansible-vault](https://docs.ansible.com/ansible/latest/user_guide/vault.html).
-+ Because multiple environments are supported, it is recommended to use [vault-ids](https://docs.ansible.com/ansible/latest/user_guide/vault.html#managing-multiple-passwords-with-vault-ids), and have credentials per environment (e.g. to help avoid accidentally running a deploy on prod).
+## Cloud Credential Management
+Credentials can be encrypted inline in the playbooks using [ansible-vault](https://docs.ansible.com/ansible/latest/vault_guide/index.html).
++ Because multiple environments are supported, it is recommended to use [vault-ids](https://docs.ansible.com/ansible/latest/vault_guide/vault_using_encrypted_content.html#passing-vault-ids), and have credentials per environment (e.g. to help avoid accidentally running a deploy on prod).
 + There is a small script (`.vaultpass-client.py`) that returns a password stored in an environment variable (`VAULT_PASSWORD_BUILDENV`) to ansible. Setting this variable is mandatory within Clusterverse as if you need to decrypt sensitive data within `ansible-vault`, the password set within the variable will be used. This is particularly useful for running within Jenkins.
   + `export VAULT_PASSWORD_BUILDENV=<'dev/stage/prod' password>`
 + To encrypt sensitive information, you must ensure that your current working dir can see the script `.vaultpass-client.py` and `VAULT_PASSWORD_BUILDENV` has been set:
@@ -170,34 +174,93 @@ Credentials can be encrypted inline in the playbooks using [ansible-vault](https
   + `echo '$ANSIBLE_VAULT;1.2;AES256;sandbox`
   `86338616...33630313034' | ansible-vault decrypt --ask-vault-pass`
 
-
 ---
-## Usage
+
+# Usage
 **clusterverse** is an Ansible _role_, and as such must be imported into your \<project\>/roles directory.  There is a full-featured example in the [/EXAMPLE](https://github.com/dseeley/clusterverse/tree/master/EXAMPLE) subdirectory.
 
-To import the role into your project, create a [`requirements.yml`](https://github.com/dseeley/clusterverse/blob/master/EXAMPLE/requirements.yml) file containing:
+To import the role (and dependent collections) into your project, create a [`requirements.yml`](https://github.com/dseeley/clusterverse/blob/master/EXAMPLE/requirements.yml) file containing:
 ```
 roles:
   - name: clusterverse
     src: https://github.com/dseeley/clusterverse
     version: master          ## branch, hash, or tag 
+
+collections:
+  - name: dseeley.nested_playbook
+    source: https://galaxy.ansible.com
+
+  - name: dseeley.tasks_serial
+    source: https://galaxy.ansible.com
 ```
 + If you use a `cluster.yml` file similar to the example found in [EXAMPLE/cluster.yml](https://github.com/dseeley/clusterverse/blob/master/EXAMPLE/cluster.yml), clusterverse will be installed _automatically_ on each run of the playbook.
+  + To install it manually: `ansible-galaxy install -r requirements.yml -p /<project>/roles/`
+  + It will, however, not install the required _collections_.  These must be installed manually (`ansible-galaxy collection install --ignore-errors -fr requirements.yml`)
 
-+ To install it manually: `ansible-galaxy install -r requirements.yml -p /<project>/roles/`
+<br/>
+
+### Clusterverse supports two main modes of operation:
++ Deploy ([cluster.yml](https://github.com/dseeley/clusterverse/tree/master/EXAMPLE/cluster.yml)) - Deploys a cluster from scratch, or repairs a cluster, or scales it up (note: not _down_).
++ Redeploy ([redeploy.yml](https://github.com/dseeley/clusterverse/tree/master/EXAMPLE/redeploy.yml)) - Redeploys the cluster, replacing all the nodes entirely.
 
 
-### Invocation
-
-_**For full invocation examples and command-line arguments, please see the [example README.md](https://github.com/dseeley/clusterverse/blob/master/EXAMPLE/README.md)**_
-
-The role is designed to run in two modes:
-#### Deploy (also performs _scaling_ and _repairs_)
+## Deploy (also performs _scaling_ and _repairs_)
 + A playbook based on the [cluster.yml example](https://github.com/dseeley/clusterverse/tree/master/EXAMPLE/cluster.yml) will be needed.
 + The `cluster.yml` sub-role immutably deploys a cluster from the config defined above.  If it is run again (with no changes to variables), it will do nothing.  If the cluster variables are changed (e.g. add a host), the cluster will reflect the new variables (e.g. a new host will be added to the cluster.  Note: it _will not remove_ nodes, nor, usually, will it reflect changes to disk volumes - these are limitations of the underlying cloud modules).
 
+### AWS:
+```
+ansible-playbook cluster.yml -e buildenv=sandbox -e clusterid=testid -e cloud_type=aws -e region=eu-west-1 --vault-id=sandbox@.vaultpass-client.py
+ansible-playbook cluster.yml -e buildenv=sandbox -e clusterid=testid -e cloud_type=aws -e region=eu-west-1 --vault-id=sandbox@.vaultpass-client.py --tags=clusterverse_clean -e clean=_all_
+ansible-playbook cluster.yml -e buildenv=sandbox -e clusterid=test_aws_euw1 --vault-id=sandbox@.vaultpass-client.py
+ansible-playbook cluster.yml -e buildenv=sandbox -e clusterid=test_aws_euw1 --vault-id=sandbox@.vaultpass-client.py --tags=clusterverse_clean -e clean=_all_
+```
+### GCP:
+```
+ansible-playbook cluster.yml -e buildenv=sandbox -e clusterid=testid -e cloud_type=gcp -e region=europe-west1 --vault-id=sandbox@.vaultpass-client.py
+ansible-playbook cluster.yml -e buildenv=sandbox -e clusterid=testid -e cloud_type=gcp -e region=europe-west1 --vault-id=sandbox@.vaultpass-client.py --tags=clusterverse_clean -e clean=_all_
+ansible-playbook cluster.yml -e buildenv=sandbox -e clusterid=test_gcp_euw1 --vault-id=sandbox@.vaultpass-client.py
+ansible-playbook cluster.yml -e buildenv=sandbox -e clusterid=test_gcp_euw1 --vault-id=sandbox@.vaultpass-client.py --tags=clusterverse_clean -e clean=_all_
+```
+### Azure:
+```
+ansible-playbook cluster.yml -e buildenv=sandbox -e cloud_type=azure -e region=westeurope --vault-id=sandbox@.vaultpass-client.py
+ansible-playbook cluster.yml -e buildenv=sandbox -e cloud_type=azure -e region=westeurope --vault-id=sandbox@.vaultpass-client.py --tags=clusterverse_clean -e clean=_all_
+```
+### libvirt:
+```
+ansible-playbook cluster.yml -e buildenv=sandbox -e cloud_type=libvirt --vault-id=sandbox@.vaultpass-client.py
+ansible-playbook cluster.yml -e buildenv=sandbox -e cloud_type=libvirt --vault-id=sandbox@.vaultpass-client.py --tags=clusterverse_clean -e clean=_all_
+```
+### ESXi (free):
+```
+ansible-playbook cluster.yml -e buildenv=sandbox -e cloud_type=esxifree --vault-id=sandbox@.vaultpass-client.py
+ansible-playbook cluster.yml -e buildenv=sandbox -e cloud_type=esxifree --vault-id=sandbox@.vaultpass-client.py --tags=clusterverse_clean -e clean=_all_
+```
 
-#### Redeploy
+### Mandatory command-line variables:
++ `-e buildenv=<sandbox>` - The environment (dev, stage, etc), which must be an attribute of `cluster_vars` (i.e. `{{cluster_vars[build_env]}}`)
++ `-e cloud_type=[aws|gcp|azure|libvirt|esxifree]` - The cloud type.
+
+### Optional extra variables:
++ `-e app_name=<nginx>` - Normally defined in `/cluster_defs/`.  The name of the application cluster (e.g. 'couchbase', 'nginx'); becomes part of cluster_name
++ `-e omit_singleton_hosttype_from_hostname=[true|false]` - When there is only one hosttype in the cluster, whether to omit the hosttype from the hostname, (e.g. bastion-dev-node-a0 -> bastion-dev-a0).  DO NOT use when there is a chance you will need it in future.
++ `-e clean=[current|retiring|redeployfail|_all_]` - Deletes VMs in `lifecycle_state`, or `_all_` (all states), as well as networking and security groups
++ `-e pkgupdate=[always|on_create]` - Upgrade the OS packages (not good for determinism).  `on_create` only upgrades when creating the VM for the first time.
++ `-e reboot_on_package_upgrade=true` - After updating packages, performs a reboot on all nodes.
++ `-e static_journal=true` - Creates /var/log/journal directory, which will keep a permanent record of journald logs in systemd machines (normally ephemeral)
++ `-e create_gcp_network=true` - Create GCP network and subnetwork (probably needed if creating from scratch and using public network)
++ `-e delete_gcp_network_on_clean=true` - Delete GCP network and subnetwork when run with `-e clean=_all_`
++ `-e cluster_vars_override='{\"dev.hosttype_vars.sys.vms_by_az\":{\"b\":1,\"c\":1,\"d\":0},\"inventory_ip\":\"private\",\"dns_nameserver_zone\":\"\"}'` - Ability to override multiple cluster_vars dictionary elements from the command line.  NOTE: there must be NO SPACES in this string.  You should escape the quotes within the string so it is passed through to redeploy correctly.
+
+### Tags
++ `clusterverse_clean`: Deletes all VMs and security groups (also needs the extra variable `clean` (`[current|retiring|redeployfail|_all_]`)
++ `clusterverse_create`: Creates only EC2 VMs, based on the hosttype_vars values in `/cluster_defs/`
++ `clusterverse_config`: Updates packages, sets hostname, adds hosts to DNS
+
+<br/>
+
+## Redeploy
 + A playbook based on the [redeploy.yml example](https://github.com/dseeley/clusterverse/tree/master/EXAMPLE/redeploy.yml) will be needed.
 + The `redeploy.yml` sub-role will completely redeploy the cluster; this is useful for example to upgrade the underlying operating system version.
 + It supports `canary` deploys.  The `canary` extra variable must be defined on the command line set to one of: `start`, `finish`, `filter`, `none` or `tidy`.
@@ -254,7 +317,32 @@ The role is designed to run in two modes:
       + (Azure functionality coming soon)
   + **_noredeploy_scale_in_only**
     + A special 'not-redeploy' scheme, which scales-in a cluster without needing to redeploy every node.
-    + For each node in the cluster:
+    + For each node in the current cluster that is not in the target cluster:
       + Run `predeleterole` on the node
       + Shut down the node.
     + If `canary=start`, only the first node is shut-down.  If `canary=finish`, only the remaining (non-first), nodes are shutdown.  If `canary=none`, all nodes are shut-down.
+
+<br/>
+
+### AWS:
+```
+ansible-playbook redeploy.yml -e buildenv=sandbox -e cloud_type=aws -e region=eu-west-1 --vault-id=sandbox@.vaultpass-client.py -e canary=none
+```
+### GCP:
+```
+ansible-playbook redeploy.yml -e buildenv=sandbox -e cloud_type=gcp -e region=europe-west1 --vault-id=sandbox@.vaultpass-client.py -e canary=none
+```
+### Azure:
+```
+ansible-playbook redeploy.yml -e buildenv=sandbox -e cloud_type=azure -e region=westeurope --vault-id=sandbox@.vaultpass-client.py -e canary=none
+```
+
+### Mandatory extra variables (either command-line or in vars files):
++ `-e buildenv=<sandbox>` - The environment (dev, stage, etc), which must be an attribute of `cluster_vars` defined in `group_vars/<clusterid>/cluster_vars.yml`
++ `-e canary=['start', 'finish', 'filter', 'none', 'tidy']` - Specify whether to start, finish or filter a canary redeploy (or 'none', to redeploy the whole cluster in one command).  See below (`-e canary_filter_regex`) for `canary=filter`.
++ `-e redeploy_scheme=<subrole_name>` - The scheme corresponds to one defined in `roles/clusterverse/redeploy`
+
+### Optional extra variables:
++ `-e canary_tidy_on_success=[true|false]` - Whether to run the tidy (remove the replaced VMs and DNS) on successful redeploy
++ `-e canary_filter_regex='^.*-test-sysdisks.*$'` - Sets the regex pattern used to filter the target hosts by their hostnames - mandatory when using `canary=filter`
++ `-e myhosttypes="data,ingress"`- Defines which host type to redeploy (e.g. if you want to redeploy data and ingress nodes before dashboard nodes).  If not defined it will redeploy all host types
