@@ -69,6 +69,6 @@
     - name: config/pkgs | reboot and wait (if reboot_on_package_upgrade==true)
       become: true
       ansible.builtin.reboot:
-      timeout: 120
+      timeout: 600
       when: (reboot_on_package_upgrade is defined and reboot_on_package_upgrade|bool) and (apt_packages_update.changed or yum_packages_update.changed)
   when: pkgupdate is defined and (pkgupdate == 'always' or (pkgupdate in ['onCreate', 'on_create'] and inventory_hostname in (hostvars['localhost'].cluster_hosts_created | default([]) | json_query('[].hostname'))))
