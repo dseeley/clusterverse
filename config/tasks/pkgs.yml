@@ -67,15 +67,8 @@
       when: ansible_os_family == 'RedHat'
 
     - name: config/pkgs | reboot and wait (if reboot_on_package_upgrade==true)
-      block:
-        - name: config/pkgs | reboot and wait (if reboot_on_package_upgrade==true) [Revert to shell command because Ubuntu 24.04 has issues with ansible.builtin.reboot - reboot loops and systemd issue (Transaction for systemd-hostnamed.service/start is destructive (systemd-modules-load.service has 'stop' job queued, but 'start' is included in transaction))])]
-          become: true
-          shell: sleep 2 && /sbin/shutdown -r now "Ansible system package upgraded and rebooted" && sleep 5
-          async: 1
-          poll: 0
-
-        - name: config/pkgs | Wait for the reboot to complete.
-          ansible.builtin.wait_for_connection:
-            timeout: 120
+      become: true
+      ansible.builtin.reboot:
+      timeout: 120
       when: (reboot_on_package_upgrade is defined and reboot_on_package_upgrade|bool) and (apt_packages_update.changed or yum_packages_update.changed)
   when: pkgupdate is defined and (pkgupdate == 'always' or (pkgupdate in ['onCreate', 'on_create'] and inventory_hostname in (hostvars['localhost'].cluster_hosts_created | default([]) | json_query('[].hostname'))))
