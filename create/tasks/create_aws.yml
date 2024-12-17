@@ -51,8 +51,8 @@
 #        spot_type: "{{cluster_vars[buildenv].hosttype_vars[item.hosttype].spot.spot_type | default('persistent')}}"
         image_id: "{{ item.image }}"
         vpc_subnet_id: "{{item.vpc_subnet_id}}"
-        network:
-          assign_public_ip: "{{ true if ('assign_public_ip' in cluster_vars and cluster_vars.assign_public_ip in ['dynamic'])  else  false }}"
+        network_interfaces:
+          - { assign_public_ip: "{{ true if ('assign_public_ip' in cluster_vars and cluster_vars.assign_public_ip in ['dynamic'])  else  false }}" }
         security_groups: "{{ cluster_vars.secgroups_existing | default([]) + ([r__ec2_group.group_name] if r__ec2_group.group_name is defined else []) }}"
         wait: true
         state: running
@@ -92,14 +92,21 @@
 
     - name: create/aws | Wait for aws instance creation to complete
       async_status: { jid: "{{ item.ansible_job_id }}" }
-      register: r__async_status__ec2
-      until: r__async_status__ec2.finished
+      register: r__async_status__ec2_instance
+      until: r__async_status__ec2_instance.finished
       delay: 3
       retries: 300
       with_items: "{{r__ec2_instance.results}}"
 
-    - name: create/aws | r__async_status__ec2.results
-      debug: msg={{r__async_status__ec2.results}}
+    - name: create/aws | Set a fact containing newly-created hosts
+      set_fact:
+        cluster_hosts_created:  "{{new_hosts | difference(existing_hosts)}}"
+      vars:
+        existing_hosts: "{{cluster_hosts_state | default([]) | json_query('[].name')}}"
+        new_hosts: "{{r__async_status__ec2_instance.results | default([]) | json_query('[].instances[].tags.Name')}}"
+
+    - name: create/aws | debug cluster_hosts_created
+      debug: msg="{{cluster_hosts_created}}"
 
     - name: create/aws | Acquire cluster_hosts_state after creating (or confirming already-created), as ec2_instance does not provide instance info if the vm already existed.
       include_role:
@@ -122,10 +129,6 @@
           Name: "{{ item.name }}"
           cv__cluster_suffix: "{{ cluster_suffix }}"
 
-    - name: create/aws | Set a fact containing the newly-created hosts
-      set_fact:
-        cluster_hosts_created: "{{ r__async_status__ec2.results | json_query(\"[?changed==`true`].item.item\") }}"
-
     - name: create/aws | Attach (or create) volumes where 'src' is present (e.g. inserted as part of _scheme_rmvm_keepdisk_rollback scheme)
       amazon.aws.ec2_vol:
         access_key: "{{cluster_vars[buildenv].aws_access_key}}"
@@ -140,7 +143,7 @@
         volume_size: "{%- if 'src' in item.auto_volume -%}{{omit}}{%- else -%}{{item.auto_volume.volume_size}}{%- endif -%}"
         volume_type: "{{item.auto_volume.volume_type}}"
         iops: "{{item.auto_volume.iops | default(omit)}}"
-        throughput: "{{item.auto_volume.throughput | default(omit)}}"        
+        throughput: "{{item.auto_volume.throughput | default(omit)}}"
         delete_on_termination: true
       loop: "{{ cluster_hosts_target_denormalised_by_volume | selectattr('auto_volume.src', 'defined') | list }}"
       async: 7200
@@ -149,14 +152,14 @@
 
     - name: create/aws | Wait for volume creation/ attachment to complete
       async_status: { jid: "{{ item.ansible_job_id }}" }
-      register: r__async_status__ec2_vol
-      until: r__async_status__ec2_vol.finished
+      register: r__async_status__ec2_instance_vol
+      until: r__async_status__ec2_instance_vol.finished
       delay: 3
       retries: 300
       with_items: "{{r__ec2_vol.results}}"
 
-#    - name: create/aws | r__async_status__ec2_vol
-#      debug: msg={{r__async_status__ec2_vol}}
+#    - name: create/aws | r__async_status__ec2_instance_vol
+#      debug: msg={{r__async_status__ec2_instance_vol}}
 
     - name: create/aws | Set the ec2 volume name tag
       amazon.aws.ec2_tag:

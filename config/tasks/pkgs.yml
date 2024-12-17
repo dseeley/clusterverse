@@ -48,14 +48,12 @@
 - name: config/pkgs | upgrade all packages, reboot and wait (if reboot_on_package_upgrade==true)
   block:
     - name: config/pkgs | upgrade all packages (apt - Debian/Ubuntu)
-      block:
-        - name: config/pkgs | run apt dist-upgrade
-          become: true
-          ansible.builtin.apt:
-            autoremove: true
-            update_cache: true
-            upgrade: dist
-          register: apt_packages_update
+      become: true
+      ansible.builtin.apt:
+        autoremove: true
+        update_cache: true
+        upgrade: dist
+      register: apt_packages_update
       when: ansible_os_family == 'Debian'
 
     - name: config/pkgs | upgrade all packages (yum - RedHat/CentOS)
