@@ -3,7 +3,7 @@
 - name: Preflight assertions (early)
   block:
     - name: preflight | Ansible version requirements
-      assert: { that: "(ansible_version.full is version('2.16.4', '>='))", fail_msg: "Ansible core >= 2.16.4 (pypi 9.3.0) is required.  (9.3.0 > pypi >= 9.0 are not supported due to https://github.com/ansible/ansible/issues/82239.)" }
+      assert: { that: "(ansible_version.full is version('2.17.4', '>='))", fail_msg: "Ansible core >= 2.17.4 (pypi >= 10.4.0) is required." }
 
     - name: preflight | merge_dict_vars_list must be defined
       assert: { that: "(merge_dict_vars_list is defined and merge_dict_vars_list | length > 0)", fail_msg: "merge_dict_vars_list must be defined" }

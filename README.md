@@ -16,8 +16,8 @@ A full-lifecycle, immutable cloud infrastructure cluster management **role**, us
 Contributions are welcome and encouraged.  Please see [CONTRIBUTING.md](https://github.com/dseeley/clusterverse/blob/master/CONTRIBUTING.md) for details.
 
 ## Requirements
-+ Ansible >= 9.3.0
-+ Python >= 3.9
++ ansible-core >= 2.17.4 (pypi >= 10.4.0)
++ Python >= 3.8
 
 ### AWS
 + AWS account with IAM rights to create EC2 VMs and security groups in the chosen VPCs/subnets.  Place the credentials in:
