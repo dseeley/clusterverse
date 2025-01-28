@@ -198,7 +198,7 @@
 
 - name: create/libvirt | Set a fact containing the newly-created hosts
   set_fact:
-    cluster_hosts_created: "{{ r__async_status__virt_define.results | json_query(\"[?changed==`true`].item.item\") }}"
+    cluster_hosts_created: "{{ r__async_status__virt_define.results | json_query(\"[?changed==`true`].item.item.hostname\") }}"
 
 - name: create/libvirt | cluster_hosts_created
   debug: msg={{cluster_hosts_created}}

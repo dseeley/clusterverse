@@ -70,4 +70,4 @@
         pre_reboot_delay: 60    # Minimum is 60s (it is converted to minutes).  This is needed so that the module can exit before the VM closes the connection, otherwise (https://github.com/ansible/ansible/issues/47647) occurs.  Symptom is seeing a '255' exit code for the shutdown command, and an exit of "Control master terminated unexpectedly" (it should exit with code 0, and "Received exit status from master 0").
       timeout: 300
       when: (reboot_on_package_upgrade is defined and reboot_on_package_upgrade|bool) and (apt_packages_update.changed or yum_packages_update.changed)
-  when: pkgupdate is defined and (pkgupdate == 'always' or (pkgupdate in ['onCreate', 'on_create'] and inventory_hostname in (hostvars['localhost'].cluster_hosts_created | default([]) | json_query('[].hostname'))))
+  when: pkgupdate is defined and (pkgupdate == 'always' or (pkgupdate in ['onCreate', 'on_create'] and inventory_hostname in (hostvars['localhost'].cluster_hosts_created | default([]) )))

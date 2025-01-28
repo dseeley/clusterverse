@@ -153,7 +153,10 @@
 
     - name: create/gcp | Set a fact containing the newly-created hosts
       set_fact:
-        cluster_hosts_created: "{{ r__async_status__gcp_compute_instance.results | json_query(\"[?item.changed==`true`].item.item\") }}"
+        cluster_hosts_created: "{{ r__async_status__gcp_compute_instance.results | json_query(\"[?item.changed==`true`].item.item.hostname\") }}"
+
+    - name: create/gcp | debug cluster_hosts_created
+      debug: msg="{{cluster_hosts_created}}"
 
     - name: create/gcp | Label the volumes
       google.cloud.gcp_compute_disk:
