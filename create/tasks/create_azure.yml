@@ -134,7 +134,7 @@
     - name: create/azure | Wait for instance creation to complete
       async_status: { jid: "{{ item.ansible_job_id }}" }
       register: r__async_status__azure_rm_virtualmachine
-      until: r__async_status__azure_rm_virtualmachine.finished
+      until: r__async_status__azure_rm_virtualmachine is finished
       delay: 3
       retries: 300
       with_items: "{{r__azure_rm_virtualmachine.results}}"
@@ -242,7 +242,7 @@
 #        - name: create/azure | Wait for disks to create
 #          async_status: { jid: "{{ item.ansible_job_id }}" }
 #          register: r__async_status__r__azure_rm_manageddisk_create
-#          until: r__async_status__r__azure_rm_manageddisk_create.finished
+#          until: r__async_status__r__azure_rm_manageddisk_create is finished
 #          delay: 3
 #          retries: 300
 #          with_items: "{{r__azure_rm_manageddisk_create.results}}"

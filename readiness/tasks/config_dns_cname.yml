@@ -63,7 +63,7 @@
       async_status:
         jid: "{{ item.ansible_job_id }}"
       register: route53_jobs
-      until: route53_jobs.finished
+      until: route53_jobs is finished
       delay: 1
       retries: 300
       run_once: true

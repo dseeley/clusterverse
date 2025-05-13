@@ -9,4 +9,4 @@
     name: "{{item.name}}"
     state: "{% if powerchange_new_state == 'stop' %}shutdown{% else %}running{% endif %}"
   with_items: "{{ hosts_to_powerchange }}"
-  when: hosts_to_powerchange | length
+  when: hosts_to_powerchange | length > 0

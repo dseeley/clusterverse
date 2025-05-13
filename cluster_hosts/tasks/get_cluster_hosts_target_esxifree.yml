@@ -11,48 +11,54 @@
   run_once: true
 
 - name: get_cluster_hosts_target/esxifree | assert that there is an esxi image
-  assert: { that: "r__esxifree_guest_info.virtual_machines | length", fail_msg: "No VM images defined on esxi host {{cluster_vars.esxi.esxi_ip}}" }
+  assert: { that: "r__esxifree_guest_info.virtual_machines | length > 0", fail_msg: "No VM images defined on esxi host {{cluster_vars.esxi.esxi_ip}}" }
 
 - name: get_cluster_hosts_target/esxifree | latest esxi image
   debug: msg={{r__esxifree_guest_info.virtual_machines[-1]['hw_name']}}
 
 - name: get_cluster_hosts_target/esxifree | Create cluster_hosts_target from optional per-VM config, and add volname (derived from the mountpoint)
-  set_fact:
+  ansible.builtin.set_fact:
     cluster_hosts_target: |-
-      {% set res = [] -%}
+      {%- set ns = namespace(res=[]) -%}
       {%- for hosttyped_name, hosttyped in cluster_vars[buildenv].hosttype_vars.items() -%}
+        {%- set updated_volumes = [] -%}
         {%- for hostvol in hosttyped.auto_volumes -%}
           {%- if 'lvmparams' in hosttyped -%}
             {%- set lvm_device_index = '-d' + loop.index|string -%}
+          {%- else -%}
+            {%- set lvm_device_index = '' -%}
           {%- endif -%}
-          {%- set _dummy = hostvol.update({'volname': hostvol.mountpoint | basename + lvm_device_index|default('')}) -%}
-        {%- endfor %}
+          {%- set updated_vol = hostvol | combine({'volname': hostvol.mountpoint | basename + lvm_device_index}) -%}
+          {%- set updated_volumes = updated_volumes + [updated_vol] -%}
+        {%- endfor -%}
         {%- for azname, azval in hosttyped.vms_by_az.items() -%}
           {%- if azval | type_debug == 'list' -%}
             {%- for vmaz in azval -%}
-              {%- set _dummy = res.append({
+              {%- set host_dict = {
                 'hosttype': hosttyped_name,
                 'hostname': cluster_name + '-' + hosttyped_name + '-' + azname|string + loop.index0|string + '-' + cluster_suffix|string,
                 'az_name': azname|string,
                 'flavor': hosttyped.flavor,
                 'image': hosttyped.image | default(r__esxifree_guest_info.virtual_machines[-1]['hw_name']),
-                'auto_volumes': hosttyped.auto_volumes,
-                'networks': vmaz.networks,
-                }) -%}
-            {%- endfor %}
+                'auto_volumes': updated_volumes,
+                'networks': vmaz.networks
+              } -%}
+              {%- set ns.res = ns.res + [host_dict] -%}
+            {%- endfor -%}
           {%- else -%}
             {%- for vmazidx in range(0, azval | int) -%}
-              {%- set _dummy = res.append({
+              {%- set host_dict = {
                 'hosttype': hosttyped_name,
                 'hostname': cluster_name + '-' + hosttyped_name + '-' + azname|string + vmazidx|string + '-' + cluster_suffix|string,
                 'az_name': azname|string,
                 'flavor': hosttyped.flavor,
                 'image': hosttyped.image | default(r__esxifree_guest_info.virtual_machines[-1]['hw_name']),
-                'auto_volumes': hosttyped.auto_volumes,
-                'networks': hosttyped.networks,
-                }) -%}
+                'auto_volumes': updated_volumes,
+                'networks': hosttyped.networks
+              } -%}
+              {%- set ns.res = ns.res + [host_dict] -%}
             {%- endfor -%}
           {%- endif -%}
-        {%- endfor %}
-      {%- endfor %}
-      {{ res }}
+        {%- endfor -%}
+      {%- endfor -%}
+      {{ ns.res }}

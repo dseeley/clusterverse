@@ -112,14 +112,15 @@
           - network: "{{ r__gcp_compute_network_info['resources'][0] | default({}) }}"
             subnetwork: "{{ r__gcp_compute_subnetwork_info['resources'][0] | default({}) }}"
             access_configs: |-
-              {%- set res = [] -%}
+              {%- set ns = namespace(res=[]) -%}
               {%- if 'assign_public_ip' in cluster_vars and cluster_vars.assign_public_ip in [true, 'dynamic', 'static'] -%}
-                {%- set _dummy = res.append({'name': 'External NAT', 'type': 'ONE_TO_ONE_NAT'}) -%}
+                {%- set config = {'name': 'External NAT', 'type': 'ONE_TO_ONE_NAT'} -%}
                 {%- if 'assign_public_ip' in cluster_vars and cluster_vars.assign_public_ip in [true, 'static'] -%}
-                  {%- set _dummy = res[res | length-1].update({'nat_ip': {'address': r__gcp_compute_address.results | json_query('[?name==\'' + item.hostname + '\'] | [0].address') }}) -%}
+                  {%- set config = config | combine({'nat_ip': {'address': r__gcp_compute_address.results | json_query('[?name==\'' + item.hostname + '\'] | [0].address')}}) -%}
                 {%- endif -%}
+                {%- set ns.res = ns.res + [config] -%}
               {%- endif -%}
-              {{res}}
+              {{ ns.res }}
         tags: { items: "{{cluster_vars.network_fw_tags}}" }
         can_ip_forward: "{{cluster_vars.ip_forward}}"
         scheduling: { automatic_restart: true, preemptible: "{{cluster_vars[buildenv].preemptible}}" }
@@ -143,7 +144,7 @@
       async_status:
         jid: "{{ item.ansible_job_id }}"
       register: r__async_status__gcp_compute_instance
-      until: r__async_status__gcp_compute_instance.finished
+      until: r__async_status__gcp_compute_instance is finished
       delay: 3
       retries: 300
       with_items: "{{r__gcp_compute_instance.results}}"

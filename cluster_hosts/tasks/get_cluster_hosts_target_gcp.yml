@@ -1,20 +1,34 @@
 ---
 
 - name: get_cluster_hosts_target/gcp | Update cluster_hosts_target auto_volumes with device_name and initialize_params
-  set_fact:
+  ansible.builtin.set_fact:
     cluster_hosts_target: |-
+      {%- set ns = namespace(res=[]) -%}
       {%- for host in cluster_hosts_target -%}
+        {%- set updated_volumes = [] -%}
         {%- for vol in host.auto_volumes -%}
           {%- if 'device_name' not in vol -%}
             {%- if 'lvmparams' in cluster_vars[buildenv].hosttype_vars[host.hosttype] -%}
               {%- set lvm_device_index = '-d' + loop.index|string -%}
+            {%- else -%}
+              {%- set lvm_device_index = '' -%}
             {%- endif -%}
-            {%- set _dummy = vol.update({'device_name': host.hostname + '--' + vol.mountpoint | basename + lvm_device_index|default('') }) -%}
-            {%- set _dummy = vol.update({'initialize_params': {'disk_name': vol.device_name, 'disk_size_gb': vol.volume_size }}) -%}
+            {%- set updated_vol = vol | combine({
+              'device_name': host.hostname + '--' + vol.mountpoint | basename + lvm_device_index,
+              'initialize_params': {
+                'disk_name': host.hostname + '--' + vol.mountpoint | basename + lvm_device_index,
+                'disk_size_gb': vol.volume_size
+              }
+            }) -%}
+            {%- set updated_volumes = updated_volumes + [updated_vol] -%}
+          {%- else -%}
+            {%- set updated_volumes = updated_volumes + [vol] -%}
           {%- endif -%}
-        {%- endfor %}
-      {%- endfor %}
-      {{ cluster_hosts_target }}
+        {%- endfor -%}
+        {%- set updated_host = host | combine({'auto_volumes': updated_volumes}) -%}
+        {%- set ns.res = ns.res + [updated_host] -%}
+      {%- endfor -%}
+      {{ ns.res }}
 
 
 - name: get_cluster_hosts_target/gcp | cluster_vars.image can either be an AMI in its own right, or a filter to the latest AMI.
@@ -40,13 +54,18 @@
       run_once: true
 
     - name: get_cluster_hosts_target/gcp | If more than one image is found per host, it is a filter, otherwise only one will be found.  We can replace cluster_hosts_target.item.image with the latest found in either case.
-      set_fact:
+      ansible.builtin.set_fact:
         cluster_hosts_target: |
+          {%- set ns = namespace(res=[]) -%}
           {%- for cht_host in cluster_hosts_target -%}
+            {%- set updated_host = cht_host -%}
             {%- for r__gcp_compute_image_info_host in r__gcp_compute_image_info__by_imageid.results -%}
               {%- if r__gcp_compute_image_info_host[r__gcp_compute_image_info_host.ansible_loop_var].hostname == cht_host.hostname -%}
-                {%- set _dummy = cht_host.update({'image': (r__gcp_compute_image_info_host.resources | json_query('[?architecture==`X86_64`]') | sort(attribute='creationTimestamp'))[-1].selfLink }) -%}
-              {%- endif %}
-            {%- endfor %}
-          {%- endfor %}
-          {{ cluster_hosts_target }}
+                {%- set updated_host = cht_host | combine({
+                  'image': (r__gcp_compute_image_info_host.resources | json_query('[?architecture==`X86_64`]') | sort(attribute='creationTimestamp'))[-1].selfLink
+                }) -%}
+              {%- endif -%}
+            {%- endfor -%}
+            {%- set ns.res = ns.res + [updated_host] -%}
+          {%- endfor -%}
+          {{ ns.res }}

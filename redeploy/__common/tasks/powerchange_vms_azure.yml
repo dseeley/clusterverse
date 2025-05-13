@@ -25,7 +25,7 @@
       async_status:
         jid: "{{ item.ansible_job_id }}"
       register: async_jobs
-      until: async_jobs.finished
+      until: async_jobs is finished
       retries: 300
       with_items: "{{r__azure_rm_virtualmachine.results}}"
-  when: hosts_to_powerchange | length
+  when: hosts_to_powerchange | length > 0

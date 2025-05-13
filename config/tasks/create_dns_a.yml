@@ -49,17 +49,17 @@
       delegate_to: localhost
       run_once: true
       with_items: |
-        {% set res = [] -%}
+        {%- set ns = namespace(res=[]) -%}
         {%- for cht_host in cluster_hosts_target -%}
           {%- for hosted_zone in r__route53_info__zones.hosted_zones | default([]) | json_query('[?name==`' + cluster_vars.dns_nameserver_zone + '.`]') -%}
             {%- if hosted_zone.config.private_zone|bool == true and 'ipv4_private' in hostvars[cht_host.hostname] -%}
-              {%- set _ = res.append({'hostname': cht_host.hostname, 'private_zone': hosted_zone.config.private_zone, 'ipv4': hostvars[cht_host.hostname]['ipv4_private']}) -%}
+              {%- set ns.res = ns.res + [{'hostname': cht_host.hostname, 'private_zone': hosted_zone.config.private_zone, 'ipv4': hostvars[cht_host.hostname]['ipv4_private']}] -%}
             {%- elif hosted_zone.config.private_zone|bool == false and 'ipv4_public' in hostvars[cht_host.hostname] -%} 
-              {%- set _ = res.append({'hostname': cht_host.hostname, 'private_zone': hosted_zone.config.private_zone, 'ipv4': hostvars[cht_host.hostname]['ipv4_public']}) -%}
+              {%- set ns.res = ns.res + [{'hostname': cht_host.hostname, 'private_zone': hosted_zone.config.private_zone, 'ipv4': hostvars[cht_host.hostname]['ipv4_public']}] -%}
             {%- endif -%}
           {%- endfor -%}
         {%- endfor -%}
-        {{res}}
+        {{ ns.res }}
       async: 7200
       poll: 0
       register: r__route53
@@ -70,7 +70,7 @@
           async_status:
             jid: "{{ item.ansible_job_id }}"
           register: route53_jobs
-          until: route53_jobs.finished
+          until: route53_jobs is finished
           delay: 1
           retries: 300
           run_once: true

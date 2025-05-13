@@ -79,7 +79,7 @@
     uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc&no_verify=1'
     command: create_cidata_cdrom
     config: |-
-      {% if item | json_query('networks[]') | length %}
+      {% if item | json_query('networks[]') | length >0 %}
       {% set cidata_ns = namespace(cidata_network = {"version": 2}) %}
       {% for network in item.networks %}
       {% if ('cloudinit_netplan' not in network) or ('ethernets' not in network['cloudinit_netplan']) or ('wifis' not in network['cloudinit_netplan']) %}
@@ -186,7 +186,7 @@
   async_status:
     jid: "{{ item.ansible_job_id }}"
   register: r__async_status__virt_define
-  until: r__async_status__virt_define.finished
+  until: r__async_status__virt_define is finished
   retries: 300
   with_items: "{{ r__virt_define.results }}"
 
@@ -228,7 +228,7 @@
     name: "{{item.item.hostname}}"
   register: r__virt__guest_agent_info
   loop: "{{ r__virt_define.results }}"
-  until: "(r__virt__guest_agent_info | json_query('guest_agent_info.interfaceAddresses.*.addrs') | length)"
+  until: "(r__virt__guest_agent_info | json_query('guest_agent_info.interfaceAddresses.*.addrs') | length > 0)"
   retries: 36     #3 minutes (24*5s)
   delay: 5
 

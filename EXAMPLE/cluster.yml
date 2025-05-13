@@ -44,7 +44,7 @@
       delay: 30
       vars:
         ansible_ssh_retries: 10
-      when: hostvars['localhost']['cluster_vars']['image'] | regex_search('xenial|bionic')
+      when: hostvars['localhost']['cluster_vars']['image'] | regex_search('xenial|bionic') is not none
 
 
 - name: clusterverse | Wait for SSH connections

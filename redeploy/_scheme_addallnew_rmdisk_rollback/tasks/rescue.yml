@@ -53,7 +53,7 @@
   include_role:
     name: clusterverse/redeploy/__common
     tasks_from: "powerchange_vms_{{cluster_vars.type}}.yml"
-  when: hosts_to_powerchange | length
+  when: hosts_to_powerchange | length > 0
   vars:
     hosts_to_powerchange: "{{ cluster_hosts_state | json_query(\"[?tagslabels.cv__lifecycle_state=='redeployfail']\") }}"
     powerchange_new_state: "stop"

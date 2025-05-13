@@ -30,7 +30,7 @@
       async_status:
         jid: "{{ item.ansible_job_id }}"
       register: async_jobs
-      until: async_jobs.finished
+      until: async_jobs is finished
       retries: 300
       with_items: "{{r__gcp_compute_instance.results}}"
 
@@ -57,7 +57,7 @@
         name: "{{ item.name }}"
         state: absent
       loop: "{{ r__gcp_compute_address_info.results | json_query(\"[].resources[]\") }}"
-  when: hosts_to_clean | length
+  when: hosts_to_clean | length > 0
 
 
 - name: clean/gcp | clean networking (when '-e clean=_all_')

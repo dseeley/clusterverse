@@ -13,7 +13,7 @@
   include_role:
     name: clusterverse/clean
     tasks_from: "{{cluster_vars.type}}.yml"
-  when: (hosts_to_clean | length)
+  when: (hosts_to_clean | length > 0)
   vars:
     hosts_to_clean: "{{ [host_to_del] }}"
 

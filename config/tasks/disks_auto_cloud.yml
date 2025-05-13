@@ -176,7 +176,7 @@
           when: test_touch_disks is defined and test_touch_disks|bool
       vars:
         raid_vols_devices: "{{ r__blockdevmap.device_map | json_query(\"[?device_name_cloud && contains('\" + (raid_vols | map(attribute='device_name') | sort  | join(',')) + \"', device_name_cloud)]\") }}"
-      when: raid_vols_devices | length
+      when: raid_vols_devices | length > 0
 
   when: (lvmparams is defined and lvmparams != {})  and  (raid_vols | map(attribute='mountpoint') | list | unique | count == 1) and (raid_vols | map(attribute='mountpoint') | list | count >= 2) and (raid_vols | map(attribute='fstype') | list | unique | count == 1)
   vars:

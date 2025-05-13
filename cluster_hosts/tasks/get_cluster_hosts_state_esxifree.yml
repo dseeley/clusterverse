@@ -12,17 +12,17 @@
 ## esxifree hosts must use the esxi 'annotations' field as json.  They are stored as unconventional text in the vmx file, so must
 ## be converted into inline-json within the facts.  If the annotation field is not convertible to json, then we don't consider this VM part of the cluster.
 - name: get_cluster_hosts_state/esxifree | update r__esxifree_guest_info result with json-parsed annotations
-  set_fact:
+  ansible.builtin.set_fact:
     r__esxifree_guest_info: |
-      {% set res = {'virtual_machines': []} -%}
-        {%- for result in r__esxifree_guest_info.virtual_machines -%}
-          {%- set annotation_parsed = result.annotation | from_yaml -%}
-          {%- if annotation_parsed | type_debug == 'dict' or annotation_parsed | type_debug == 'list' -%}
-            {%- set _ = result.update({'annotation': annotation_parsed}) -%}
-            {%- set _ = res.virtual_machines.append(result) -%}
-          {%- endif -%}
-        {%- endfor -%}
-      {{ res }}
+      {%- set ns = namespace(res={'virtual_machines': []}) -%}
+      {%- for result in r__esxifree_guest_info.virtual_machines -%}
+        {%- set annotation_parsed = result.annotation | from_yaml -%}
+        {%- if annotation_parsed | type_debug == 'dict' or annotation_parsed | type_debug == 'list' -%}
+          {%- set updated_result = result | combine({'annotation': annotation_parsed}) -%}
+          {%- set ns.res.virtual_machines = ns.res.virtual_machines + [updated_result] -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ ns.res }}
 
 - name: get_cluster_hosts_state/esxifree | Set cluster_hosts_state
   set_fact:

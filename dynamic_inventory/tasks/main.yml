@@ -31,7 +31,7 @@
 - name: dynamic_inventory | Check whether we're using a manually-defined (or multiply-defined) static inventory
   warn_str:
     msg: "WARNING: Static inventory file(s) in use - cannot gather dynamic inventory: {{ r__stat_inventory_sources.results | json_query(\"[?stat.isreg].item \") }}"
-  when: r__stat_inventory_sources.results | json_query('[?stat.isreg].item') | length
+  when: r__stat_inventory_sources.results | json_query('[?stat.isreg].item') | length > 0
 
 - block:
     - name: dynamic_inventory | create the inventory_source directory
@@ -46,22 +46,23 @@
     - name: dynamic_inventory | Add (powered-on) hosts to dynamic inventory
       set_fact:
         dynamic_inv: |
-          {% set res = [] -%}
+          {%- set ns = namespace(res=[]) -%}
           {%- for item in cluster_hosts_state | json_query('[?contains([\'RUNNING\',\'running\',\'poweredOn\'], instance_state)]') | sort(attribute='name') -%}
-            {%- set _dummy = res.append({
-                'name': item.name,
-                'groups': [item.tagslabels.cv__hosttype] + [cluster_name] + ([clusterid] if clusterid is defined and clusterid else []) + ([item.regionzone] if item.regionzone is defined and item.regionzone else []) + (['not_target_hosts'] if cluster_hosts_target is defined and item.name not in (cluster_hosts_target | default({}) | map(attribute='hostname')) else []),
-                'ansible_host': item.ipv4.public if cluster_vars.inventory_ip=='public' else item.ipv4.private,
-                'ipv4_private': item.ipv4.private,
-                'hosttype': item.tagslabels.cv__hosttype
-              }) -%}
-            {%- set _dummy = res[res | length-1].update({'regionzone': item.regionzone})  if item.regionzone else '' -%}
-            {%- set _dummy = res[res | length-1].update({'ansible_user': cluster_vars[buildenv].ssh_connection_cfg.host.ansible_user})  if cluster_vars[buildenv].ssh_connection_cfg.host.ansible_user else '' -%}
-            {%- set _dummy = res[res | length-1].update({'ipv4_public': item.ipv4.public})  if 'assign_public_ip' in cluster_vars and cluster_vars.assign_public_ip in [true, 'dynamic', 'static'] else '' -%}
-            {%- set _dummy = res[res | length-1].update({'ansible_ssh_private_key_file': 'id_rsa_ansible_ssh_private_key_file'})  if cluster_vars[buildenv].ssh_connection_cfg.host.ansible_ssh_private_key_file else '' -%}
-            {%- set _dummy = res[res | length-1].update({'ansible_ssh_common_args': cluster_vars[buildenv].ssh_connection_cfg.bastion.ssh_args})  if _bastion_host and (not _bastion_in_host_net or (force_use_bastion is defined and force_use_bastion|bool)) else '' -%}
-            {%- endfor -%}
-            {{ res }}
+            {%- set host_dict = {
+              'name': item.name,
+              'groups': [item.tagslabels.cv__hosttype] + [cluster_name] + ([clusterid] if clusterid is defined and clusterid else []) + ([item.regionzone] if item.regionzone is defined and item.regionzone else []) + (['not_target_hosts'] if cluster_hosts_target is defined and item.name not in (cluster_hosts_target | default({}) | map(attribute='hostname')) else []),
+              'ansible_host': item.ipv4.public if cluster_vars.inventory_ip=='public' else item.ipv4.private,
+              'ipv4_private': item.ipv4.private,
+              'hosttype': item.tagslabels.cv__hosttype
+            } -%}
+            {%- set host_dict = host_dict | combine({'regionzone': item.regionzone}) if item.regionzone else host_dict -%}
+            {%- set host_dict = host_dict | combine({'ansible_user': cluster_vars[buildenv].ssh_connection_cfg.host.ansible_user}) if cluster_vars[buildenv].ssh_connection_cfg.host.ansible_user else host_dict -%}
+            {%- set host_dict = host_dict | combine({'ipv4_public': item.ipv4.public}) if 'assign_public_ip' in cluster_vars and cluster_vars.assign_public_ip in [true, 'dynamic', 'static'] else host_dict -%}
+            {%- set host_dict = host_dict | combine({'ansible_ssh_private_key_file': 'id_rsa_ansible_ssh_private_key_file'}) if cluster_vars[buildenv].ssh_connection_cfg.host.ansible_ssh_private_key_file else host_dict -%}
+            {%- set host_dict = host_dict | combine({'ansible_ssh_common_args': cluster_vars[buildenv].ssh_connection_cfg.bastion.ssh_args}) if _bastion_host and (not _bastion_in_host_net or (force_use_bastion is defined and force_use_bastion|bool)) else host_dict -%}
+            {%- set ns.res = ns.res + [host_dict] -%}
+          {%- endfor -%}
+          {{ ns.res }}
       vars:
         _local_cidr: "{{ (ansible_default_ipv4.network+'/'+ansible_default_ipv4.netmask) | ansible.utils.ipaddr('network/prefix') }}"                                 # Get the network the localhost IP is in
         _bastion_host: "{{ cluster_vars[buildenv].ssh_connection_cfg.bastion.ssh_args | default() | regex_replace('.*@([]\\w\\d\\.-]*).*', '\\1') }}"                 # Extract just the bastion hostname from 'cluster_vars[buildenv].ssh_connection_cfg.bastion.ssh_args'
@@ -75,18 +76,18 @@
         - name: dynamic_inventory | Populate inventory file from dynamic inventory (if not empty)
           copy:
             content: |
-              {% set groups = dynamic_inv | json_query('[].groups|[]') | unique | sort() %}
-              {% for groupname in groups -%}
+              {% set all_groups = dynamic_inv | json_query('[].groups[]') | unique | sort | list %}
+              {% for groupname in all_groups -%}
               [{{ groupname }}]
-              {% for host in dynamic_inv | json_query('[?contains(groups, \'' + groupname + '\')]') %}
-              {{ host['name'] }} ansible_host={{host['ansible_host']}} {% if 'ipv4_public' in host %}ipv4_public={{ host['ipv4_public'] }}{% endif %} ipv4_private={{ host['ipv4_private'] }} hosttype={{ host['hosttype'] }} {% if 'ansible_user' in host %}ansible_user='{{ host['ansible_user'] }}'{% endif %} {% if 'ansible_ssh_private_key_file' in host %}ansible_ssh_private_key_file='{{ host['ansible_ssh_private_key_file'] }}'{% endif %} {% if 'regionzone' in host %}regionzone={{ host['regionzone'] }}{% endif %} {% if 'ansible_ssh_common_args' in host %}ansible_ssh_common_args='{{ host['ansible_ssh_common_args'] }}'{% endif %}{{''}}
+              {% for host in dynamic_inv | json_query('[?groups[?@ == \'' + groupname + '\']]') %}
+              {{ host['name'] }} ansible_host={{ host['ansible_host'] }} {% if 'ipv4_public' in host %}ipv4_public={{ host['ipv4_public'] }}{% endif %} ipv4_private={{ host['ipv4_private'] }} hosttype={{ host['hosttype'] }} {% if 'ansible_user' in host %}ansible_user='{{ host['ansible_user'] }}'{% endif %} {% if 'ansible_ssh_private_key_file' in host %}ansible_ssh_private_key_file='{{ host['ansible_ssh_private_key_file'] }}'{% endif %} {% if 'regionzone' in host %}regionzone={{ host['regionzone'] }}{% endif %} {% if 'ansible_ssh_common_args' in host %}ansible_ssh_common_args='{{ host['ansible_ssh_common_args'] }}'{% endif %}{{''}}
               {% endfor %}
               
               {% endfor %}
             dest: "{{item}}"
             force: true
           with_items: "{{inventory_files}}"
-          when: dynamic_inv | length
+          when: dynamic_inv | length > 0
 
         - name: dynamic_inventory | Delete inventory files if inventory is zero-length
           file:

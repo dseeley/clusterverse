@@ -19,7 +19,7 @@
       async_status:
         jid: "{{ item.ansible_job_id }}"
       register: esxi_jobs
-      until: esxi_jobs.finished
+      until: esxi_jobs is finished
       retries: 300
       with_items: "{{esxi_instances.results}}"
-  when: hosts_to_clean | length
+  when: hosts_to_clean | length > 0

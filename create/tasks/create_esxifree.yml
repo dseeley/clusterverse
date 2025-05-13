@@ -38,7 +38,7 @@
   async_status:
     jid: "{{ item.ansible_job_id }}"
   register: r__async_status__esxifree_guest
-  until: r__async_status__esxifree_guest.finished
+  until: r__async_status__esxifree_guest is finished
   retries: 300
   with_items: "{{ esxi_instances.results }}"
 

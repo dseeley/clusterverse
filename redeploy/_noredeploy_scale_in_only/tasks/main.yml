@@ -48,12 +48,12 @@
     - include_role:
         name: clusterverse/clean
         tasks_from: dns.yml
-      when: (hosts_to_clean | length)  and  (cluster_vars.dns_server is defined and cluster_vars.dns_server != "") and (cluster_vars.dns_user_domain is defined and cluster_vars.dns_user_domain != "")
+      when: (hosts_to_clean | length > 0)  and  (cluster_vars.dns_server is defined and cluster_vars.dns_server != "") and (cluster_vars.dns_user_domain is defined and cluster_vars.dns_user_domain != "")
 
     - include_role:
         name: clusterverse/clean
         tasks_from: "{{cluster_vars.type}}.yml"
-      when: (hosts_to_clean | length)
+      when: (hosts_to_clean | length > 0)
 
     - debug:
         msg: "tidy | No hosts to tidy.  Only powered-down, non-current machines with be tidied; to clean other machines, please use the '-e clean=<state>' extra variable."
