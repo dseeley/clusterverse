@@ -119,7 +119,12 @@ class ActionModule(ActionBase):
                 if (not self.valid_extensions) or path.splitext(filename)[-1][1:] in self.valid_extensions:
                     _new_facts_cmp = deepcopy(new_facts)
                     self._display.vvvvv("*** _new_facts_cmp: %s " % _new_facts_cmp)
-                    new_facts = merge_hash(new_facts, self._loader.load_from_file(filename, cache='none', trusted_as_template=True))
+
+                    ansible_version_tuple = (task_vars['ansible_version']['major'], task_vars['ansible_version']['minor'])
+                    if ansible_version_tuple < (2, 19):
+                        new_facts = merge_hash(new_facts, self._loader.load_from_file(filename, cache=None))
+                    else:
+                        new_facts = merge_hash(new_facts, self._loader.load_from_file(filename, cache=None, trusted_as_template=True))
                     self._display.vvvvv("*** new_facts: %s " % new_facts)
                     if new_facts != _new_facts_cmp:
                         self._result["changed"] = True

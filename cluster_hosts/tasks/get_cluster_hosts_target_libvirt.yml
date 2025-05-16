@@ -9,7 +9,7 @@
   register: r__virt_list_vms
 
 - block:
-    - assert: { that: "latest_machine is not none", fail_msg: "No VMs found with image matching '{{ cluster_vars.image }}'" }
+    - assert: { that: "latest_machine is not in [none, '']", fail_msg: "No VMs found with image matching '{{ cluster_vars.image }}'" }
 
     - name: get_cluster_hosts_target/libvirt | latest_machine
       debug: msg={{ latest_machine }}

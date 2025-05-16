@@ -1,5 +1,12 @@
 ---
 
+- name: get_cluster_hosts_state/libvirt | Copy libvirt ssh private key file
+  copy: { content: "{{cluster_vars.libvirt.private_key}}", dest: '{{ playbook_dir }}/id_rsa__libvirt_svc', mode: '0600' }
+  no_log: true
+  delegate_to: localhost
+  run_once: true
+  when: "cluster_vars.type == 'libvirt'  and  cluster_vars.libvirt.private_key is defined"
+
 - name: get_cluster_hosts_state/libvirt | get cluster_hosts_state using the many individual info modules.
   block:
     - name: get_cluster_hosts_state/libvirt | list_vms
@@ -95,13 +102,6 @@
 
 #- name: get_cluster_hosts_state/libvirt | get cluster_hosts_state using the inventory plugin.
 #  block:
-#    - name: get_cluster_hosts_state/libvirt | Copy libvirt ssh private key file
-#      copy: { content: "{{cluster_vars.libvirt.private_key}}", dest: '{{ playbook_dir }}/id_rsa__libvirt_svc', mode: '0600' }
-#      no_log: true
-#      delegate_to: localhost
-#      run_once: true
-#      when: "cluster_vars.type == 'libvirt'  and  cluster_vars.libvirt.private_key is defined"
-#
 #    - name: get_cluster_hosts_state/libvirt | Get basic instance info of all vms
 #      set_fact:
 #        libvirt_inventory: "{{ lookup('dseeley.inventory_lookup.inventory', 'community.libvirt.libvirt', plugin_options=params) }}"

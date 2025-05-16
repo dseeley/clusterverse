@@ -118,7 +118,7 @@
 
     - name: Validate volume mountpoints
       ansible.builtin.assert:
-        that: problematic_volume_mountpoints is none
+        that: problematic_volume_mountpoints in [none, '']
         fail_msg: "All non-root volume mountpoints must either be all different (in which case 'lvmparams' must not be set), or all the same (in which case, 'lvmparams' must be set). [Failure: {{ problematic_volume_mountpoints | default('null') }}]"
       vars:
         problematic_volume_mountpoints: >-
