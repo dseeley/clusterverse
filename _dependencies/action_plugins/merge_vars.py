@@ -122,8 +122,10 @@ class ActionModule(ActionBase):
 
                     ansible_version_tuple = (task_vars['ansible_version']['major'], task_vars['ansible_version']['minor'])
                     if ansible_version_tuple < (2, 19):
+                        self._display.v("*** using load_from_file for v<2.19")
                         new_facts = merge_hash(new_facts, self._loader.load_from_file(filename, cache=None))
                     else:
+                        self._display.v("*** using load_from_file for v>=2.19")
                         new_facts = merge_hash(new_facts, self._loader.load_from_file(filename, cache=None, trusted_as_template=True))
                     self._display.vvvvv("*** new_facts: %s " % new_facts)
                     if new_facts != _new_facts_cmp:

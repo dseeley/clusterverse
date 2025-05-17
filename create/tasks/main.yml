@@ -8,15 +8,15 @@
       {%- set ns = namespace(res=[]) -%}
       {%- for cht_host in cluster_hosts_target -%}
         {%- for autovol in cht_host.auto_volumes -%}
-          {%- set elem = {} -%}
+          {%- set ns_elem = namespace(elem = {}) -%}
           {%- for cht_host_key in cht_host.keys() -%}
             {%- if cht_host_key != 'auto_volumes' -%}
-              {%- set elem = elem | combine({cht_host_key: cht_host[cht_host_key]}) -%}
+              {%- set ns_elem.elem = ns_elem.elem | combine({cht_host_key: cht_host[cht_host_key]}) -%}
             {%- else -%}
-              {%- set elem = elem | combine({'auto_volume': autovol}) -%}
+              {%- set ns_elem.elem = ns_elem.elem | combine({'auto_volume': autovol}) -%}
             {%- endif -%}
           {%- endfor -%}
-          {%- set ns.res = ns.res + [elem] -%}
+          {%- set ns.res = ns.res + [ns_elem.elem] -%}
         {%- endfor -%}
       {%- endfor -%}
       {{ ns.res }}
