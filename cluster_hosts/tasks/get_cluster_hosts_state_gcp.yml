@@ -8,7 +8,7 @@
     auth_kind: "serviceaccount"
     service_account_file: "{{gcp_credentials_file}}"
     scopes: ["https://www.googleapis.com/auth/compute.readonly"]
-  with_items: "{{ cluster_vars[buildenv].hosttype_vars | json_query(\"*[vms_by_az][][keys(@)][][]\") | unique }}"
+  with_items: "{{ cluster_vars[buildenv].hosttype_vars | json_query(\"*[vms_by_az|to_json|from_json][][keys(@)][][]\") | unique }}"
   register: r__gcp_compute_instance_info
   delegate_to: localhost
   run_once: true

@@ -5,27 +5,22 @@
     cluster_hosts_target: |-
       {%- set ns = namespace(res=[]) -%}
       {%- for host in cluster_hosts_target -%}
-        {%- set updated_volumes = [] -%}
+        {%- set ns_updated_volumes = namespace(volume=[]) -%}
         {%- for vol in host.auto_volumes -%}
           {%- if 'device_name' not in vol -%}
             {%- if 'lvmparams' in cluster_vars[buildenv].hosttype_vars[host.hosttype] -%}
               {%- set lvm_device_index = '-d' + loop.index|string -%}
-            {%- else -%}
-              {%- set lvm_device_index = '' -%}
             {%- endif -%}
             {%- set updated_vol = vol | combine({
-              'device_name': host.hostname + '--' + vol.mountpoint | basename + lvm_device_index,
-              'initialize_params': {
-                'disk_name': host.hostname + '--' + vol.mountpoint | basename + lvm_device_index,
-                'disk_size_gb': vol.volume_size
-              }
+              'device_name': host.hostname + '--' + vol.mountpoint | basename + lvm_device_index|default(''),
+              'initialize_params': { 'disk_name': host.hostname + '--' + vol.mountpoint | basename + lvm_device_index|default(''), 'disk_size_gb': vol.volume_size }
             }) -%}
-            {%- set updated_volumes = updated_volumes + [updated_vol] -%}
+            {%- set ns_updated_volumes.volume = ns_updated_volumes.volume + [updated_vol] -%}
           {%- else -%}
-            {%- set updated_volumes = updated_volumes + [vol] -%}
+            {%- set ns_updated_volumes.volume = ns_updated_volumes.volume + [vol] -%}
           {%- endif -%}
         {%- endfor -%}
-        {%- set updated_host = host | combine({'auto_volumes': updated_volumes}) -%}
+        {%- set updated_host = host | combine({'auto_volumes': ns_updated_volumes.volume}) -%}
         {%- set ns.res = ns.res + [updated_host] -%}
       {%- endfor -%}
       {{ ns.res }}
@@ -58,14 +53,12 @@
         cluster_hosts_target: |
           {%- set ns = namespace(res=[]) -%}
           {%- for cht_host in cluster_hosts_target -%}
-            {%- set updated_host = cht_host -%}
+            {%- set ns_updated_host = namespace(host=cht_host) -%}
             {%- for r__gcp_compute_image_info_host in r__gcp_compute_image_info__by_imageid.results -%}
               {%- if r__gcp_compute_image_info_host[r__gcp_compute_image_info_host.ansible_loop_var].hostname == cht_host.hostname -%}
-                {%- set updated_host = cht_host | combine({
-                  'image': (r__gcp_compute_image_info_host.resources | json_query('[?architecture==`X86_64`]') | sort(attribute='creationTimestamp'))[-1].selfLink
-                }) -%}
+                {%- set ns_updated_host.host = cht_host | combine({ 'image': (r__gcp_compute_image_info_host.resources | json_query('[?architecture==`X86_64`]') | sort(attribute='creationTimestamp'))[-1].selfLink }) -%}
               {%- endif -%}
             {%- endfor -%}
-            {%- set ns.res = ns.res + [updated_host] -%}
+            {%- set ns.res = ns.res + [ns_updated_host.host] -%}
           {%- endfor -%}
           {{ ns.res }}

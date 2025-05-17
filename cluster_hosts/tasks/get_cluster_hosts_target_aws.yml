@@ -75,17 +75,17 @@
           {%- set ns = namespace(res=[]) -%}
           {%- for host in cluster_hosts_target -%}
             {%- set cluster_host_topology = host.hostname | regex_replace('^.*(-.*?-).*$', '\\1') -%}
-            {%- set updated_volumes = [] -%}
+            {%- set ns_updated_volumes = namespace(volume=[]) -%}
             {%- for vol in host.auto_volumes -%}
               {%- set cur_snapshot = r__ebs_snapshots | default([]) | to_json | from_json | json_query('snapshots[?contains(tags.Name, \'' + cluster_host_topology + '\')]') -%}
               {%- if cur_snapshot and 'snapshot_tags' in vol.keys() -%}
                 {%- set updated_vol = vol | combine({'snapshot': cur_snapshot[0].snapshot_id}) | dict(vol.items() | reject('equalto', ('snapshot_tags', vol.snapshot_tags))) -%}
-                {%- set updated_volumes = updated_volumes + [updated_vol] -%}
+                {%- set ns_updated_volumes.volume = ns_updated_volumes.volume + [updated_vol] -%}
               {%- else -%}
-                {%- set updated_volumes = updated_volumes + [vol] -%}
+                {%- set ns_updated_volumes.volume = ns_updated_volumes.volume + [vol] -%}
               {%- endif -%}
             {%- endfor -%}
-            {%- set updated_host = host | combine({'auto_volumes': updated_volumes}) -%}
+            {%- set updated_host = host | combine({'auto_volumes': ns_updated_volumes.volume}) -%}
             {%- set ns.res = ns.res + [updated_host] -%}
           {%- endfor -%}
           {{ ns.res }}

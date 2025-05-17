@@ -140,7 +140,7 @@
       async: 7200
       poll: 0
 
-    - name: create/gcp | Wait for GCE instance creation to complete
+    - name: create/gcp | Wait for instance creation to complete
       async_status:
         jid: "{{ item.ansible_job_id }}"
       register: r__async_status__gcp_compute_instance
