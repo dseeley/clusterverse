@@ -162,15 +162,13 @@
             cluster_hosts_target: |
               {%- set ns = namespace(res=[]) -%}
               {%- for cht_host in cluster_hosts_target -%}
-                {%- set updated_host = cht_host -%}
+                {%- set ns_updated_host = namespace(host=cht_host) -%}
                 {%- for r__ec2_ami_info_host in r__ec2_ami_info__by_location.results -%}
                   {%- if r__ec2_ami_info_host[r__ec2_ami_info_host.ansible_loop_var].hostname == cht_host.hostname -%}
-                    {%- set updated_host = cht_host | combine({
-                      'image': (r__ec2_ami_info_host.images | sort(attribute='creation_date'))[-1].image_id
-                    }) -%}
+                    {%- set ns_updated_host.host = cht_host | combine({ 'image': (r__ec2_ami_info_host.images | sort(attribute='creation_date'))[-1].image_id }) -%}
                   {%- endif -%}
                 {%- endfor -%}
-                {%- set ns.res = ns.res + [updated_host] -%}
+                {%- set ns.res = ns.res + [ns_updated_host.host] -%}
               {%- endfor -%}
               {{ ns.res }}
       vars:

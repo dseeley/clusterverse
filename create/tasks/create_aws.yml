@@ -173,13 +173,13 @@
       with_items: "{{_ec2_vols_denormalised_by_device}}"
       vars:
         _ec2_vols_denormalised_by_device: |
-          {% set res = [] -%}
+          {% set ns_res = namespace(res=[])-%}
           {%- for cluster_host in cluster_hosts_state -%}
             {%- for block_device in cluster_host.disk_info_cloud -%}
-              {% set _ = res.append({'hostname': cluster_host.name, 'hosttype': cluster_host.tagslabels.cv__hosttype, 'device_name': block_device.device_name, 'volume_id': block_device.ebs.volume_id}) -%}
+              {% set ns_res.res = ns_res.res + [{'hostname': cluster_host.name, 'hosttype': cluster_host.tagslabels.cv__hosttype, 'device_name': block_device.device_name, 'volume_id': block_device.ebs.volume_id}] -%}
             {%- endfor %}
           {%- endfor %}
-          {{ res }}
+          {{ ns_res.res }}
         _tags:
           Name: "{{ item.hostname }}--{{item.device_name | regex_replace('^.*\\/(.*)', '\\1')}}"
           device_name: "{{item.device_name}}"

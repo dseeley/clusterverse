@@ -42,15 +42,15 @@
         private_zone: "{{ item.private_zone }}"
         overwrite: true
       with_items: |
-        {% set res = [] -%}
+        {% set ns_res = namespace(res=[])-%}
         {%- for cht_host in cluster_hosts_target -%}
           {%- for hosted_zone in r__route53_info__zones.hosted_zones | default([]) | json_query('[?name==`' + cluster_vars.dns_nameserver_zone + '.`]') -%}
             {%- if hosted_zone.config.private_zone|bool == true and 'ipv4_private' in hostvars[cht_host.hostname]  or  hosted_zone.config.private_zone|bool == false and 'ipv4_public' in hostvars[cht_host.hostname] -%} 
-              {%- set _ = res.append({'hostname': cht_host.hostname, 'private_zone': hosted_zone.config.private_zone}) -%}
+              {%- set ns_res.res = ns_res.res + [{'hostname': cht_host.hostname, 'private_zone': hosted_zone.config.private_zone}] -%}
             {%- endif -%}
           {%- endfor -%}
         {%- endfor -%}
-        {{res}}
+        {{ ns_res.res }}
       become: false
       delegate_to: localhost
       run_once: true
