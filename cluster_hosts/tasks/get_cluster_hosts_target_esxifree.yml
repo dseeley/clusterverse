@@ -19,18 +19,17 @@
 - name: get_cluster_hosts_target/esxifree | Create cluster_hosts_target from optional per-VM config, and add volname (derived from the mountpoint)
   ansible.builtin.set_fact:
     cluster_hosts_target: |-
-      {%- set ns = namespace(res=[]) -%}
+      {%- set ns_res = namespace(res=[]) -%}
       {%- for hosttyped_name, hosttyped in cluster_vars[buildenv].hosttype_vars.items() -%}
-        {%- set updated_volumes = [] -%}
-        {%- for hostvol in hosttyped.auto_volumes -%}
+        {%- set ns_auto_volumes = namespace(auto_volumes=[]) -%}
+        {%- for vol in hosttyped.auto_volumes -%}
           {%- if 'lvmparams' in hosttyped -%}
             {%- set lvm_device_index = '-d' + loop.index|string -%}
-          {%- else -%}
-            {%- set lvm_device_index = '' -%}
           {%- endif -%}
-          {%- set updated_vol = hostvol | combine({'volname': hostvol.mountpoint | basename + lvm_device_index}) -%}
-          {%- set updated_volumes = updated_volumes + [updated_vol] -%}
+          {%- set new_vol = vol | combine({'volname': vol.mountpoint | basename + lvm_device_index|default('')}) -%}
+          {%- set ns_auto_volumes.auto_volumes = ns_auto_volumes.auto_volumes + [new_vol] -%}
         {%- endfor -%}
+        {%- set new_hostvol = hosttyped | combine({'auto_volumes': ns_auto_volumes.auto_volumes}) -%}
         {%- for azname, azval in hosttyped.vms_by_az.items() -%}
           {%- if azval | type_debug == 'list' -%}
             {%- for vmaz in azval -%}
@@ -40,10 +39,10 @@
                 'az_name': azname|string,
                 'flavor': hosttyped.flavor,
                 'image': hosttyped.image | default(r__esxifree_guest_info.virtual_machines[-1]['hw_name']),
-                'auto_volumes': updated_volumes,
+                'auto_volumes': ns_auto_volumes.auto_volumes,
                 'networks': vmaz.networks
               } -%}
-              {%- set ns.res = ns.res + [host_dict] -%}
+              {%- set ns_res.res = ns_res.res + [host_dict] -%}
             {%- endfor -%}
           {%- else -%}
             {%- for vmazidx in range(0, azval | int) -%}
@@ -53,12 +52,12 @@
                 'az_name': azname|string,
                 'flavor': hosttyped.flavor,
                 'image': hosttyped.image | default(r__esxifree_guest_info.virtual_machines[-1]['hw_name']),
-                'auto_volumes': updated_volumes,
+                'auto_volumes': ns_auto_volumes.auto_volumes,
                 'networks': hosttyped.networks
               } -%}
-              {%- set ns.res = ns.res + [host_dict] -%}
+              {%- set ns_res.res = ns_res.res + [host_dict] -%}
             {%- endfor -%}
           {%- endif -%}
         {%- endfor -%}
       {%- endfor -%}
-      {{ ns.res }}
+      {{ ns_res.res }}

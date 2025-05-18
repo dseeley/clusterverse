@@ -14,15 +14,17 @@
 - name: get_cluster_hosts_state/esxifree | update r__esxifree_guest_info result with json-parsed annotations
   ansible.builtin.set_fact:
     r__esxifree_guest_info: |
-      {%- set ns = namespace(res={'virtual_machines': []}) -%}
+      {%- set ns = namespace(vms=[]) -%}
       {%- for result in r__esxifree_guest_info.virtual_machines -%}
         {%- set annotation_parsed = result.annotation | from_yaml -%}
         {%- if annotation_parsed | type_debug == 'dict' or annotation_parsed | type_debug == 'list' -%}
           {%- set updated_result = result | combine({'annotation': annotation_parsed}) -%}
-          {%- set ns.res.virtual_machines = ns.res.virtual_machines + [updated_result] -%}
+          {%- set ns.vms = ns.vms + [updated_result] -%}
+        {%- else -%}
+          {%- set ns.vms = ns.vms + [result] -%}
         {%- endif -%}
       {%- endfor -%}
-      {{ ns.res }}
+      {{ {'virtual_machines': ns.vms} }}
 
 - name: get_cluster_hosts_state/esxifree | Set cluster_hosts_state
   set_fact:

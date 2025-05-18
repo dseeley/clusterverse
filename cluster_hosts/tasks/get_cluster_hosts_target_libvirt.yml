@@ -31,7 +31,7 @@
         msg: "{{ latest_machine_disk }}"
 
     - name: get_cluster_hosts_target/libvirt | Create cluster_hosts_target from optional per-VM config, and add volname (derived from the mountpoint)
-      set_fact:
+      ansible.builtin.set_fact:
         cluster_hosts_target: |-
           {%- set ns_res = namespace(res=[]) -%}
           {%- for hosttyped_name, hosttyped in cluster_vars[buildenv].hosttype_vars.items() -%}
