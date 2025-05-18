@@ -160,14 +160,3 @@ class ActionModule(ActionBase):
         self._display.vvvvv("*** new_facts: %s " % new_facts)
         self._result['ansible_facts'] = new_facts
         return self._result
-
-    def _load_from_file(self, filename):
-        self._display.vvvvv("*** filename: %s " % filename)
-        # This is the approach used by include_vars in order to get the show_content value based
-        # on whether decryption occurred.  load_from_file does not return that value.
-        # https://github.com/ansible/ansible/blob/v2.7.5/lib/ansible/plugins/action/include_vars.py#L236-L240
-        b_data, show_content = self._loader._get_file_contents(filename)
-        data = to_text(b_data, errors='surrogate_or_strict')
-
-        self.show_content = show_content
-        return self._loader.load(data, file_name=filename, show_content=show_content) or {}
