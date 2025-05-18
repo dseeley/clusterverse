@@ -8,7 +8,7 @@ pkgupdate: ""                                             # "always" or "on_crea
 reboot_on_package_upgrade: true                           # reboot after upgrading packages
 
 # Whether to run the tidy (remove the replaced VMs and DNS entries) on successful redeploy
-canary_tidy_on_success: false
+canary_tidy_on_success: true
 
 # External DNS server for lookups when using external IPs (the default AWS resolver will resolve the VPC IPs)
 external_dns_resolver: "8.8.8.8"
