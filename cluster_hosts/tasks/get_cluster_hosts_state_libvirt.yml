@@ -75,9 +75,9 @@
           {%- for res_item in r__virt__guest_agent_info.results -%}
             {%- set tagslabels = res_item.item.xml | xpath('/domain/metadata/clusterverse:cdata//text()', {'clusterverse': 'https://github.com/dseeley/clusterverse'} ) | json_query('[0]') | from_yaml -%}
             {%- if tagslabels and 'cv__cluster_name' in tagslabels and tagslabels['cv__cluster_name'] == cluster_name -%}
-              {%- set disk_info_cloud = [] -%}
+              {%- set ns_disk_info_cloud = namespace(disk_info=[]) -%}
               {%- for diskIdx in range(1, (res_item.item.xml | xpath('/domain/devices/disk[@type=\"file\"]/source/@file') | length + 1)) -%}
-                {%- set disk_info_cloud = disk_info_cloud + [{
+                {%- set ns_disk_info_cloud.disk_info = ns_disk_info_cloud.disk_info + [{
                   'target_dev': res_item.item.xml | xpath('/domain/devices/disk[@type=\"file\"]['+diskIdx|string+']/target/@dev') | json_query('[0]'),
                   'source_file': res_item.item.xml | xpath('/domain/devices/disk[@type=\"file\"]['+diskIdx|string+']/source/@file') | json_query('[0]'),
                   'serial': res_item.item.xml | xpath('/domain/devices/disk[@type=\"file\"]['+diskIdx|string+']/serial//text()') | json_query('[0]')
@@ -89,7 +89,7 @@
                 'instance_id': res_item.item.name,
                 'instance_state': res_item.item.instance_state,
                 'regionzone': tagslabels['cv__regionzone'],
-                'disk_info_cloud': disk_info_cloud,
+                'disk_info_cloud': ns_disk_info_cloud.disk_info,
                 'ipv4': {
                   'private': res_item['guest_agent_info']['interfaceAddresses'] | dict2items | json_query('[?key != `lo`]|[0].value.addrs[0].addr'),
                   'public': None
