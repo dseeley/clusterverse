@@ -15,7 +15,7 @@
             {%- if cht_host.hostname | regex_replace('-(?!.*-).*') == chs_host.name | regex_replace('-(?!.*-).*') -%}
               {%- for chs_host_diskinfo in chs_host.disk_info_cloud -%}
                 {%- if cht_autovol.initialize_params.disk_name | regex_replace('(.*)-.*(--.*)', '\\1\\2') == chs_host_diskinfo.source | basename | regex_replace('(.*)-.*(--.*)', '\\1\\2') -%}
-                  {%- ns_new_autovol.vol = ns_new_autovol.vol | combine({
+                  {%- set ns_new_autovol.vol = ns_new_autovol.vol | combine({
                     'device_name': chs_host_diskinfo.source | basename,
                     'src': { 'hostname': chs_host.name, 'device_name': chs_host_diskinfo.source | basename, 'source_url': chs_host_diskinfo.source },
                     'initialize_params': { 'disk_name': chs_host_diskinfo.source | basename, 'disk_size_gb': chs_host_diskinfo.diskSizeGb }
