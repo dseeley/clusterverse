@@ -42,3 +42,31 @@
     - assert: { that: "(cluster_hosts_state | selectattr('tagslabels.cv__lifecycle_state', '==', 'current') | list | length) == (cluster_hosts_target | length)", fail_msg: "Cannot use this scheme to redeploy to a different-sized cluster" }
       # TODO: remove myhosttypes not defined and replace json_query    "{{ cluster_hosts_state | json_query(\"[?tagslabels.cv__lifecycle_state!='current' && ('\"+ myhosttypes|default('') + \"' == ''  ||  contains(['\"+ myhosttypes|default('') + \"'], tagslabels.cv__hosttype))].name\") }}"
       when: (canary=="start" or canary=="none") and (myhosttypes is not defined or myhosttypes=='')
+
+    - name: Preflight | Add exactly one test file per device
+      block:
+        - name: "Preflight | Touch a file with the mountpoint and device name for testing that disk attachment is correct.  Note: Use a unique filename here instead of writing to a file, so that more than one file per device is an error.  Note: don't add device_name for GCP, because we can't rename the disks when redeploying and keeping disks (_scheme_rmvm_keepdisk_rollback)"
+          become: true
+          file:
+            path: "{{item.1.mountpoint}}/.clusterverse_volcopymove_test__{{item.0.hostname | regex_replace('-(?!.*-).*')}}__{{ item.1.mountpoint | regex_replace('\\/', '_') }}"
+            state: touch
+          delegate_to: "{{ item.0.hostname }}"
+          with_subelements:
+            - "{{cluster_hosts_target}}"
+            - auto_volumes
+
+        - name: Preflight | Find all .clusterverse_volcopymove_test__ files in mounted disks
+          find:
+            paths: "{{item.1.mountpoint}}"
+            hidden: true
+            patterns: ".clusterverse_volcopymove_test__*"
+          delegate_to: "{{ item.0.hostname }}"
+          with_subelements:
+            - "{{cluster_hosts_target}}"
+            - auto_volumes
+          register: r__find_test
+
+        - name: Preflight | assert that exactly one .clusterverse_volcopymove_test__ file exists per device
+          assert:
+            that: r__find_test.results | map(attribute='files') | map('length') | select('ne', 1) | length == 0
+            fail_msg: "ERROR - Exactly one .clusterverse_volcopymove_test__ file should exist per device. Details: {{ r__find_test.results | map(attribute='files') | list }}"

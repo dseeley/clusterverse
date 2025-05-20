@@ -64,27 +64,27 @@
         - name: "config/disks_auto_cloud | Touch a file with the mountpoint and device name for testing that disk attachment is correct.  Note: Use a unique filename here instead of writing to a file, so that more than one file per device is an error.  Note: don't add device_name for GCP, because we can't rename the disks when redeploying and keeping disks (_scheme_rmvm_keepdisk_rollback)"
           become: true
           file:
-            path: "{{item.mountpoint}}/.clusterversetest__{{inventory_hostname | regex_replace('-(?!.*-).*')}}__{{ item.mountpoint | regex_replace('\\/', '_') }}{%- if cluster_vars.type != 'gcp'-%}__{{ item.device_name | regex_replace('\/', '_') }}{%- endif -%}"
+            path: "{{item.mountpoint}}/.clusterverse_volplacement_test__{{inventory_hostname | regex_replace('-(?!.*-).*')}}__{{ item.mountpoint | regex_replace('\\/', '_') }}{%- if cluster_vars.type != 'gcp'-%}__{{ item.device_name | regex_replace('\/', '_') }}{%- endif -%}"
             state: touch
           loop: "{{auto_vols}}"
 
-        - name: config/disks_auto_cloud | Find all .clusterversetest__ files in mounted disks
+        - name: config/disks_auto_cloud | Find all .clusterverse_volplacement_test__ files in mounted disks
           find:
             paths: "{{item.mountpoint}}"
             hidden: true
-            patterns: ".clusterversetest__*"
+            patterns: ".clusterverse_volplacement_test__*"
           loop: "{{auto_vols}}"
           register: r__find_test
 
-        - name: config/disks_auto_cloud | Check that there is only one .clusterversetest__ file per device in mounted disks.
+        - name: config/disks_auto_cloud | Check that there is only one .clusterverse_volplacement_test__ file per device in mounted disks.
           block:
             - name: config/disks_auto_cloud | testdevicedescriptor
               debug: msg={{testdevicedescriptor}}
 
             - name: config/disks_auto_cloud | assert that only one device descriptor file exists per disk (otherwise, indicates that this run has mapped either more than one device per mount, or a different one to previous)
               assert:
-#                that: testdevicedescriptor | json_query('[?length(files) > `1`]')      #Note: This SHOULD also work, and is more intuitive.  Broken in v2.19 for some reason.
-                that: testdevicedescriptor | map(attribute='files') | map('length') | select('gt', 1) | length == 0
+#                that: testdevicedescriptor | json_query('[?length(files) != `1`]')      #Note: This SHOULD also work, and is more intuitive.  Broken in v2.19 for some reason.
+                that: testdevicedescriptor | map(attribute='files') | map('length') | select('ne', 1) | length == 0
                 fail_msg: "ERROR - Exactly one file should exist per storage device. [{{ testdevicedescriptor }}]"
           vars:
             testdevicedescriptor: "{{ r__find_test | json_query(\"results[].{hostname: '\" + inventory_hostname + \"', device_name: item.device_name, mountpoint: item.mountpoint, files: files[].path}\") }}"
@@ -162,14 +162,14 @@
             - name: "config/disks_auto_cloud/lvm | Touch a file with the mountpoint for testing that disk attachment is correct.  Note: Use a unique filename here instead of writing to a file, so that more than one file per device is an error."
               become: true
               file:
-                path: "{{ raid_vols[0].mountpoint }}/.clusterversetest__{{inventory_hostname | regex_replace('-(?!.*-).*')}}__{{ raid_vols[0].mountpoint | regex_replace('\\/', '_') }}"
+                path: "{{ raid_vols[0].mountpoint }}/.clusterverse_volplacement_test__{{inventory_hostname | regex_replace('-(?!.*-).*')}}__{{ raid_vols[0].mountpoint | regex_replace('\\/', '_') }}"
                 state: touch
 
-            - name: config/disks_auto_cloud/lvm | Find all .clusterversetest__ files in mounted disks
+            - name: config/disks_auto_cloud/lvm | Find all .clusterverse_volplacement_test__ files in mounted disks
               find:
                 paths: "{{ raid_vols[0].mountpoint }}"
                 hidden: true
-                patterns: ".clusterversetest__*"
+                patterns: ".clusterverse_volplacement_test__*"
               register: r__find_test
 
             - debug: msg={{r__find_test}}
