@@ -43,11 +43,6 @@
     - fail:
       when: testfail is defined and testfail == "fail_1"
 
-    - name: re-acquire cluster_hosts_target and cluster_hosts_state (For the '-e canary=tidy' option. This can't be run in the tidy block below because that block depends on this info being correct)
-      import_role:
-        name: clusterverse/cluster_hosts
-      when: (canary_tidy_on_success is defined and canary_tidy_on_success|bool)
-
     - name: Postflight check | validate that exactly one test file exists per device
       block:
         - name: Postflight | Find all .clusterverse_volcopymove_test__ files in mounted disks
@@ -67,6 +62,11 @@
           assert:
             that: r__find_test.results | map(attribute='files') | map('length') | select('ne', 1) | length == 0
             fail_msg: "ERROR - Exactly one .clusterverse_volcopymove_test__ file should exist per device. Details: {{ r__find_test.results | map(attribute='files') | list }}"
+
+    - name: "re-acquire cluster_hosts_target and cluster_hosts_state **for the tidy block** (LEAVE THIS AS THE LAST TASK IN THIS BLOCK, OR cluster_hosts_target WILL BE WRONG).  Note: This can't be run in the tidy block below because that block depends on this info being correct)"
+      import_role:
+        name: clusterverse/cluster_hosts
+      when: (canary_tidy_on_success is defined and canary_tidy_on_success|bool)
 
   rescue:
     - debug: msg="Rescuing"
