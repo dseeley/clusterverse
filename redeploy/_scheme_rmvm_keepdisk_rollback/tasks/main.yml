@@ -57,9 +57,11 @@
             patterns: ".clusterverse_volcopymove_test__*"
           delegate_to: "{{ item.0.hostname }}"
           with_subelements:
-            - "{{cluster_hosts_target}}"
+            - "{{ cluster_hosts_target | json_query(\"[].{hostname:hostname, auto_volumes: auto_volumes[?mountpoint!=`/`]}\") }}"
             - auto_volumes
           register: r__find_test
+
+        - debug: msg={{r__find_test.results | map(attribute='files') }}
 
         - name: Postflight | assert that exactly one .clusterverse_volcopymove_test__ file exists per device
           assert:

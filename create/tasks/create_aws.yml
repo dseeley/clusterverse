@@ -66,8 +66,8 @@
               {%- if 'volume_type' in vol and vol.volume_type == 'ephemeral' -%}
                 {%- set ns.res = ns.res + [{ 'device_name': vol.device_name, 'volume_name': vol.ephemeral }] -%}
               {%- else -%}
-                {%- set ebs_base = {'volume_type': vol.volume_type, 'volume_size': vol.volume_size} -%}
-                {%- set ebs = ebs_base | combine({'iops': vol.iops} if 'iops' in vol else {}) -%}
+                {%- set ebs = {'volume_type': vol.volume_type, 'volume_size': vol.volume_size} -%}
+                {%- set ebs = ebs | combine({'iops': vol.iops} if 'iops' in vol else {}) -%}
                 {%- set ebs = ebs | combine({'throughput': vol.throughput} if 'throughput' in vol else {}) -%}
                 {%- set ebs = ebs | combine({'snapshot_id': vol.snapshot} if 'snapshot' in vol else {}) -%}
                 {%- set ebs = ebs | combine({'encrypted': vol.encrypted} if 'encrypted' in vol else {}) -%}
@@ -161,6 +161,11 @@
 
 #    - name: create/aws | r__async_status__ec2_instance_vol
 #      debug: msg={{r__async_status__ec2_instance_vol}}
+
+    - name: create/aws | Acquire cluster_hosts_state after attaching volumes (or confirming already-attached), as we need it to correctly re-tag any moved volumes.
+      include_role:
+        name: clusterverse/cluster_hosts
+        tasks_from: "get_cluster_hosts_state_{{cluster_vars.type}}.yml"
 
     - name: create/aws | Set the ec2 volume name tag
       amazon.aws.ec2_tag:

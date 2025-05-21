@@ -22,6 +22,14 @@
     _host_to_redeploy_nosuffix: "{{host_to_redeploy.hostname | regex_replace('-(?!.*-).*')}}"   #Remove the cluster_suffix from the hostname
     hosts_to_change: "{{ cluster_hosts_state | to_json | from_json | json_query(\"[?tagslabels.cv__lifecycle_state!='current' && starts_with(name, '\" + _host_to_redeploy_nosuffix + \"')]\") }}"
 
+- name: by_hosttype_by_host | Power on rescued VM (hosts_to_powerchange will be empty for normal redeploy, but not in rescue case)
+  include_role:
+    name: clusterverse/redeploy/__common
+    tasks_from: "powerchange_vms_{{cluster_vars.type}}.yml"
+  vars:
+    hosts_to_powerchange: "{{ cluster_hosts_state | selectattr('name', '==', host_to_redeploy.hostname) | selectattr('tagslabels.cv__lifecycle_state', '==', 'current') | selectattr('instance_state', '==', 'stopped') | list }}"
+    powerchange_new_state: "start"
+
 - name: "by_hosttype_by_host | Run {{mainclusteryml}} to add {{host_to_redeploy.hostname}} to cluster"
   dseeley.nested_playbook.nested_playbook:
     playbook_cmdline: "{{ (argv[1:] | join(' ')) | regex_replace('redeploy.yml', mainclusteryml) }} -e cluster_suffix={{cluster_suffix}} -e '{'cluster_hosts_target': [{{host_to_redeploy | to_json}}]}' {{ redeploy_extra_vars | default({}) | extravars_from_dict }}"
@@ -30,14 +38,6 @@
   include_role:
     name: clusterverse/cluster_hosts
     tasks_from: "get_cluster_hosts_state_{{cluster_vars.type}}.yml"
-
-- name: by_hosttype_by_host | Power on new VM (not needed for normal redeploy, but for rescue case)
-  include_role:
-    name: clusterverse/redeploy/__common
-    tasks_from: "powerchange_vms_{{cluster_vars.type}}.yml"
-  vars:
-    hosts_to_powerchange: "{{ cluster_hosts_state | selectattr('name', '==', host_to_redeploy.hostname) | list }}"
-    powerchange_new_state: "start"
 
 - name: by_hosttype_by_host | re-acquire the dynamic inventory (includes cluster_hosts_state)
   include_role:

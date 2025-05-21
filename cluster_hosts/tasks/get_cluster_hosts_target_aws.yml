@@ -142,15 +142,15 @@
             _cluster_hosts_targets__derived_arch: |-
               {%- set ns = namespace(res=[]) -%}
               {%- set _cluster_hosts_targets__derived_arch = _cluster_hosts_targets__no_ami -%}
-              {%- for host in _cluster_hosts_targets__derived_arch -%}
-                {%- set hosttype_archs_ec2_instance_type_info = r__ec2_instance_type_info.instance_types | json_query('[?instance_type==\'' + host.flavor + '\'].processor_info.supported_architectures[]') -%}
-                {%- set updated_host = host -%}
+              {%- for cht_host in _cluster_hosts_targets__derived_arch -%}
+                {%- set hosttype_archs_ec2_instance_type_info = r__ec2_instance_type_info.instance_types | json_query('[?instance_type==\'' + cht_host.flavor + '\'].processor_info.supported_architectures[]') -%}
+                {%- set ns_updated_host = namespace(host=cht_host) -%}
                 {%- if hosttype_archs_ec2_instance_type_info | length == 1 -%}
-                  {%- set updated_host = host | combine({'derived_architecture': hosttype_archs_ec2_instance_type_info[0]}) -%}
+                  {%- set ns_updated_host.host = cht_host | combine({'derived_architecture': hosttype_archs_ec2_instance_type_info[0]}) -%}
                 {%- elif hosttype_archs_ec2_instance_type_info | symmetric_difference(['i386','x86_64']) | length == 0 -%}
-                  {%- set updated_host = host | combine({'derived_architecture': 'x86_64'}) -%}
+                  {%- set ns_updated_host.host = cht_host | combine({'derived_architecture': 'x86_64'}) -%}
                 {%- endif -%}
-                {%- set ns.res = ns.res + [updated_host] -%}
+                {%- set ns.res = ns.res + [ns_updated_host.host] -%}
               {%- endfor -%}
               {{ ns.res }}
           register: r__ec2_ami_info__by_location
