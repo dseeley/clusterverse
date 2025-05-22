@@ -1,8 +1,9 @@
 ---
 
-- debug: msg="by_hosttype_by_host | Attempting to redeploy {{host_to_redeploy.hostname}}"
+- name: by_hosttype_by_host | debug host_to_redeploy
+  debug: msg="{{host_to_redeploy}}"
 
-- name: stop/ remove previous instance
+- name: by_hosttype_by_host | stop/ remove previous instance
   block:
     - name: by_hosttype_by_host | run predeleterole role
       include_role:
@@ -37,3 +38,22 @@
 - name: by_hosttype_by_host | re-acquire the dynamic inventory (includes cluster_hosts_state)
   include_role:
     name: clusterverse/dynamic_inventory
+
+- name: by_hosttype_by_host | Postflight - validate that exactly one test file exists per device
+  block:
+    - name: by_hosttype_by_host | Postflight - Find all .clusterverse_volcopymove_test__ files in mounted disks
+      find:
+        paths: "{{item.mountpoint}}"
+        hidden: true
+        patterns: ".clusterverse_volcopymove_test__*"
+      delegate_to: "{{ host_to_redeploy.hostname }}"
+      with_items: "{{ host_to_redeploy.auto_volumes | selectattr('mountpoint', '!=', '/') }}"
+      register: r__find_test
+
+    - debug: msg={{r__find_test.results | map(attribute='files') }}
+
+    - name: by_hosttype_by_host | Postflight - Assert that exactly one .clusterverse_volcopymove_test__ file exists per device
+      assert:
+        that: r__find_test.results | map(attribute='files') | map('length') | select('ne', 1) | length == 0
+        fail_msg: "ERROR - Exactly one .clusterverse_volcopymove_test__ file should exist per device. Details: {{ r__find_test.results | map(attribute='files') | list }}"
+  when: test_touch_disks is defined and test_touch_disks|bool

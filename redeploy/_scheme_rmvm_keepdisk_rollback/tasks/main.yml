@@ -31,37 +31,21 @@
       loop_control: { loop_var: item__include_tasks }   #This mechanism (to include_tasks only when the file exists), also creates a loop iterator 'item' that it sends to the included tasks.  If they also have loops, we otherwise get the warning: "The loop variable 'item' is already in use".
       vars: { params: { files: ["_add_src_diskinfo_to_cluster_hosts_target__{{cluster_vars.type}}.yml"], skip: true } }
 
-    - name: Run redeploy per hosttype.  Create one at a time, then stop previous.
-      include_tasks: by_hosttype.yml
-      with_items: "{{ myhosttypes_array | default([]) }}"
-      loop_control:
-        loop_var: hosttype
+    - block:
+        - name: debug cluster_hosts_target_by_hosttype
+          debug: msg="{{ cluster_hosts_target_by_hosttype }}"
+
+        - name: Run redeploy per hosttype.  Create one at a time, then stop previous.
+          include_tasks: by_hosttype.yml
+          with_items: "{{ myhosttypes_array | default([]) }}"
+          loop_control:
+            loop_var: hosttype
       vars:
         cluster_hosts_target_by_hosttype: "{{cluster_hosts_target | default({}) | dict_agg('hosttype') }}"
         myhosttypes_array: "{%- if myhosttypes is defined -%}{{ myhosttypes.split(',') }}{%- elif cluster_hosts_target_by_hosttype is defined and cluster_hosts_target_by_hosttype.keys() | length > 0 -%}{{ cluster_hosts_target_by_hosttype.keys() | list }}{%- else -%}[]{%- endif -%}"
 
     - fail:
       when: testfail is defined and testfail == "fail_1"
-
-    - name: Postflight check | validate that exactly one test file exists per device
-      block:
-        - name: Postflight | Find all .clusterverse_volcopymove_test__ files in mounted disks
-          find:
-            paths: "{{item.1.mountpoint}}"
-            hidden: true
-            patterns: ".clusterverse_volcopymove_test__*"
-          delegate_to: "{{ item.0.hostname }}"
-          with_subelements:
-            - "{{ cluster_hosts_target | json_query(\"[].{hostname:hostname, auto_volumes: auto_volumes[?mountpoint!=`/`]}\") }}"
-            - auto_volumes
-          register: r__find_test
-
-        - debug: msg={{r__find_test.results | map(attribute='files') }}
-
-        - name: Postflight | assert that exactly one .clusterverse_volcopymove_test__ file exists per device
-          assert:
-            that: r__find_test.results | map(attribute='files') | map('length') | select('ne', 1) | length == 0
-            fail_msg: "ERROR - Exactly one .clusterverse_volcopymove_test__ file should exist per device. Details: {{ r__find_test.results | map(attribute='files') | list }}"
 
     - name: "re-acquire cluster_hosts_target and cluster_hosts_state **for the tidy block** (LEAVE THIS AS THE LAST TASK IN THIS BLOCK, OR cluster_hosts_target WILL BE WRONG).  Note: This can't be run in the tidy block below because that block depends on this info being correct)"
       import_role:
