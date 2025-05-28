@@ -1,6 +1,6 @@
 ---
 
-- name: cluster_hosts_target_denormalised_by_volume
+- name: create/azure | cluster_hosts_target_denormalised_by_volume
   debug: msg="{{cluster_hosts_target_denormalised_by_volume}}"
 
 #- name: create/azure | Create storage account (must be [a-z0-9] and <= 24 chars).  NOT NECESSARY for IaaS block storage

@@ -1,6 +1,6 @@
 ---
 
-- name: cluster_hosts_target_denormalised_by_volume
+- name: create/aws | cluster_hosts_target_denormalised_by_volume
   debug: msg="{{cluster_hosts_target_denormalised_by_volume}}"
 
 - name: create/aws | Create security groups

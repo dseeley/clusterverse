@@ -1,5 +1,8 @@
 ---
 
+- name: create/gcp | cluster_hosts_target_denormalised_by_volume
+  debug: msg="{{cluster_hosts_target_denormalised_by_volume}}"
+
 - name: create/gcp | Create network and subnetwork (if -e create_gcp_network=true)
   block:
     - name: create/gcp | Create host network (if -e create_gcp_network=true)
