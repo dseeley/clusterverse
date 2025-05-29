@@ -67,8 +67,7 @@
     - name: config/dns/a/route53 | Wait for records to be replicated to all Amazon Route 53 DNS servers
       block:
         - name: config/dns/a/route53 | Wait for records to be replicated to all Amazon Route 53 DNS servers
-          async_status:
-            jid: "{{ item.ansible_job_id }}"
+          async_status: { jid: "{{ item.ansible_job_id }}" }
           register: route53_jobs
           until: route53_jobs is finished
           delay: 1

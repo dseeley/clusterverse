@@ -21,8 +21,7 @@
       poll: 0
 
     - name: "powerchange_vms/gcp | Wait for VM(s) to {{powerchange_new_state}}"
-      async_status:
-        jid: "{{ item.ansible_job_id }}"
+      async_status: { jid: "{{ item.ansible_job_id }}" }
       register: async_jobs
       until: async_jobs is finished
       retries: 300

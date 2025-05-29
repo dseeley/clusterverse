@@ -144,8 +144,7 @@
       poll: 0
 
     - name: create/gcp | Wait for instance creation to complete
-      async_status:
-        jid: "{{ item.ansible_job_id }}"
+      async_status: { jid: "{{ item.ansible_job_id }}" }
       register: r__async_status__gcp_compute_instance
       until: r__async_status__gcp_compute_instance is finished
       delay: 3

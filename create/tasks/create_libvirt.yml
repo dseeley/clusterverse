@@ -183,8 +183,7 @@
       cv__regionzone: "{{cluster_vars.region}}-{{item.az_name}}"    # cv__regionzone needed here for libvirt because libvirt doesn't store zone metadata natively
 
 - name: create/libvirt | Wait for instance creation to complete
-  async_status:
-    jid: "{{ item.ansible_job_id }}"
+  async_status: { jid: "{{ item.ansible_job_id }}" }
   register: r__async_status__virt_define
   until: r__async_status__virt_define is finished
   retries: 300
@@ -211,15 +210,19 @@
   with_items: "{{ r__virt_define.results }}"
   when: "'autostart' in item.item.flavor and item.item.flavor.autostart|bool"
 
-- name: create/libvirt | Start the VMs
-  community.libvirt.virt:
+- name: create/libvirt | Wait for all VMs to start (retry if fail)
+  dseeley.libvirt.virt:
     uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc&no_verify=1'
     name: "{{item.item.hostname}}"
     state: running
-  with_items: "{{ r__virt_define.results }}"
-  run_once: true
-  async: 7200
-  poll: 0
+  register: r__virt__start_vms_async
+  loop: "{{ r__virt_define.results }}"
+  until: "r__virt__start_vms_async is not failed"
+  retries: 10
+  delay: 1
+
+- name: create/libvirt | r__virt__start_vms_async
+  debug: msg={{r__virt__start_vms_async}}
 
 - name: create/libvirt | Wait until IPs are presented for all started VMs
   dseeley.libvirt.virt:

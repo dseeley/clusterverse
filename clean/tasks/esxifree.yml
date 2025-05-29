@@ -16,8 +16,7 @@
       poll: 0
 
     - name: clean/esxifree | Wait for VM deletion to complete
-      async_status:
-        jid: "{{ item.ansible_job_id }}"
+      async_status: { jid: "{{ item.ansible_job_id }}" }
       register: esxi_jobs
       until: esxi_jobs is finished
       retries: 300

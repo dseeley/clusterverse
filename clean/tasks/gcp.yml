@@ -27,8 +27,7 @@
       poll: 0
 
     - name: clean/gcp | Wait for VM deletion to complete
-      async_status:
-        jid: "{{ item.ansible_job_id }}"
+      async_status: { jid: "{{ item.ansible_job_id }}" }
       register: async_jobs
       until: async_jobs is finished
       retries: 300
