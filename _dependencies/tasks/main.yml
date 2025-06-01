@@ -18,7 +18,7 @@
 
     - name: Ensure the mandatory cluster_vars are defined
       merge_vars:
-        facts: "{{ cluster_vars__mandatory | dict2items_recursive(key_name='path', value_name='value') | json_query(\"[].{path: join('.', ['cluster_vars', path]), value: value}\") }}"
+        facts: "{{ cluster_vars__mandatory | dict2items(key_name='path', value_name='value') | to_json | from_json | json_query(\"[].{path: join('.', ['cluster_vars', path]), value: value}\") }}"
 
     - name: argv
       debug: msg={{ argv }}
@@ -28,11 +28,21 @@
         msg:
           - "{{cluster_vars_override}}"
           - "{{cluster_vars_override | type_debug}}"
+          - "{{cluster_vars_override | from_yaml }}"
+          - "{{cluster_vars_override | from_yaml | type_debug}}"
       when: cluster_vars_override is defined
 
-    - name: Combine command-line cluster_vars_override into the loaded cluster_vars
+    - name: Combine command-line cluster_vars_override (which are yaml-as-a-string, so need to be from_yaml'd) into the loaded cluster_vars
       merge_vars:
-        facts: "{{ cluster_vars_override | from_yaml | dict2items_recursive(key_name='path', value_name='value') | json_query(\"[].{path: join('.', ['cluster_vars', path]), value: value}\") }}"
+        facts: "{{ cluster_vars_override_yaml_facts }}"
+      vars:
+        str_facts: "{{ cluster_vars_override | from_yaml | dict2items(key_name='path', value_name='value') | to_json | from_json | json_query(\"[].{path: join('.', ['cluster_vars', path]), value: value}\") }}"
+        cluster_vars_override_yaml_facts: |
+          {%- set ns = namespace(facts=[]) -%}
+          {%- for fact in str_facts -%}
+              {%- set ns.facts = ns.facts + [fact | combine({'value': (fact.value | from_yaml)})] -%}
+          {%- endfor -%}
+          {{ ns.facts }}
       when: cluster_vars is defined and cluster_vars_override is defined and cluster_vars_override != ''
 
     - name: Loaded/derived/overridden cluster_vars
