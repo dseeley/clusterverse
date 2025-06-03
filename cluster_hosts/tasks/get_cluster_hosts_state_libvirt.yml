@@ -119,7 +119,7 @@
           {%- set ns = namespace(res=[]) -%}
           {%- for host in libvirt_inventory | json_query('[].all[]') -%}
             {%- set hostname = host.keys() | first -%}
-            {%- set tagslabels = host[hostname].xml_desc | xpath('/domain/metadata/clusterverse:cdata//text()', {'clusterverse': 'https://github.com/dseeley/clusterverse'} ) | json_query('[0]') | from_yaml -%}
+            {%- set tagslabels = host[hostname].xml_desc | default('') | xpath('/domain/metadata/clusterverse:cdata//text()', {'clusterverse': 'https://github.com/dseeley/clusterverse'} ) | json_query('[0]') | from_yaml -%}
             {%- if tagslabels and 'cv__cluster_name' in tagslabels and tagslabels['cv__cluster_name'] == cluster_name -%}
               {%- set ns_disk_info_cloud = namespace(disk_info=[]) -%}
               {%- for diskIdx in range(1, (host[hostname].xml_desc | xpath('/domain/devices/disk[@type=\"file\"]/source/@file') | length + 1)) -%}

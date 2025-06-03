@@ -109,7 +109,7 @@
       delegate_to: localhost
       run_once: true
 
-    - name: get_cluster_hosts_target/aws | Create block variable '_cluster_hosts_targets__no_ami' that is the cluster_hosts_targets whose 'image' defintion is not an AMI; we'll try to evaluate it as a 'manifest-location' filter to the latest AMI instead.
+    - name: get_cluster_hosts_target/aws | Create block variable '_cluster_hosts_targets__no_ami' that is the cluster_hosts_targets whose 'image' definition is not an AMI; we'll try to evaluate it as a 'manifest-location' filter to the latest AMI instead.
       block:
         - name: get_cluster_hosts_target/aws | _cluster_hosts_targets__no_ami
           debug: msg="{{ _cluster_hosts_targets__no_ami }}"
