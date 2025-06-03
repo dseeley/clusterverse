@@ -274,12 +274,18 @@
               when: ((item.0.name |regex_replace('-(?!.*-).*')) == (item.1.record.name | regex_replace('^(.*?)\\..*$', '\\1')))  and  (item.0.name == item.1.record.rrdatas[0] | regex_replace('^(.*?)\\..*$', '\\1'))
           vars:
             gcp_dns_resource_record_set_info__and__gcp_dns_managed_zone_info: |
-              {%- set res = [] -%}
+              {%- set ns = namespace(res=[]) -%}
               {%- for managed_zone in r__gcp_dns_resource_record_set_info.results -%}
                 {%- for record in managed_zone.resources -%}
-                  {%- set _dummy = res.extend([{ 'managed_zone': {'dnsName': managed_zone.item.dnsName, 'name': managed_zone.item.name}, 'record': record }]) -%}
+                  {%- set ns.res = ns.res + [{
+                    'managed_zone': {
+                      'dnsName': managed_zone.item.dnsName,
+                      'name': managed_zone.item.name
+                    },
+                    'record': record
+                  }] -%}
                 {%- endfor -%}
               {%- endfor -%}
-              {{ res }}
+              {{ ns.res }}
       when: cluster_vars.dns_server=="clouddns"
-  when: hosts_to_clean | length
+  when: hosts_to_clean | length > 0

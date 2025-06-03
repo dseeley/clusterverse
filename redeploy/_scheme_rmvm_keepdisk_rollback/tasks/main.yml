@@ -31,19 +31,23 @@
       loop_control: { loop_var: item__include_tasks }   #This mechanism (to include_tasks only when the file exists), also creates a loop iterator 'item' that it sends to the included tasks.  If they also have loops, we otherwise get the warning: "The loop variable 'item' is already in use".
       vars: { params: { files: ["_add_src_diskinfo_to_cluster_hosts_target__{{cluster_vars.type}}.yml"], skip: true } }
 
-    - name: Run redeploy per hosttype.  Create one at a time, then stop previous.
-      include_tasks: by_hosttype.yml
-      with_items: "{{ myhosttypes_array | default([]) }}"
-      loop_control:
-        loop_var: hosttype
+    - block:
+        - name: debug cluster_hosts_target_by_hosttype
+          debug: msg="{{ cluster_hosts_target_by_hosttype }}"
+
+        - name: Run redeploy per hosttype.  Create one at a time, then stop previous.
+          include_tasks: by_hosttype.yml
+          with_items: "{{ myhosttypes_array | default([]) }}"
+          loop_control:
+            loop_var: hosttype
       vars:
         cluster_hosts_target_by_hosttype: "{{cluster_hosts_target | default({}) | dict_agg('hosttype') }}"
-        myhosttypes_array: "{%- if myhosttypes is defined -%}{{ myhosttypes.split(',') }}{%- elif cluster_hosts_target_by_hosttype is defined and cluster_hosts_target_by_hosttype.keys() | length -%}{{ cluster_hosts_target_by_hosttype.keys() | list }}{%- else -%}[]{%- endif -%}"
+        myhosttypes_array: "{%- if myhosttypes is defined -%}{{ myhosttypes.split(',') }}{%- elif cluster_hosts_target_by_hosttype is defined and cluster_hosts_target_by_hosttype.keys() | length > 0 -%}{{ cluster_hosts_target_by_hosttype.keys() | list }}{%- else -%}[]{%- endif -%}"
 
     - fail:
       when: testfail is defined and testfail == "fail_1"
 
-    - name: re-acquire cluster_hosts_target and cluster_hosts_state (For the '-e canary=tidy' option. This can't be run in the tidy block below because that block depends on this info being correct)
+    - name: "re-acquire cluster_hosts_target and cluster_hosts_state **for the tidy block** (LEAVE THIS AS THE LAST TASK IN THIS BLOCK, OR cluster_hosts_target WILL BE WRONG).  Note: This can't be run in the tidy block below because that block depends on this info being correct)"
       import_role:
         name: clusterverse/cluster_hosts
       when: (canary_tidy_on_success is defined and canary_tidy_on_success|bool)
@@ -103,12 +107,12 @@
     - include_role:
         name: clusterverse/clean
         tasks_from: dns.yml
-      when: (hosts_to_clean | length)  and  (cluster_vars.dns_server is defined and cluster_vars.dns_server != "") and (cluster_vars.dns_user_domain is defined and cluster_vars.dns_user_domain != "")
+      when: (hosts_to_clean | length > 0)  and  (cluster_vars.dns_server is not in [none, '']) and (cluster_vars.dns_user_domain is not in [none, ''])
 
     - include_role:
         name: clusterverse/clean
         tasks_from: "{{cluster_vars.type}}.yml"
-      when: (hosts_to_clean | length)
+      when: (hosts_to_clean | length > 0)
 
     - debug:
         msg: "tidy | No hosts to tidy.  Only powered-down, non-current machines with be tidied; to clean other machines, please use the '-e clean=<state>' extra variable."

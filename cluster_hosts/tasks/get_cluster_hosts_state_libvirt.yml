@@ -1,5 +1,12 @@
 ---
 
+- name: get_cluster_hosts_state/libvirt | Copy libvirt ssh private key file
+  copy: { content: "{{cluster_vars.libvirt.private_key}}", dest: '{{ playbook_dir }}/id_rsa__libvirt_svc', mode: '0600' }
+  no_log: true
+  delegate_to: localhost
+  run_once: true
+  when: "cluster_vars.type == 'libvirt'  and  cluster_vars.libvirt.private_key is defined"
+
 #- name: get_cluster_hosts_state/libvirt | get cluster_hosts_state using the many individual info modules.
 #  block:
 #    - name: get_cluster_hosts_state/libvirt | list_vms
@@ -64,36 +71,38 @@
 #    - name: get_cluster_hosts_state/libvirt | Set cluster_hosts_state
 #      set_fact:
 #        cluster_hosts_state: |
-#          {%- set res = [] -%}
-#            {%- for res_item in r__virt__guest_agent_info.results -%}
-#              {%- set cluster_host = {} -%}
-#              {%- set tagslabels = res_item.item.xml | xpath('/domain/metadata/clusterverse:cdata//text()', {'clusterverse': 'https://github.com/dseeley/clusterverse'} ) | json_query('[0]') | from_yaml -%}
-#              {%- if tagslabels and 'cv__cluster_name' in tagslabels and tagslabels['cv__cluster_name'] == cluster_name -%}
-#                {%- set _ = cluster_host.update({'tagslabels': tagslabels}) -%}
-#                {%- set _ = cluster_host.update({'name': res_item.item.name}) -%}
-#                {%- set _ = cluster_host.update({'instance_id': res_item.item.name}) -%}
-#                {%- set _ = cluster_host.update({'instance_state': res_item.item.instance_state}) -%}
-#                {%- set _ = cluster_host.update({'regionzone': tagslabels['cv__regionzone']}) -%}
-#                {%- set _ = cluster_host.update({'disk_info_cloud': [] }) -%}
-#                {%- for diskIdx in range(1, (res_item.item.xml | xpath('/domain/devices/disk[@type=\"file\"]/source/@file') | length + 1)) -%}
-#                  {%- set _ = cluster_host.disk_info_cloud.append({'target_dev': res_item.item.xml | xpath('/domain/devices/disk[@type=\"file\"]['+diskIdx|string+']/target/@dev') | json_query('[0]'), 'source_file': res_item.item.xml | xpath('/domain/devices/disk[@type=\"file\"]['+diskIdx|string+']/source/@file') | json_query('[0]'), 'serial': res_item.item.xml | xpath('/domain/devices/disk[@type=\"file\"]['+diskIdx|string+']/serial//text()') | json_query('[0]') }) -%}
-#                {%- endfor -%}
-#                {%- set _ = cluster_host.update({'ipv4': {'private': res_item['guest_agent_info']['interfaceAddresses'] | dict2items | json_query('[?key != `lo`]|[0].value.addrs[0].addr'), 'public': None }}) -%}
-#                {%- set _ = res.append(cluster_host) -%}
-#              {%- endif -%}
-#            {%- endfor -%}
-#          {{ res }}
+#          {%- set ns = namespace(res=[]) -%}
+#          {%- for res_item in r__virt__guest_agent_info.results -%}
+#            {%- set tagslabels = res_item.item.xml | xpath('/domain/metadata/clusterverse:cdata//text()', {'clusterverse': 'https://github.com/dseeley/clusterverse'} ) | json_query('[0]') | from_yaml -%}
+#            {%- if tagslabels and 'cv__cluster_name' in tagslabels and tagslabels['cv__cluster_name'] == cluster_name -%}
+#              {%- set ns_disk_info_cloud = namespace(disk_info=[]) -%}
+#              {%- for diskIdx in range(1, (res_item.item.xml | xpath('/domain/devices/disk[@type=\"file\"]/source/@file') | length + 1)) -%}
+#                {%- set ns_disk_info_cloud.disk_info = ns_disk_info_cloud.disk_info + [{
+#                  'target_dev': res_item.item.xml | xpath('/domain/devices/disk[@type=\"file\"]['+diskIdx|string+']/target/@dev') | json_query('[0]'),
+#                  'source_file': res_item.item.xml | xpath('/domain/devices/disk[@type=\"file\"]['+diskIdx|string+']/source/@file') | json_query('[0]'),
+#                  'serial': res_item.item.xml | xpath('/domain/devices/disk[@type=\"file\"]['+diskIdx|string+']/serial//text()') | json_query('[0]')
+#                }] -%}
+#              {%- endfor -%}
+#              {%- set cluster_host = {
+#                'tagslabels': tagslabels,
+#                'name': res_item.item.name,
+#                'instance_id': res_item.item.name,
+#                'instance_state': res_item.item.instance_state,
+#                'regionzone': tagslabels['cv__regionzone'],
+#                'disk_info_cloud': ns_disk_info_cloud.disk_info,
+#                'ipv4': {
+#                  'private': res_item['guest_agent_info']['interfaceAddresses'] | dict2items | json_query('[?key != `lo`]|[0].value.addrs[0].addr'),
+#                  'public': None
+#                }
+#              } -%}
+#              {%- set ns.res = ns.res + [cluster_host] -%}
+#            {%- endif -%}
+#          {%- endfor -%}
+#          {{ ns.res }}
 
 
 - name: get_cluster_hosts_state/libvirt | get cluster_hosts_state using the inventory plugin.
   block:
-    - name: get_cluster_hosts_state/libvirt | Copy libvirt ssh private key file
-      copy: { content: "{{cluster_vars.libvirt.private_key}}", dest: '{{ playbook_dir }}/id_rsa__libvirt_svc', mode: '0600' }
-      no_log: true
-      delegate_to: localhost
-      run_once: true
-      when: "cluster_vars.type == 'libvirt'  and  cluster_vars.libvirt.private_key is defined"
-
     - name: get_cluster_hosts_state/libvirt | Get basic instance info of all vms
       set_fact:
         libvirt_inventory: "{{ lookup('dseeley.inventory_lookup.inventory', 'community.libvirt.libvirt', plugin_options=params) }}"
@@ -105,25 +114,34 @@
 #      debug: msg={{libvirt_inventory}}
 
     - name: get_cluster_hosts_state/libvirt | Set cluster_hosts_state
-      set_fact:
+      ansible.builtin.set_fact:
         cluster_hosts_state: |
-          {%- set res = [] -%}
+          {%- set ns = namespace(res=[]) -%}
           {%- for host in libvirt_inventory | json_query('[].all[]') -%}
-            {%- set cluster_host = {} -%}
-            {%- set hostname = host | json_query('keys(@) | [0]') -%}
-            {%- set tagslabels = host[hostname].xml_desc | xpath('/domain/metadata/clusterverse:cdata//text()', {'clusterverse': 'https://github.com/dseeley/clusterverse'} ) | json_query('[0]') | from_yaml -%}
+            {%- set hostname = host.keys() | first -%}
+            {%- set tagslabels = host[hostname].xml_desc | default('') | xpath('/domain/metadata/clusterverse:cdata//text()', {'clusterverse': 'https://github.com/dseeley/clusterverse'} ) | json_query('[0]') | from_yaml -%}
             {%- if tagslabels and 'cv__cluster_name' in tagslabels and tagslabels['cv__cluster_name'] == cluster_name -%}
-              {%- set _ = cluster_host.update({'tagslabels': tagslabels}) -%}
-              {%- set _ = cluster_host.update({'name': hostname}) -%}
-              {%- set _ = cluster_host.update({'instance_id': hostname}) -%}
-              {%- set _ = cluster_host.update({'instance_state': host[hostname].info.state}) -%}
-              {%- set _ = cluster_host.update({'regionzone': tagslabels['cv__regionzone']}) -%}
-              {%- set _ = cluster_host.update({'disk_info_cloud': [] }) -%}
+              {%- set ns_disk_info_cloud = namespace(disk_info=[]) -%}
               {%- for diskIdx in range(1, (host[hostname].xml_desc | xpath('/domain/devices/disk[@type=\"file\"]/source/@file') | length + 1)) -%}
-                {%- set _ = cluster_host.disk_info_cloud.append({'target_dev': host[hostname].xml_desc | xpath('/domain/devices/disk[@type=\"file\"]['+diskIdx|string+']/target/@dev') | json_query('[0]'), 'source_file': host[hostname].xml_desc | xpath('/domain/devices/disk[@type=\"file\"]['+diskIdx|string+']/source/@file') | json_query('[0]'), 'serial': host[hostname].xml_desc | xpath('/domain/devices/disk[@type=\"file\"]['+diskIdx|string+']/serial//text()') | json_query('[0]') }) -%}
+                {%- set ns_disk_info_cloud.disk_info = ns_disk_info_cloud.disk_info + [{
+                  'target_dev': host[hostname].xml_desc | xpath('/domain/devices/disk[@type=\"file\"]['+diskIdx|string+']/target/@dev') | json_query('[0]'),
+                  'source_file': host[hostname].xml_desc | xpath('/domain/devices/disk[@type=\"file\"]['+diskIdx|string+']/source/@file') | json_query('[0]'),
+                  'serial': host[hostname].xml_desc | xpath('/domain/devices/disk[@type=\"file\"]['+diskIdx|string+']/serial//text()') | json_query('[0]')
+                }] -%}
               {%- endfor -%}
-              {%- set _ = cluster_host.update({'ipv4': {'private': host[hostname]['interface_addresses'] | dict2items | json_query('[?key != `lo`]|[0].value.addrs[0].addr'), 'public': None }}) -%}
-              {%- set _ = res.append(cluster_host) -%}
+              {%- set cluster_host = {
+                'tagslabels': tagslabels,
+                'name': hostname,
+                'instance_id': hostname,
+                'instance_state': host[hostname].info.state,
+                'regionzone': tagslabels['cv__regionzone'],
+                'disk_info_cloud': ns_disk_info_cloud.disk_info,
+                'ipv4': {
+                  'private': host[hostname]['interface_addresses'] | dict2items | json_query('[?key != `lo`]|[0].value.addrs[0].addr'),
+                  'public': None
+                }
+              } -%}
+              {%- set ns.res = ns.res + [cluster_host] -%}
             {%- endif -%}
           {%- endfor -%}
-          {{ res }}
+          {{ ns.res }}

@@ -14,10 +14,9 @@
       poll: 0
 
     - name: clean/libvirt | Wait for VM 'destroy' (forcible shutdown) to complete
-      async_status:
-        jid: "{{ item.ansible_job_id }}"
+      async_status: { jid: "{{ item.ansible_job_id }}" }
       register: r__virt__destroyed_jobs
-      until: r__virt__destroyed_jobs.finished
+      until: r__virt__destroyed_jobs is finished
       retries: 300
       with_items: "{{r__virt__destroyed.results}}"
 
@@ -35,10 +34,9 @@
       poll: 0
 
     - name: clean/libvirt | Wait for VM deletion to complete
-      async_status:
-        jid: "{{ item.ansible_job_id }}"
+      async_status: { jid: "{{ item.ansible_job_id }}" }
       register: r__virt__undefine_jobs
-      until: r__virt__undefine_jobs.finished
+      until: r__virt__undefine_jobs is finished
       retries: 300
       with_items: "{{r__virt__undefine.results}}"
 
@@ -50,4 +48,4 @@
         command: delete
       register: r__virt__delete
       with_items: "{{hosts_to_clean | json_query(\"[].disk_info_cloud[].source_file\") }}"
-  when: hosts_to_clean | length
+  when: hosts_to_clean | length > 0

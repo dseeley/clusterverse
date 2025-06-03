@@ -18,7 +18,7 @@
 
     - name: Ensure the mandatory cluster_vars are defined
       merge_vars:
-        facts: "{{ cluster_vars__mandatory | dict2items_recursive(key_name='path', value_name='value') | json_query(\"[].{path: join('.', ['cluster_vars', path]), value: value}\") }}"
+        facts: "{{ cluster_vars__mandatory | dict2items(key_name='path', value_name='value') | to_json | from_json | json_query(\"[].{path: join('.', ['cluster_vars', path]), value: value}\") }}"
 
     - name: argv
       debug: msg={{ argv }}
@@ -28,11 +28,21 @@
         msg:
           - "{{cluster_vars_override}}"
           - "{{cluster_vars_override | type_debug}}"
+          - "{{cluster_vars_override | from_yaml }}"
+          - "{{cluster_vars_override | from_yaml | type_debug}}"
       when: cluster_vars_override is defined
 
-    - name: Combine command-line cluster_vars_override into the loaded cluster_vars
+    - name: Combine command-line cluster_vars_override (which are yaml-as-a-string, so need to be from_yaml'd) into the loaded cluster_vars
       merge_vars:
-        facts: "{{ cluster_vars_override | from_yaml | dict2items_recursive(key_name='path', value_name='value') | json_query(\"[].{path: join('.', ['cluster_vars', path]), value: value}\") }}"
+        facts: "{{ cluster_vars_override_yaml_facts }}"
+      vars:
+        str_facts: "{{ cluster_vars_override | from_yaml | dict2items(key_name='path', value_name='value') | to_json | from_json | json_query(\"[].{path: join('.', ['cluster_vars', path]), value: value}\") }}"
+        cluster_vars_override_yaml_facts: |
+          {%- set ns = namespace(facts=[]) -%}
+          {%- for fact in str_facts -%}
+              {%- set ns.facts = ns.facts + [fact | combine({'value': (fact.value | from_yaml)})] -%}
+          {%- endfor -%}
+          {{ ns.facts }}
       when: cluster_vars is defined and cluster_vars_override is defined and cluster_vars_override != ''
 
     - name: Loaded/derived/overridden cluster_vars
@@ -62,7 +72,7 @@
           - path: "cluster_vars.{{buildenv}}.aws_session_token"
             value: "{{r__sts_assume_role.sts_creds.session_token}}"
       delegate_to: "{{ item }}"
-      with_items: "{{ play_hosts }}"
+      with_items: "{{ ansible_play_batch }}"
       run_once: true
 
     - name: Loaded/derived/overridden cluster_vars
@@ -75,7 +85,7 @@
     - name: preflight | assertions based on required collections
       block:
         - name: preflight | dseeley.nested_playbook is required for redeploys
-          assert: { that: "'dseeley.nested_playbook' in galaxy_collections", fail_msg: "Please ensure the dseeley.nested_playbook collection is installed:  ansible-galaxy collection install dseeley.nested_playbook (or ansible-galaxy collection install --ignore-errors -fr requirements.yml)" }
+          assert: { that: "'dseeley.nested_playbook' in galaxy_collections and galaxy_collections['dseeley.nested_playbook'].version is version('0.0.7', '>=')", fail_msg: "Please ensure the dseeley.nested_playbook (>=0.0.7 collection is installed:  ansible-galaxy collection install dseeley.nested_playbook (or ansible-galaxy collection install --ignore-errors -fr requirements.yml)" }
 
         - name: preflight | libvirt collection requirements
           block:
@@ -98,11 +108,13 @@
     - assert: { that: "cluster_suffix is regex('^[a-z\\d\\-_]{0,63}$')", fail_msg: "Please ensure cluster_suffix ({{cluster_suffix}}) is in the set[a-z\\d\\-_], and <63 characters long." }
       when: cluster_suffix is defined
 
+    - debug: msg={{cluster_vars.custom_tagslabels}}
+
     - assert:
-        that: cluster_vars_assertcheck_templated == ''
-        fail_msg: "Please ensure all cluster_vars.custom_tagslabels are in the set [a-z\\d\\-_], and <63 characters long.  Failed on: {{cluster_vars_assertcheck_templated}}"
+        that: invalid_tags | length == 0
+        fail_msg: "Please ensure all cluster_vars.custom_tagslabels are in the set [a-z\\d\\-_], and <63 characters long. Failed on: {{ invalid_tags }}"
       vars:
-        cluster_vars_assertcheck_templated: "{%- for k, v in cluster_vars.custom_tagslabels.items() -%}{%- if v is not regex('^[a-z\\d\\-_]{0,63}$') -%}{{k + '(' + v + '), '}}{%- endif -%}{%- endfor -%}"
+        invalid_tags: "{{ cluster_vars.custom_tagslabels | dict2items | rejectattr('value', 'match', '^[a-z\\d\\-_]{0,63}$') | items2dict  }}"
       when: "'custom_tagslabels' in cluster_vars"
 
     - assert: { that: "cluster_vars[buildenv].hosttype_vars | json_query('*.version') | map('regex_search', '^[a-z\\d\\-_]{0,63}$') | select('ne', None) | length == cluster_vars[buildenv].hosttype_vars | length", fail_msg: "Please ensure cluster_vars[{{buildenv}}].hosttype_vars[hosttype].version is in the set [a-z\\d\\-_], and <63 characters long." }
@@ -113,11 +125,19 @@
     - assert: { that: "cluster_vars[buildenv] | json_query(\"hosttype_vars.*.auto_volumes[] | [?contains(`/dev/sdb,/dev/sdc,/dev/sdd,/dev/sde`, device_name) && volume_type!='ephemeral']\") | length == 0", fail_msg: "device_names /dev/sd[b-e] are only allowed for ephemeral volumes in AWS cluster_vars[buildenv].hosttype_vars.  Please start non-ephemeral devices at /dev/sdf." }
       when: cluster_vars.type == "aws"
 
-    - assert:
-        that: assertcheck_templated == ''
-        fail_msg: "All non-root volume mountpoints must either be all different (in which case 'lvmparams' must not be set), or all the same (in which case, 'lvmparams' must be set). [Failure: {{assertcheck_templated}}"
+
+    - name: Validate volume mountpoints
+      ansible.builtin.assert:
+        that: problematic_volume_mountpoints in [none, '']
+        fail_msg: "All non-root volume mountpoints must either be all different (in which case 'lvmparams' must not be set), or all the same (in which case, 'lvmparams' must be set). [Failure: {{ problematic_volume_mountpoints | default('null') }}]"
       vars:
-        assertcheck_templated: "{%- for hosttype in cluster_vars[buildenv].hosttype_vars | dict2items -%}{%- if ('lvmparams' not in hosttype.value and (hosttype.value.auto_volumes | length) == (hosttype.value.auto_volumes | map(attribute='mountpoint') | list | unique | count))  or  ('lvmparams' in hosttype.value and (hosttype.value.auto_volumes | selectattr('mountpoint', '!=', '/') | map(attribute='mountpoint') | list | unique | count == 1)) -%}{%- else -%}{{hosttype.key}}{%- endif -%}{%- endfor -%}"
+        problematic_volume_mountpoints: >-
+          {%- for hosttype in cluster_vars[buildenv].hosttype_vars | dict2items -%}
+            {%- if ('lvmparams' not in hosttype.value and (hosttype.value.auto_volumes | length) == (hosttype.value.auto_volumes | map(attribute='mountpoint') | list | unique | count)) or ('lvmparams' in hosttype.value and (hosttype.value.auto_volumes | selectattr('mountpoint', '!=', '/') | map(attribute='mountpoint') | list | unique | count == 1)) -%}
+            {%- else -%}
+              {{ hosttype.key }}
+            {%- endif -%}
+          {%- endfor -%}
 
     - assert: { that: "cluster_vars[buildenv] | json_query(\"hosttype_vars.*.auto_volumes[] | [?iops > `16000`] && [?starts_with(volume_type, `gp`)]\") | length == 0", fail_msg: "Volume iops is too high; maximum is 16000" }
       when: cluster_vars.type == "aws"

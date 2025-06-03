@@ -1,6 +1,6 @@
 ---
 
-- name: cluster_hosts_target_denormalised_by_volume
+- name: create/aws | cluster_hosts_target_denormalised_by_volume
   debug: msg="{{cluster_hosts_target_denormalised_by_volume}}"
 
 - name: create/aws | Create security groups
@@ -60,22 +60,23 @@
         termination_protection: "{{cluster_vars[buildenv].termination_protection}}"
         user_data: "{{ cluster_vars.user_data | default(omit) }}"
         volumes: |
-          {%- set res = [] -%}
+          {%- set ns = namespace(res=[]) -%}
           {%- for vol in item.auto_volumes -%}
             {%- if 'src' not in vol -%}
               {%- if 'volume_type' in vol and vol.volume_type == 'ephemeral' -%}
-                {%- set _dummy = res.append({ 'device_name': vol.device_name, 'volume_name': vol.ephemeral }) -%}
+                {%- set ns.res = ns.res + [{ 'device_name': vol.device_name, 'volume_name': vol.ephemeral }] -%}
               {%- else -%}
-                {%- set _dummy = res.append({ 'device_name': vol.device_name, 'ebs': {'volume_type': vol.volume_type, 'volume_size': vol.volume_size } }) -%}
-                {%- if 'iops' in vol -%} {%- set _dummy = res[res|length-1].ebs.update({'iops': vol.iops}) -%} {%- endif -%}
-                {%- if 'throughput' in vol -%} {%- set _dummy = res[res|length-1].ebs.update({'throughput': vol.throughput}) -%} {%- endif -%}
-                {%- if 'snapshot' in vol -%} {%- set _dummy = res[res|length-1].ebs.update({'snapshot_id': vol.snapshot}) -%} {%- endif -%}
-                {%- if 'encrypted' in vol -%} {%- set _dummy = res[res|length-1].ebs.update({'encrypted': vol.encrypted}) -%} {%- endif -%}
-                {%- if 'delete_on_termination' in vol -%} {%- set _dummy = res[res|length-1].ebs.update({'delete_on_termination': vol.delete_on_termination}) -%} {%- endif -%}
+                {%- set ebs = {'volume_type': vol.volume_type, 'volume_size': vol.volume_size} -%}
+                {%- set ebs = ebs | combine({'iops': vol.iops} if 'iops' in vol else {}) -%}
+                {%- set ebs = ebs | combine({'throughput': vol.throughput} if 'throughput' in vol else {}) -%}
+                {%- set ebs = ebs | combine({'snapshot_id': vol.snapshot} if 'snapshot' in vol else {}) -%}
+                {%- set ebs = ebs | combine({'encrypted': vol.encrypted} if 'encrypted' in vol else {}) -%}
+                {%- set ebs = ebs | combine({'delete_on_termination': vol.delete_on_termination} if 'delete_on_termination' in vol else {}) -%}
+                {%- set ns.res = ns.res + [{ 'device_name': vol.device_name, 'ebs': ebs }] -%}
               {%- endif -%}
             {%- endif -%}
-          {%- endfor %}
-          {{ res }}
+          {%- endfor -%}
+          {{ ns.res }}
         filters: { "tag:Name": "{{item.hostname}}", "instance-state-name": ["running", "pending"] }
         exact_count: 1
       vars:
@@ -93,7 +94,7 @@
     - name: create/aws | Wait for aws instance creation to complete
       async_status: { jid: "{{ item.ansible_job_id }}" }
       register: r__async_status__ec2_instance
-      until: r__async_status__ec2_instance.finished
+      until: r__async_status__ec2_instance is finished
       delay: 3
       retries: 300
       with_items: "{{r__ec2_instance.results}}"
@@ -153,13 +154,18 @@
     - name: create/aws | Wait for volume creation/ attachment to complete
       async_status: { jid: "{{ item.ansible_job_id }}" }
       register: r__async_status__ec2_instance_vol
-      until: r__async_status__ec2_instance_vol.finished
+      until: r__async_status__ec2_instance_vol is finished
       delay: 3
       retries: 300
       with_items: "{{r__ec2_vol.results}}"
 
 #    - name: create/aws | r__async_status__ec2_instance_vol
 #      debug: msg={{r__async_status__ec2_instance_vol}}
+
+    - name: create/aws | Acquire cluster_hosts_state after attaching volumes (or confirming already-attached), as we need it to correctly re-tag any moved volumes.
+      include_role:
+        name: clusterverse/cluster_hosts
+        tasks_from: "get_cluster_hosts_state_{{cluster_vars.type}}.yml"
 
     - name: create/aws | Set the ec2 volume name tag
       amazon.aws.ec2_tag:
@@ -172,13 +178,13 @@
       with_items: "{{_ec2_vols_denormalised_by_device}}"
       vars:
         _ec2_vols_denormalised_by_device: |
-          {% set res = [] -%}
+          {% set ns_res = namespace(res=[])-%}
           {%- for cluster_host in cluster_hosts_state -%}
             {%- for block_device in cluster_host.disk_info_cloud -%}
-              {% set _ = res.append({'hostname': cluster_host.name, 'hosttype': cluster_host.tagslabels.cv__hosttype, 'device_name': block_device.device_name, 'volume_id': block_device.ebs.volume_id}) -%}
+              {% set ns_res.res = ns_res.res + [{'hostname': cluster_host.name, 'hosttype': cluster_host.tagslabels.cv__hosttype, 'device_name': block_device.device_name, 'volume_id': block_device.ebs.volume_id}] -%}
             {%- endfor %}
           {%- endfor %}
-          {{ res }}
+          {{ ns_res.res }}
         _tags:
           Name: "{{ item.hostname }}--{{item.device_name | regex_replace('^.*\\/(.*)', '\\1')}}"
           device_name: "{{item.device_name}}"

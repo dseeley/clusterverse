@@ -118,7 +118,16 @@ class ActionModule(ActionBase):
             for filename in files:
                 if (not self.valid_extensions) or path.splitext(filename)[-1][1:] in self.valid_extensions:
                     _new_facts_cmp = deepcopy(new_facts)
-                    new_facts = merge_hash(new_facts, self._load_from_file(filename))
+                    self._display.vvvvv("*** _new_facts_cmp: %s " % _new_facts_cmp)
+
+                    ansible_version_tuple = (task_vars['ansible_version']['major'], task_vars['ansible_version']['minor'])
+                    if ansible_version_tuple < (2, 19):
+                        self._display.v("*** using load_from_file for v<2.19")
+                        new_facts = merge_hash(new_facts, self._loader.load_from_file(filename, cache=None))
+                    else:
+                        self._display.v("*** using load_from_file for v>=2.19")
+                        new_facts = merge_hash(new_facts, self._loader.load_from_file(filename, cache=None, trusted_as_template=True))
+                    self._display.vvvvv("*** new_facts: %s " % new_facts)
                     if new_facts != _new_facts_cmp:
                         self._result["changed"] = True
                     self._result['ansible_included_var_files'].append(filename)
@@ -151,13 +160,3 @@ class ActionModule(ActionBase):
         self._display.vvvvv("*** new_facts: %s " % new_facts)
         self._result['ansible_facts'] = new_facts
         return self._result
-
-    def _load_from_file(self, filename):
-        # This is the approach used by include_vars in order to get the show_content value based
-        # on whether decryption occurred.  load_from_file does not return that value.
-        # https://github.com/ansible/ansible/blob/v2.7.5/lib/ansible/plugins/action/include_vars.py#L236-L240
-        b_data, show_content = self._loader._get_file_contents(filename)
-        data = to_text(b_data, errors='surrogate_or_strict')
-
-        self.show_content = show_content
-        return self._loader.load(data, file_name=filename, show_content=show_content) or {}

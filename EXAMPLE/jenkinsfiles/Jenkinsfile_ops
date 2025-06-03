@@ -35,7 +35,7 @@ properties([
         choice(name: 'DEPLOY_TYPE', choices: ['deploy', 'redeploy', 'clean'], description: "Choose the deploy type"),
         choice(name: 'REDEPLOY_SCHEME', choices: ['', '_scheme_addallnew_rmdisk_rollback', '_scheme_addnewvm_rmdisk_rollback', '_scheme_rmvm_rmdisk_only', '_scheme_rmvm_keepdisk_rollback', '_noredeploy_scale_in_only'], description: "Choose the redeploy schemes"),
         choice(name: 'CANARY', choices: ['none', 'start', 'finish', 'tidy'], description: "Choose the canary type"),
-        booleanParam(name: 'CANARY_TIDY_ON_SUCCESS', defaultValue: false, description: 'Tick the box to tidy up successful canary (none or finish) redeploys (by default, old machines are left powered off)'),
+        booleanParam(name: 'CANARY_TIDY_ON_SUCCESS', defaultValue: true, description: 'Tick the box to tidy up successful canary (none or finish) redeploys (by default, old machines are left powered off)'),
         string(name: 'MYHOSTTYPES', description: "comma-separated string, e.g. master,slave - In redeployment you can define which host type you like to redeploy. If not defined it will redeploy all host types"),
         gitParameter(name: 'RELEASE', type: 'PT_TAG', useRepository: '.*clusterverse.git', branch: 'master', branchFilter: '.*', defaultValue: 'master', description: 'Choose an existing release version to deploy (or \'master\')', quickFilterEnabled: false, selectedValue: 'NONE', sortMode: 'DESCENDING_SMART', tagFilter: '*'),
         string(name: 'CV_GIT_URL', defaultValue: DEFAULT_CLUSTERVERSE_URL, description: "The main clusterverse URL."),

@@ -1,11 +1,11 @@
 ---
 
 merge_dict_vars_list:
-  - "./cluster_defs/"
-  - "./cluster_defs/{{ cloud_type }}/"
-  - "./cluster_defs/{{ cloud_type }}/{{ clusterid | default() }}/"
-  - "./cluster_defs/{{ cloud_type }}/{{ clusterid | default() }}/{{ region }}/"
-  - "./cluster_defs/{{ cloud_type }}/{{ clusterid | default() }}/{{ region }}/{{ buildenv }}/"
-  - "./cluster_defs/{{ cloud_type }}/{{ buildenv }}/"
-  - "./cluster_defs/{{ cloud_type }}/{{ region }}/"
-  - "./cluster_defs/{{ cloud_type }}/{{ region }}/{{ buildenv }}/"
+  - "{{playbook_dir}}/cluster_defs/"
+  - "{{playbook_dir}}/cluster_defs/{{ cloud_type }}/"
+  - "{{playbook_dir}}/cluster_defs/{{ cloud_type }}/{{ clusterid | default() }}/"
+  - "{{playbook_dir}}/cluster_defs/{{ cloud_type }}/{{ clusterid | default() }}/{{ region }}/"
+  - "{{playbook_dir}}/cluster_defs/{{ cloud_type }}/{{ clusterid | default() }}/{{ region }}/{{ buildenv }}/"
+  - "{{playbook_dir}}/cluster_defs/{{ cloud_type }}/{{ buildenv }}/"
+  - "{{playbook_dir}}/cluster_defs/{{ cloud_type }}/{{ region }}/"
+  - "{{playbook_dir}}/cluster_defs/{{ cloud_type }}/{{ region }}/{{ buildenv }}/"

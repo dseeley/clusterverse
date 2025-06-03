@@ -20,11 +20,11 @@
     - name: clean/azure | Wait for instance deletion to complete
       async_status: { jid: "{{ item.ansible_job_id }}" }
       register: r__async_status__azure_rm_virtualmachine
-      until: r__async_status__azure_rm_virtualmachine.finished
+      until: r__async_status__azure_rm_virtualmachine is finished
       delay: 3
       retries: 300
       with_items: "{{r__azure_rm_virtualmachine.results}}"
-  when: hosts_to_clean | length
+  when: hosts_to_clean | length > 0
 
 
 #### ALTERNATE - IF NOT RELYING ON ANSIBLE-CREATED VMs
@@ -48,9 +48,9 @@
 #    - name: clean/azure | Wait for instance resource info (to get Zone info)
 #      async_status: { jid: "{{ item.ansible_job_id }}" }
 #      register: r__async_status__azure_rm_resource_info__vm
-#      until: r__async_status__azure_rm_resource_info__vm.finished
+#      until: r__async_status__azure_rm_resource_info__vm is finished
 #      delay: 3
-#      retries: 300
+#      retries: 300`
 #      with_items: "{{r__azure_rm_resource_info__vm.results}}"
 #
 #
@@ -72,7 +72,7 @@
 #    - name: clean/azure | Wait for instance deletion to complete
 #      async_status: { jid: "{{ item.ansible_job_id }}" }
 #      register: r__async_status__azure_rm_virtualmachine
-#      until: r__async_status__azure_rm_virtualmachine.finished
+#      until: r__async_status__azure_rm_virtualmachine is finished
 #      delay: 3
 #      retries: 300
 #      with_items: "{{r__azure_rm_virtualmachine.results}}"
@@ -94,7 +94,7 @@
 #    - name: clean/azure | Wait for managed disk deletion
 #      async_status: { jid: "{{ item.ansible_job_id }}" }
 #      register: r__async_status__aazure_rm_manageddisk
-#      until: r__async_status__aazure_rm_manageddisk.finished
+#      until: r__async_status__aazure_rm_manageddisk is finished
 #      delay: 3
 #      retries: 300
 #      with_items: "{{r__aazure_rm_manageddisk.results}}"
@@ -118,7 +118,7 @@
 #    - name: clean/azure | Wait for network interface info
 #      async_status: { jid: "{{ item.ansible_job_id }}" }
 #      register: r__async_status__azure_rm_networkinterface_info
-#      until: r__async_status__azure_rm_networkinterface_info.finished
+#      until: r__async_status__azure_rm_networkinterface_info is finished
 #      delay: 3
 #      retries: 300
 #      with_items: "{{r__azure_rm_networkinterface_info.results}}"
@@ -139,7 +139,7 @@
 #    - name: clean/azure | Wait for publicipaddress deletion
 #      async_status: { jid: "{{ item.ansible_job_id }}" }
 #      register: r__async_status__azure_rm_publicipaddress
-#      until: r__async_status__azure_rm_publicipaddress.finished
+#      until: r__async_status__azure_rm_publicipaddress is finished
 #      delay: 3
 #      retries: 300
 #      with_items: "{{r__azure_rm_networkinterface.results}}"

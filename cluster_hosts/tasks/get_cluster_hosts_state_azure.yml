@@ -41,7 +41,7 @@
 - name: get_cluster_hosts_state/azure | Wait for network interface info
   async_status: { jid: "{{ item.ansible_job_id }}" }
   register: r__async_status__azure_rm_networkinterface_info
-  until: r__async_status__azure_rm_networkinterface_info.finished
+  until: r__async_status__azure_rm_networkinterface_info is finished
   delay: 3
   retries: 300
   with_items: "{{r__azure_rm_networkinterface_info.results}}"
@@ -72,7 +72,7 @@
 - name: get_cluster_hosts_state/azure | Wait for publicipaddress info
   async_status: { jid: "{{ item.ansible_job_id }}" }
   register: r__async_status__azure_rm_publicipaddress_info
-  until: r__async_status__azure_rm_publicipaddress_info.finished
+  until: r__async_status__azure_rm_publicipaddress_info is finished
   delay: 3
   retries: 300
   with_items: "{{r__azure_rm_publicipaddress_info.results}}"

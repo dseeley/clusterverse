@@ -33,13 +33,15 @@
       run_once: true
 
     - name: get_cluster_hosts_target/aws | Update cluster_hosts_target with subnet_ids
-      set_fact:
+      ansible.builtin.set_fact:
         cluster_hosts_target: |
+          {%- set ns = namespace(res=[]) -%}
           {%- for host in cluster_hosts_target -%}
             {%- set subnet_id = r__ec2_vpc_subnet_info | to_json | from_json | json_query('subnets[?starts_with(tags.Name, \'' + cluster_vars[buildenv].vpc_subnet_name_prefix + host.az_name +'\')].subnet_id|[0]') -%}
-            {%- set _dummy = host.update({'vpc_subnet_id': subnet_id | string}) -%}
-          {%- endfor %}
-          {{ cluster_hosts_target }}
+            {%- set updated_host = host | combine({'vpc_subnet_id': subnet_id | string}) -%}
+            {%- set ns.res = ns.res + [updated_host] -%}
+          {%- endfor -%}
+          {{ ns.res }}
 
 
 - name: get_cluster_hosts_target/aws | Add snapshot info (if found) to cluster_hosts_target
@@ -68,19 +70,25 @@
 
     ## [ See github.com/ansible/ansible/issues/27299 for reason for  '| to_json | from_json' ]
     - name: get_cluster_hosts_target/aws | update cluster_hosts_target with snapshot_id
-      set_fact:
+      ansible.builtin.set_fact:
         cluster_hosts_target: |
+          {%- set ns = namespace(res=[]) -%}
           {%- for host in cluster_hosts_target -%}
             {%- set cluster_host_topology = host.hostname | regex_replace('^.*(-.*?-).*$', '\\1') -%}
+            {%- set ns_updated_volumes = namespace(volume=[]) -%}
             {%- for vol in host.auto_volumes -%}
               {%- set cur_snapshot = r__ebs_snapshots | default([]) | to_json | from_json | json_query('snapshots[?contains(tags.Name, \'' + cluster_host_topology + '\')]') -%}
               {%- if cur_snapshot and 'snapshot_tags' in vol.keys() -%}
-                {%- set _dummy = vol.update({'snapshot': cur_snapshot[0].snapshot_id}) -%}
-                {%- set _dummy = vol.pop('snapshot_tags') -%}
-              {%- endif %}
-            {%- endfor %}
-          {%- endfor %}
-          {{ cluster_hosts_target }}
+                {%- set updated_vol = vol | combine({'snapshot': cur_snapshot[0].snapshot_id}) | dict(vol.items() | reject('equalto', ('snapshot_tags', vol.snapshot_tags))) -%}
+                {%- set ns_updated_volumes.volume = ns_updated_volumes.volume + [updated_vol] -%}
+              {%- else -%}
+                {%- set ns_updated_volumes.volume = ns_updated_volumes.volume + [vol] -%}
+              {%- endif -%}
+            {%- endfor -%}
+            {%- set updated_host = host | combine({'auto_volumes': ns_updated_volumes.volume}) -%}
+            {%- set ns.res = ns.res + [updated_host] -%}
+          {%- endfor -%}
+          {{ ns.res }}
   vars:
     _snapshot_tags: "{{ cluster_vars[buildenv].hosttype_vars|json_query('*.auto_volumes[].snapshot_tags')  }}"
   when: _snapshot_tags|length > 0
@@ -101,7 +109,7 @@
       delegate_to: localhost
       run_once: true
 
-    - name: get_cluster_hosts_target/aws | Create block variable '_cluster_hosts_targets__no_ami' that is the cluster_hosts_targets whose 'image' defintion is not an AMI; we'll try to evaluate it as a 'manifest-location' filter to the latest AMI instead.
+    - name: get_cluster_hosts_target/aws | Create block variable '_cluster_hosts_targets__no_ami' that is the cluster_hosts_targets whose 'image' definition is not an AMI; we'll try to evaluate it as a 'manifest-location' filter to the latest AMI instead.
       block:
         - name: get_cluster_hosts_target/aws | _cluster_hosts_targets__no_ami
           debug: msg="{{ _cluster_hosts_targets__no_ami }}"
@@ -132,37 +140,43 @@
           loop_control: { loop_var: item__ec2_ami_info__by_location }
           vars:
             _cluster_hosts_targets__derived_arch: |-
-              {% set _cluster_hosts_targets__derived_arch = _cluster_hosts_targets__no_ami -%}
-              {%- for host in _cluster_hosts_targets__derived_arch -%}
-                {%- set hosttype_archs_ec2_instance_type_info = r__ec2_instance_type_info.instance_types | json_query('[?instance_type==\'' + host.flavor + '\'].processor_info.supported_architectures[]') -%}
+              {%- set ns = namespace(res=[]) -%}
+              {%- set _cluster_hosts_targets__derived_arch = _cluster_hosts_targets__no_ami -%}
+              {%- for cht_host in _cluster_hosts_targets__derived_arch -%}
+                {%- set hosttype_archs_ec2_instance_type_info = r__ec2_instance_type_info.instance_types | json_query('[?instance_type==\'' + cht_host.flavor + '\'].processor_info.supported_architectures[]') -%}
+                {%- set ns_updated_host = namespace(host=cht_host) -%}
                 {%- if hosttype_archs_ec2_instance_type_info | length == 1 -%}
-                  {%- set _dummy = host.update({'derived_architecture': hosttype_archs_ec2_instance_type_info[0] }) -%}
+                  {%- set ns_updated_host.host = cht_host | combine({'derived_architecture': hosttype_archs_ec2_instance_type_info[0]}) -%}
                 {%- elif hosttype_archs_ec2_instance_type_info | symmetric_difference(['i386','x86_64']) | length == 0 -%}
-                  {%- set _dummy = host.update({'derived_architecture': 'x86_64' }) -%}
+                  {%- set ns_updated_host.host = cht_host | combine({'derived_architecture': 'x86_64'}) -%}
                 {%- endif -%}
-              {%- endfor %}
-              {{ _cluster_hosts_targets__derived_arch }}
+                {%- set ns.res = ns.res + [ns_updated_host.host] -%}
+              {%- endfor -%}
+              {{ ns.res }}
           register: r__ec2_ami_info__by_location
           delegate_to: localhost
           run_once: true
 
         - name: get_cluster_hosts_target/aws | Replace image with the latest AMI found at 'manifest-location'
-          set_fact:
+          ansible.builtin.set_fact:
             cluster_hosts_target: |
+              {%- set ns = namespace(res=[]) -%}
               {%- for cht_host in cluster_hosts_target -%}
+                {%- set ns_updated_host = namespace(host=cht_host) -%}
                 {%- for r__ec2_ami_info_host in r__ec2_ami_info__by_location.results -%}
                   {%- if r__ec2_ami_info_host[r__ec2_ami_info_host.ansible_loop_var].hostname == cht_host.hostname -%}
-                    {%- set _dummy = cht_host.update({'image': (r__ec2_ami_info_host.images | sort(attribute='creation_date'))[-1].image_id }) -%}
-                  {%- endif %}
-                {%- endfor %}
-              {%- endfor %}
-              {{ cluster_hosts_target }}
+                    {%- set ns_updated_host.host = cht_host | combine({ 'image': (r__ec2_ami_info_host.images | sort(attribute='creation_date'))[-1].image_id }) -%}
+                  {%- endif -%}
+                {%- endfor -%}
+                {%- set ns.res = ns.res + [ns_updated_host.host] -%}
+              {%- endfor -%}
+              {{ ns.res }}
       vars:
         _cluster_hosts_targets__no_ami: |
-          {% set _cluster_hosts_targets__no_ami = [] -%}
+          {%- set ns = namespace(res=[]) -%}
           {%- for host in r__ec2_ami_info__by_imageid.results -%}
             {%- if 'images' in host and host.images | length == 0 -%}
-              {%- set _dummy = _cluster_hosts_targets__no_ami.extend([host[host.ansible_loop_var]]) -%}
+              {%- set ns.res = ns.res + [host[host.ansible_loop_var]] -%}
             {%- endif -%}
-          {%- endfor %}
-          {{ _cluster_hosts_targets__no_ami }}
+          {%- endfor -%}
+          {{ ns.res }}

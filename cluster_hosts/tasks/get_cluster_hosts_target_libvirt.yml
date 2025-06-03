@@ -9,7 +9,7 @@
   register: r__virt_list_vms
 
 - block:
-    - assert: { that: "latest_machine", fail_msg: "No VMs found with image matching '{{ cluster_vars.image }}'" }
+    - assert: { that: "latest_machine is not in [none, '']", fail_msg: "No VMs found with image matching '{{ cluster_vars.image }}'" }
 
     - name: get_cluster_hosts_target/libvirt | latest_machine
       debug: msg={{ latest_machine }}
@@ -31,49 +31,56 @@
         msg: "{{ latest_machine_disk }}"
 
     - name: get_cluster_hosts_target/libvirt | Create cluster_hosts_target from optional per-VM config, and add volname (derived from the mountpoint)
-      set_fact:
+      ansible.builtin.set_fact:
         cluster_hosts_target: |-
-          {% set res = [] -%}
+          {%- set ns_res = namespace(res=[]) -%}
           {%- for hosttyped_name, hosttyped in cluster_vars[buildenv].hosttype_vars.items() -%}
-            {%- for hostvol in hosttyped.auto_volumes -%}
+            {%- set ns_auto_volumes = namespace(auto_volumes=[]) -%}
+            {%- for vol in hosttyped.auto_volumes -%}
               {%- if 'lvmparams' in hosttyped -%}
                 {%- set lvm_device_index = '-d' + loop.index|string -%}
               {%- endif -%}
-              {%- set _dummy = hostvol.update({'device_name': hostvol.mountpoint | regex_replace('^\/?') | regex_replace('\/', '__') + lvm_device_index|default('') }) -%}
-            {%- endfor %}
+              {%- set new_vol = vol | combine({'device_name': vol.mountpoint | regex_replace('^\/?', '') | regex_replace('\/', '__') + lvm_device_index|default('')}) -%}
+              {%- set ns_auto_volumes.auto_volumes = ns_auto_volumes.auto_volumes + [new_vol] -%}
+            {%- endfor -%}
+            {%- set new_hostvol = hosttyped | combine({'auto_volumes': ns_auto_volumes.auto_volumes}) -%}
             {%- for azname, azval in hosttyped.vms_by_az.items() -%}
               {%- if azval | type_debug == 'list' -%}
                 {%- for vmaz in azval -%}
-                  {%- set _dummy = res.append({
+                  {%- set host_dict = {
                     'hosttype': hosttyped_name,
                     'hostname': cluster_name + '-' + hosttyped_name + '-' + azname|string + loop.index0|string + '-' + cluster_suffix|string,
                     'az_name': azname|string,
                     'flavor': hosttyped.flavor,
                     'image': hosttyped.image | default(latest_machine_disk),
-                    'auto_volumes': hosttyped.auto_volumes,
-                    'networks': vmaz.networks }) -%}
+                    'auto_volumes': ns_auto_volumes.auto_volumes,
+                    'networks': vmaz.networks
+                  } -%}
                   {%- if 'rootvol_size_gb' in hosttyped -%}
-                      {%- set _dummy = res[res | length-1].update({'rootvol_size_gb': hosttyped.rootvol_size_gb}) -%}
+                    {%- set host_dict = host_dict | combine({'rootvol_size_gb': hosttyped.rootvol_size_gb}) -%}
                   {%- endif -%}
-                {%- endfor %}
+                  {%- set ns_res.res = ns_res.res + [host_dict] -%}
+                {%- endfor -%}
               {%- else -%}
                 {%- for vmazidx in range(0, azval | int) -%}
-                  {%- set _dummy = res.append({
+                  {%- set host_dict = {
                     'hosttype': hosttyped_name,
                     'hostname': cluster_name + '-' + hosttyped_name + '-' + azname|string + vmazidx|string + '-' + cluster_suffix|string,
                     'az_name': azname|string,
                     'flavor': hosttyped.flavor,
                     'image': hosttyped.image | default(latest_machine_disk),
-                    'auto_volumes': hosttyped.auto_volumes,
-                    'networks': hosttyped.networks }) -%}
+                    'auto_volumes': ns_auto_volumes.auto_volumes,
+                    'networks': hosttyped.networks
+                  } -%}
                   {%- if 'rootvol_size_gb' in hosttyped -%}
-                      {%- set _dummy = res[res | length-1].update({'rootvol_size_gb': hosttyped.rootvol_size_gb}) -%}
+                    {%- set host_dict = host_dict | combine({'rootvol_size_gb': hosttyped.rootvol_size_gb}) -%}
                   {%- endif -%}
+                  {%- set ns_res.res = ns_res.res + [host_dict] -%}
                 {%- endfor -%}
               {%- endif -%}
-            {%- endfor %}
-          {%- endfor %}
-          {{ res }}
+            {%- endfor -%}
+          {%- endfor -%}
+          {{ ns_res.res }}
   delegate_to: localhost
   vars:
     latest_machine_disk: "{{ r__virt_xml.get_xml | xpath('/domain/devices/disk[target/@dev=\"vda\"]/source/@file') | first | default(None) }}"

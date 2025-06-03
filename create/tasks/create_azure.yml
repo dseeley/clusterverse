@@ -1,6 +1,6 @@
 ---
 
-- name: cluster_hosts_target_denormalised_by_volume
+- name: create/azure | cluster_hosts_target_denormalised_by_volume
   debug: msg="{{cluster_hosts_target_denormalised_by_volume}}"
 
 #- name: create/azure | Create storage account (must be [a-z0-9] and <= 24 chars).  NOT NECESSARY for IaaS block storage
@@ -134,7 +134,7 @@
     - name: create/azure | Wait for instance creation to complete
       async_status: { jid: "{{ item.ansible_job_id }}" }
       register: r__async_status__azure_rm_virtualmachine
-      until: r__async_status__azure_rm_virtualmachine.finished
+      until: r__async_status__azure_rm_virtualmachine is finished
       delay: 3
       retries: 300
       with_items: "{{r__azure_rm_virtualmachine.results}}"
@@ -186,7 +186,7 @@
           name: "{{item.hostname}}--{{ item.auto_volume.mountpoint | basename }}{%- if 'lvmparams' in cluster_vars[buildenv].hosttype_vars[item.hosttype] -%}-d{{ item.auto_volume.device_name | string }}{%- endif -%}"
       loop: "{{ cluster_hosts_target_denormalised_by_volume }}"
       register: r__azure_rm_manageddisk
-      until: r__azure_rm_manageddisk.state.managed_by
+      until: r__azure_rm_manageddisk.state.managed_by is defined and r__azure_rm_manageddisk.state.managed_by != ''
       delay: 3
       retries: 10
 
@@ -242,7 +242,7 @@
 #        - name: create/azure | Wait for disks to create
 #          async_status: { jid: "{{ item.ansible_job_id }}" }
 #          register: r__async_status__r__azure_rm_manageddisk_create
-#          until: r__async_status__r__azure_rm_manageddisk_create.finished
+#          until: r__async_status__r__azure_rm_manageddisk_create is finished
 #          delay: 3
 #          retries: 300
 #          with_items: "{{r__azure_rm_manageddisk_create.results}}"

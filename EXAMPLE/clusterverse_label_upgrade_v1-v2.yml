@@ -30,25 +30,16 @@
           with_items: "{{r__ec2_instance_info.instances}}"
           vars:
             _tags: |
-              {% set res = {'cv__cluster_name': cluster_name} -%}
-              {%- if 'inv_node_version' in item.tags -%}
-                {%- set _ = res.update({'cv__app_version': item.tags.inv_node_version}) -%}
-              {%- endif -%}
-              {%- if 'cluster_suffix' in item.tags -%}
-                {%- set _ = res.update({'cv__cluster_suffix': item.tags.cluster_suffix}) -%}
-              {%- endif -%}
-              {%- if 'env' in item.tags -%}
-                {%- set _ = res.update({'cv__environment': item.tags.env}) -%}
-              {%- endif -%}
-              {%- if 'owner' in item.tags -%}
-                {%- set _ = res.update({'cv__owner': item.tags.owner}) -%}
-              {%- endif -%}
-              {%- if 'lifecycle_state' in item.tags -%}
-                {%- set _ = res.update({'cv__lifecycle_state': item.tags.lifecycle_state}) -%}
-              {%- endif -%}
-              {%- if 'hosttype' in item.tags -%}
-                {%- set _ = res.update({'cv__hosttype': item.tags.hosttype}) -%}
-              {%- endif -%}
+              {%- set res = {}
+                    | combine({'cv__cluster_name': inventory_tagslabels.cluster_name} if 'cluster_name' in inventory_tagslabels else {})
+                    | combine({'cv__app_version': item.tags.inv_node_version} if 'inv_node_version' in item.tags else {})
+                    | combine({'cv__cluster_suffix': item.tags.cluster_suffix} if 'cluster_suffix' in item.tags else {})
+                    | combine({'cv__environment': item.tags.env} if 'env' in item.tags else {})
+                    | combine({'cv__owner': item.tags.owner} if 'owner' in item.tags else {})
+                    | combine({'cv__lifecycle_state': item.tags.lifecycle_state} if 'lifecycle_state' in item.tags else {})
+                    | combine({'cv__regionzone': inventory_tagslabels.regionzone} if 'regionzone' in inventory_tagslabels else {})
+                    | combine({'cv__hosttype': item.tags.hosttype} if 'hosttype' in item.tags else {})
+                -%}
               {{ res }}
       when: cluster_vars.type == "aws"
 
@@ -68,8 +59,8 @@
                 params:
                   uri: 'qemu+ssh://{{ cluster_vars.libvirt.username }}@{{ cluster_vars.libvirt.hypervisor }}/system?keyfile=id_rsa__libvirt_svc&no_verify=1'
 
-#        - name: get_cluster_hosts_state/libvirt | debug libvirt_inventory
-#          debug: msg={{libvirt_inventory | json_query('[].all[].*[]') }}
+        - name: get_cluster_hosts_state/libvirt | debug libvirt_inventory
+          debug: msg={{libvirt_inventory | json_query('[].all[].*[]') }}
 
         - debug:
             msg:
@@ -81,31 +72,16 @@
           vars:
             inventory_tagslabels: "{{item.xml_desc | xpath('/domain/metadata/clusterverse:cdata//text()', {'clusterverse': 'https://github.com/dseeley/clusterverse'} ) | json_query(\"[ 0 ]\") | from_yaml}}"
             _tags: |
-              {% set res = {} -%}
-              {%- if 'cluster_name' in inventory_tagslabels -%}
-                {%- set _ = res.update({'cv__cluster_name': inventory_tagslabels.cluster_name}) -%}
-              {%- endif -%}
-              {%- if 'inv_node_version' in inventory_tagslabels -%}
-                {%- set _ = res.update({'cv__app_version': inventory_tagslabels.inv_node_version}) -%}
-              {%- endif -%}
-              {%- if 'cluster_suffix' in inventory_tagslabels -%}
-                {%- set _ = res.update({'cv__cluster_suffix': inventory_tagslabels.cluster_suffix}) -%}
-              {%- endif -%}
-              {%- if 'env' in inventory_tagslabels -%}
-                {%- set _ = res.update({'cv__environment': inventory_tagslabels.env}) -%}
-              {%- endif -%}
-              {%- if 'owner' in inventory_tagslabels -%}
-                {%- set _ = res.update({'cv__owner': inventory_tagslabels.owner}) -%}
-              {%- endif -%}
-              {%- if 'lifecycle_state' in inventory_tagslabels -%}
-                {%- set _ = res.update({'cv__lifecycle_state': inventory_tagslabels.lifecycle_state}) -%}
-              {%- endif -%}
-              {%- if 'regionzone' in inventory_tagslabels -%}
-                {%- set _ = res.update({'cv__regionzone': inventory_tagslabels.regionzone}) -%}
-              {%- endif -%}
-              {%- if 'hosttype' in inventory_tagslabels -%}
-                {%- set _ = res.update({'cv__hosttype': inventory_tagslabels.hosttype}) -%}
-              {%- endif -%}
+              {%- set res = {}
+                    | combine({'cv__cluster_name': inventory_tagslabels.cluster_name} if 'cluster_name' in inventory_tagslabels else {})
+                    | combine({'cv__app_version': inventory_tagslabels.inv_node_version} if 'inv_node_version' in inventory_tagslabels else {})
+                    | combine({'cv__cluster_suffix': inventory_tagslabels.cluster_suffix} if 'cluster_suffix' in inventory_tagslabels else {})
+                    | combine({'cv__environment': inventory_tagslabels.env} if 'env' in inventory_tagslabels else {})
+                    | combine({'cv__owner': inventory_tagslabels.owner} if 'owner' in inventory_tagslabels else {})
+                    | combine({'cv__lifecycle_state': inventory_tagslabels.lifecycle_state} if 'lifecycle_state' in inventory_tagslabels else {})
+                    | combine({'cv__regionzone': inventory_tagslabels.regionzone} if 'regionzone' in inventory_tagslabels else {})
+                    | combine({'cv__hosttype': inventory_tagslabels.hosttype} if 'hosttype' in inventory_tagslabels else {})
+                -%}
               {{ res }}
 
         - name: "upgrade/libvirt | upgrade tags"
@@ -120,30 +96,15 @@
           vars:
             inventory_tagslabels: "{{item.xml_desc | xpath('/domain/metadata/clusterverse:cdata//text()', {'clusterverse': 'https://github.com/dseeley/clusterverse'} ) | json_query(\"[ 0 ]\") | from_yaml}}"
             _tags: |
-              {% set res = {} -%}
-              {%- if 'cluster_name' in inventory_tagslabels -%}
-                {%- set _ = res.update({'cv__cluster_name': inventory_tagslabels.cluster_name}) -%}
-              {%- endif -%}
-              {%- if 'inv_node_version' in inventory_tagslabels -%}
-                {%- set _ = res.update({'cv__app_version': inventory_tagslabels.inv_node_version}) -%}
-              {%- endif -%}
-              {%- if 'cluster_suffix' in inventory_tagslabels -%}
-                {%- set _ = res.update({'cv__cluster_suffix': inventory_tagslabels.cluster_suffix}) -%}
-              {%- endif -%}
-              {%- if 'env' in inventory_tagslabels -%}
-                {%- set _ = res.update({'cv__environment': inventory_tagslabels.env}) -%}
-              {%- endif -%}
-              {%- if 'owner' in inventory_tagslabels -%}
-                {%- set _ = res.update({'cv__owner': inventory_tagslabels.owner}) -%}
-              {%- endif -%}
-              {%- if 'lifecycle_state' in inventory_tagslabels -%}
-                {%- set _ = res.update({'cv__lifecycle_state': inventory_tagslabels.lifecycle_state}) -%}
-              {%- endif -%}
-              {%- if 'regionzone' in inventory_tagslabels -%}
-                {%- set _ = res.update({'cv__regionzone': inventory_tagslabels.regionzone}) -%}
-              {%- endif -%}
-              {%- if 'hosttype' in inventory_tagslabels -%}
-                {%- set _ = res.update({'cv__hosttype': inventory_tagslabels.hosttype}) -%}
-              {%- endif -%}
+              {%- set res = {}
+                    | combine({'cv__cluster_name': inventory_tagslabels.cluster_name} if 'cluster_name' in inventory_tagslabels else {})
+                    | combine({'cv__app_version': inventory_tagslabels.inv_node_version} if 'inv_node_version' in inventory_tagslabels else {})
+                    | combine({'cv__cluster_suffix': inventory_tagslabels.cluster_suffix} if 'cluster_suffix' in inventory_tagslabels else {})
+                    | combine({'cv__environment': inventory_tagslabels.env} if 'env' in inventory_tagslabels else {})
+                    | combine({'cv__owner': inventory_tagslabels.owner} if 'owner' in inventory_tagslabels else {})
+                    | combine({'cv__lifecycle_state': inventory_tagslabels.lifecycle_state} if 'lifecycle_state' in inventory_tagslabels else {})
+                    | combine({'cv__regionzone': inventory_tagslabels.regionzone} if 'regionzone' in inventory_tagslabels else {})
+                    | combine({'cv__hosttype': inventory_tagslabels.hosttype} if 'hosttype' in inventory_tagslabels else {})
+                -%}
               {{ res }}
       when: cluster_vars.type == "libvirt"
