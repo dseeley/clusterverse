@@ -10,6 +10,9 @@ collections:
   - name: google.cloud
     source: https://galaxy.ansible.com
 
+  - name: dseeley.blockdevmap
+    source: https://galaxy.ansible.com
+
   - name: dseeley.nested_playbook
     source: https://galaxy.ansible.com
 
