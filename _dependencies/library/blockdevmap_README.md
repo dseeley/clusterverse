@@ -20,6 +20,9 @@ An Ansible module to map cloud-specific (AWS, GCP, Azure, LibVirt) block device 
 ### Azure
 + Azure LUNs are user-defined, and appear as the last entry in the `lsblk` _HCTL_ column, (which is copied for consistency to `device_name_cloud`).
 
+### Libvirt/Qemu/KVM
++ Device names are user-defined, and appear as entries either in the `lsblk` _SERIAL_ column (for newer Ubuntu), or ID_SERIAL parameter of `udevadm` (all Ubuntu). This is copied for consistency to `device_name_cloud`).
+
 ### lsblk
 + The script can be run as plain `lsblk` command, where the cloud provider does not include a mapping, and will return the information as a dictionary.  For example, the _bytes_ mapped to the _NAME_ field could be cross-checked against the requested disk size to create a mapping.
 
@@ -45,5 +48,5 @@ This can be run as an Ansible module (needs root):
 
 or from the console:
 ```bash
-python3 ./blockdevmap.py console
+python3 ./blockdevmap.py console aws
 ```

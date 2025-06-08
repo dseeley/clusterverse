@@ -386,7 +386,7 @@ class cBlockDevMap(object):
             udevadm_output = dict(s.split('=', 1) for s in udevadm_output_lines)
             if 'ID_PART_TABLE_TYPE' in udevadm_output:
                 os_device.update({"parttable_type": udevadm_output['ID_PART_TABLE_TYPE']})
-            if 'SERIAL' not in os_device:
+            if 'SERIAL' not in os_device or os_device['SERIAL']=='':
                 if 'ID_SERIAL_SHORT' in udevadm_output:
                     os_device.update({"SERIAL": udevadm_output['ID_SERIAL_SHORT']})
                 elif 'ID_SERIAL' in udevadm_output:

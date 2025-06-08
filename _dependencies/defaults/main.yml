@@ -3,6 +3,9 @@
 # If set true, will prevent the playbook from failing in case any of the existing VM has a deprecated AMI.
 override_deprecated_ami: true
 
+# If set true, will add test files to the disks to ensure that the redeploy works correctly.
+test_touch_disks: true
+
 # Default packages configurations
 pkgupdate: ""                                             # "always" or "on_create".  Leave empty to prevent updating packages.
 reboot_on_package_upgrade: true                           # reboot after upgrading packages

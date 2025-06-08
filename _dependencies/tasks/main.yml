@@ -87,6 +87,9 @@
         - name: preflight | dseeley.nested_playbook is required for redeploys
           assert: { that: "'dseeley.nested_playbook' in galaxy_collections and galaxy_collections['dseeley.nested_playbook'].version is version('0.0.7', '>=')", fail_msg: "Please ensure the dseeley.nested_playbook (>=0.0.7 collection is installed:  ansible-galaxy collection install dseeley.nested_playbook (or ansible-galaxy collection install --ignore-errors -fr requirements.yml)" }
 
+#        - name: preflight | dseeley.blockdevmap is required
+#          assert: { that: "'dseeley.blockdevmap' in galaxy_collections.keys() and (galaxy_collections['dseeley.blockdevmap'].version is version('1.0.14', '>='))",  fail_msg: "Please ensure the dseeley.blockdevmap (>=1.0.14) collection is installed:  ansible-galaxy collection install dseeley.tasks_serial (or ansible-galaxy collection install --ignore-errors -fr requirements.yml)" }
+
         - name: preflight | libvirt collection requirements
           block:
             - assert: { that: "galaxy_collections['community.libvirt'].version is version('1.2.0', '>=')", fail_msg: "community.libvirt > 1.2.0 required for libvirt support (default in Ansible >= 6.3.0)." }
