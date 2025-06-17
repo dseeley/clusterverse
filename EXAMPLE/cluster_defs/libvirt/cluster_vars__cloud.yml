@@ -25,7 +25,7 @@ cluster_vars:
     private_key: !vault |
       $ANSIBLE_VAULT;1.1;AES256
       7669080460651349243347331538721104778691266429457726036813912140404310
-    storage_pool: "/media/vdisks"
+    storage_pool: "default"
     delete_cloudinit: true
     cloudinit_userdata:
       users:
