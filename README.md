@@ -1,4 +1,7 @@
-# clusterverse  &nbsp; [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) ![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen.svg)
+> **NOTE: This repository is no longer maintained here. It will be continue to be maintained at: [https://github.com/dseeley/clusterverse](https://github.com/dseeley/clusterverse)**
+
+# clusterverse  &nbsp; [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+
 A full-lifecycle, immutable cloud infrastructure cluster management **role**, using Ansible.
 + **Multi-cloud:** clusterverse can manage cluster lifecycle in AWS and GCP
 + **Deploy:**  You define your infrastructure as code (in Ansible yaml), and clusterverse will deploy it 
