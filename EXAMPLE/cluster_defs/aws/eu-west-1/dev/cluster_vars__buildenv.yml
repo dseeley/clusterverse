@@ -14,7 +14,9 @@ cluster_vars:
           $ANSIBLE_VAULT;1.2;AES256;dev
           7669080460651349243347331538721104778691266429457726036813912140404310
       bastion:
-        ssh_args: '-o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./id_rsa_bastion -W %h:%p -q user@192.168.0.1"'
+        ssh_args (proxy_only): "{{ ((' -o ProxyCommand=\"nc -X connect -x ' ~ (lookup('env', 'HTTP_PROXY') | regex_replace('^https?://', '')) ~ ' %h %p\"') if lookup('env', 'HTTP_PROXY') != '' else '') }}"
+        ssh_args (bastion_only): '-o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./id_rsa_bastion -W %h:%p -q user@bastion.chezdj.com"'
+        ssh_args (bastion_and_proxy): "{{ '-o ProxyCommand=\"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./id_rsa_bastion' ~ ((' -o ProxyCommand=\\\"nc -X connect -x ' ~ (lookup('env', 'HTTP_PROXY') | regex_replace('^https?://', '')) ~ ' bastion.chezdj.com 22\\\"') if lookup('env', 'HTTP_PROXY') != '' else '') ~ ' user@bastion.chezdj.com -W %h:%p\"' }}"
         ssh_priv_key: !vault |
           $ANSIBLE_VAULT;1.2;AES256;dev
           7669080460651349243347331538721104778691266429457726036813912140404310

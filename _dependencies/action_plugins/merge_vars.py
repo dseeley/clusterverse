@@ -82,7 +82,8 @@ class ActionModule(ActionBase):
         self.ignore_missing_files = self._task.args.get('ignore_missing_files', False)
         self.valid_extensions = self._task.args.get('extensions')
 
-        self._display.vvvvv("*** task_vars.get('ansible_facts', {}),: %s " % task_vars.get('ansible_facts', {}))
+        self._display.vvvvv("*** self._task.args %s " % self._task.args)
+        self._display.vvvvv("*** task_vars %s " % task_vars)
 
         # NOTE: We have to pretend that this plugin action is actually the 'include_vars' plugin, so that the loaded vars
         # are treated as host variables, (and not just facts), otherwise they are not templated.  We could try to
@@ -111,7 +112,7 @@ class ActionModule(ActionBase):
                     dirfiles.sort()
                     files = files + dirfiles
                 elif not (path.isfile(source) or path.isdir(source)) and self.ignore_missing_files:
-                    self._display.warning("Missing source file/dir (%s) ignored due to 'ignore_missing_files: True'" % (source))
+                    self._display.v("Missing source file/dir (%s) ignored due to 'ignore_missing_files: True'" % (source))
                 else:
                     raise AnsibleActionFail("Source file/dir '%s' does not exist" % source)
 
@@ -144,6 +145,7 @@ class ActionModule(ActionBase):
 
             # Run ansible.utils.update_fact
             task_result = update_fact_actionloader.run(task_vars=task_vars)
+            self._display.vvvvv("*** task_result: %s " % task_result)
 
             # Set changed if changed
             self._result["changed"] = self._result["changed"] or task_result['changed']

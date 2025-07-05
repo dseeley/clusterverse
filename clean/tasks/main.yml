@@ -7,7 +7,7 @@
 
     - name: clean | Delete DNS
       include_tasks: dns.yml
-      when: (cluster_vars.dns_server is not in [none, '']) and (cluster_vars.dns_user_domain is not in [none, ''])
+      when: (cluster_vars.dns_server is truthy) and (cluster_vars.dns_user_domain is truthy)
 
     - name: "clean | {{cluster_vars.type}}"
       include_tasks: "{{cluster_vars.type}}.yml"
