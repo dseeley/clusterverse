@@ -1,7 +1,7 @@
 ---
 
 # A list of CIDRs from which to allow SSH access
-ssh_whitelist: ['10.0.0.0/8', '82.69.177.168/29']
+ssh_whitelist: ['10.0.0.0/8']
 
 ## Source images from which to clone.  Set these as variables so they can be selected on command line (for automated testing).
 #_ubuntu2004image: "projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20210820"   #europe-west4 20.04 amd64 20210820.  Ubuntu images can be located at https://cloud-images.ubuntu.com/locator/

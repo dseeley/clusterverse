@@ -69,6 +69,7 @@
           loop: "{{auto_vols}}"
 
         - name: config/disks_auto_cloud | Find all .clusterverse_volplacement_test__ files in mounted disks
+          become: true
           find:
             paths: "{{item.mountpoint}}"
             hidden: true
@@ -166,6 +167,7 @@
                 state: touch
 
             - name: config/disks_auto_cloud/lvm | Find all .clusterverse_volplacement_test__ files in mounted disks
+              become: true
               find:
                 paths: "{{ raid_vols[0].mountpoint }}"
                 hidden: true
