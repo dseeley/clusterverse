@@ -18,7 +18,7 @@
 
     - name: Ensure the mandatory cluster_vars are defined
       merge_vars:
-        facts: "{{ cluster_vars__mandatory | dict2items(key_name='path', value_name='value') | to_json | from_json | json_query(\"[].{path: join('.', ['cluster_vars', path]), value: value}\") }}"
+        facts: "{{ cluster_vars__mandatory | ansible.utils.to_paths(prepend='cluster_vars') | dict2items(key_name='path', value_name='value') }}"
 
     - name: argv
       debug: msg={{ argv }}
@@ -43,7 +43,7 @@
               {%- set ns.facts = ns.facts + [fact | combine({'value': (fact.value | from_yaml)})] -%}
           {%- endfor -%}
           {{ ns.facts }}
-      when: cluster_vars is defined and cluster_vars_override is defined and cluster_vars_override != ''
+      when: cluster_vars is defined and cluster_vars_override is defined and cluster_vars_override is truthy
 
     - name: Loaded/derived/overridden cluster_vars
       debug: msg="{{cluster_vars}}"
@@ -77,7 +77,7 @@
 
     - name: Loaded/derived/overridden cluster_vars
       debug: msg="{{cluster_vars}}"
-  when: (cluster_vars.type == "aws" and cluster_vars[buildenv].aws_sts_assume_role_arn is defined and cluster_vars[buildenv].aws_sts_assume_role_arn != '')
+  when: (cluster_vars.type == "aws" and cluster_vars[buildenv].aws_sts_assume_role_arn is defined and cluster_vars[buildenv].aws_sts_assume_role_arn is truthy)
 
 
 - name: Preflight assertions (late - based on loaded vars)
@@ -160,7 +160,7 @@
       stat: path={{gcp_credentials_file}}
       register: r__stat_gcp_credentials_file
 
-    - name: "Copy credentials into gcp_credentials_file as {{gcp_credentials_file}}"
+    - name: "Copy credentials into gcp_credentials_file as {{gcp_credentials_file | default('')}}"
       local_action: copy content={{cluster_vars[buildenv].gcp_service_account_rawtext}} dest={{gcp_credentials_file}}
       when: not r__stat_gcp_credentials_file.stat.exists|default(False)|bool
   when: cluster_vars.type == "gcp"

@@ -77,7 +77,7 @@
     - include_role:
         name: clusterverse/clean
         tasks_from: dns.yml
-      when: (hosts_to_clean | length > 0)  and  (cluster_vars.dns_server is not in [none, '']) and (cluster_vars.dns_user_domain is not in [none, ''])
+      when: (hosts_to_clean | length > 0)  and  (cluster_vars.dns_server is truthy) and (cluster_vars.dns_user_domain is truthy)
 
     - include_role:
         name: clusterverse/clean

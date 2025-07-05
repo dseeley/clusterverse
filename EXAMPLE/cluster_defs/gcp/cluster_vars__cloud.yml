@@ -1,7 +1,7 @@
 ---
 
 # A list of CIDRs from which to allow SSH access
-ssh_whitelist:  ['10.0.0.0/8', '82.69.177.168/29']
+ssh_whitelist: ['10.0.0.0/8']
 
 ## Source images from which to clone.  Set these as variables so they can be selected on command line (for automated testing).
 #_ubuntu2004image: "projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20210820"   #europe-west4 20.04 amd64 20210820.  Ubuntu images can be located at https://cloud-images.ubuntu.com/locator/
@@ -17,7 +17,7 @@ cluster_vars:
   image: "{{_ubuntu2404image}}"
   dns_cloud_internal_domain: "c.{{ (_gcp_service_account_rawtext | string | from_json).project_id }}.internal"    # The cloud-internal zone as defined by the cloud provider (e.g. GCP, AWS)
   dns_nameserver_zone: &dns_nameserver_zone ""                                                                    # The zone that dns_server will operate on.  gcloud dns needs a trailing '.'.  Leave blank if no external DNS (use IPs only)
-  dns_user_domain: "{%- if _dns_nameserver_zone -%}{{cloud_type}}-{{region}}.{{buildenv}}.{{_dns_nameserver_zone}}{%- endif -%}"         # A user-defined _domain_ part of the FDQN, (if more prefixes are required before the dns_nameserver_zone)
+  dns_user_domain: "{%- if _dns_nameserver_zone is truthy -%}{{cloud_type}}-{{region}}.{{buildenv}}.{{_dns_nameserver_zone}}{%- endif -%}"         # A user-defined _domain_ part of the FDQN, (if more prefixes are required before the dns_nameserver_zone)
   dns_server: "clouddns"                                      # Specify DNS server. nsupdate, route53 or clouddns.  If empty string is specified, no DNS will be added.
   assign_public_ip: false                                     # Whether a 'dynamic' (will change on stop/start), 'static' (e.g. elastic IP), or no public IP should be assigned.
   inventory_ip: "private"                                     # 'public' or 'private', (private in case we're operating in a private LAN).  If public, 'assign_public_ip' must be 'static' or 'dynamic'

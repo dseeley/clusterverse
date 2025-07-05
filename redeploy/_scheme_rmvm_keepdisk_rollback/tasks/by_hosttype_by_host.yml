@@ -42,6 +42,7 @@
 - name: by_hosttype_by_host | Postflight - validate that exactly one test file exists per device
   block:
     - name: by_hosttype_by_host | Postflight - Find all .clusterverse_volcopymove_test__ files in mounted disks
+      become: true
       find:
         paths: "{{item.mountpoint}}"
         hidden: true

@@ -25,7 +25,7 @@
       loop: "{{auto_vols}}"
       vars:
         _dev: "{{ r__blockdevmap.device_map | json_query(\"[?device_name_cloud == '\" + item.device_name + \"' && TYPE=='disk' && parttable_type=='' && FSTYPE=='' && MOUNTPOINT==''].device_name_os | [0]\") }}"
-      when: _dev is not in [none, '']
+      when: _dev is truthy
 
     - name: config/disks_auto_cloud | Get the block device information (post-filesystem create), to get the block IDs for mounting
       blockdevmap:
@@ -47,7 +47,7 @@
       loop: "{{auto_vols}}"
       vars:
         _UUID: "{{ r__blockdevmap.device_map | json_query(\"[?device_name_cloud == '\" + item.device_name + \"' && TYPE=='disk' && parttable_type=='' && MOUNTPOINT==''].UUID | [0]\") }}"
-      when: _UUID is not in [none, '']
+      when: _UUID is truthy
 
     - name: config/disks_auto_cloud | change ownership of mountpoint (if set)
       become: true
@@ -69,6 +69,7 @@
           loop: "{{auto_vols}}"
 
         - name: config/disks_auto_cloud | Find all .clusterverse_volplacement_test__ files in mounted disks
+          become: true
           find:
             paths: "{{item.mountpoint}}"
             hidden: true
@@ -166,6 +167,7 @@
                 state: touch
 
             - name: config/disks_auto_cloud/lvm | Find all .clusterverse_volplacement_test__ files in mounted disks
+              become: true
               find:
                 paths: "{{ raid_vols[0].mountpoint }}"
                 hidden: true
