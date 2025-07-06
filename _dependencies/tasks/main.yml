@@ -120,7 +120,7 @@
         invalid_tags: "{{ cluster_vars.custom_tagslabels | dict2items | rejectattr('value', 'match', '^[a-z\\d\\-_]{0,63}$') | items2dict  }}"
       when: "'custom_tagslabels' in cluster_vars"
 
-    - assert: { that: "cluster_vars[buildenv].hosttype_vars | json_query('*.version') | map('regex_search', '^[a-z\\d\\-_]{0,63}$') | select('ne', None) | length == cluster_vars[buildenv].hosttype_vars | length", fail_msg: "Please ensure cluster_vars[{{buildenv}}].hosttype_vars[hosttype].version is in the set [a-z\\d\\-_], and <63 characters long." }
+    - assert: { that: "(cluster_vars[buildenv].hosttype_vars | json_query('*.version') | map('regex_search', '^[a-z\\d\\-_]{0,63}$') | select('ne', None) | length) == (cluster_vars[buildenv].hosttype_vars | json_query('*.version') | length)", fail_msg: "Please ensure cluster_vars[{{buildenv}}].hosttype_vars[<hosttype>].version is in the set [a-z\\d\\-_], and <63 characters long." }
 
     - assert: { that: "(cluster_vars.inventory_ip == 'private')  or  (cluster_vars.assign_public_ip in [true, 'dynamic', 'static'] and cluster_vars.inventory_ip == 'public')", fail_msg: "If inventory_ip=='public', 'assign_public_ip' must be [true, 'dynamic', 'static']" }
       when: cluster_vars.type == "gcp" or cluster_vars.type == "aws"

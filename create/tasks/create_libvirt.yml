@@ -33,7 +33,7 @@
         xml: |
           <volume type='file'>
             <name>{{item.hostname}}--{{item.auto_volume.device_name}}.qcow2</name>
-            <capacity unit='G'>{{ item.rootvol_size_gb|int }}</capacity>
+            <capacity unit='G'>{{ item.auto_volume.size_gb|int }}</capacity>
             <target><format type='qcow2'/></target>
           </volume>
       register: r__virt_volume__nonroot
