@@ -69,7 +69,7 @@
           {%- endfor -%}
           {{ ns.res }}
 
-    - name: debug cluster_hosts_target post subnet_ids update
+    - name: get_cluster_hosts_target/aws | debug cluster_hosts_target after subnet_ids update
       debug: var=cluster_hosts_target
 
 
@@ -141,12 +141,21 @@
 #      debug: var=r__ec2_ami_info__by_imageid
 
     - name: get_cluster_hosts_target/aws | Resolve non-AMI image filters via 'manifest-location'
+      delegate_to: localhost
+      run_once: true
+      vars:
+        _cluster_hosts_targets__no_ami: |
+          {%- set ns = namespace(res=[]) -%}
+          {%- for host in r__ec2_ami_info__by_imageid.results -%}
+            {%- if 'images' in host and host.images | length == 0 -%}
+              {%- set ns.res = ns.res + [host[host.ansible_loop_var]] -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {{ ns.res }}
       when: _cluster_hosts_targets__no_ami | length > 0
       block:
         - name: get_cluster_hosts_target/aws | _cluster_hosts_targets__no_ami
           debug: msg="{{ _cluster_hosts_targets__no_ami }}"
-          delegate_to: localhost
-          run_once: true
 
         - name: get_cluster_hosts_target/aws | Search the instance type info for the flavor of each hosttype's ami (to get architecture, needed for amazon.aws.ec2_ami_info)
           clusterverse.clusterverse.ec2_instance_type_info:
@@ -156,44 +165,53 @@
             region: "{{ item.0 }}"
             instance_types: "{{ item.1 | json_query('[].flavor') | unique }}"
           register: r__ec2_instance_type_info
-          delegate_to: localhost
-          run_once: true
           loop: "{{ _cluster_hosts_targets__no_ami | groupby('region') | map('list') | list }}"
 
 #        - name: get_cluster_hosts_target/aws | debug r__ec2_instance_type_info
 #          debug: msg={{r__ec2_instance_type_info}}
 
-        - name: get_cluster_hosts_target/aws | Get the AMI per hosttype and filtered on 'manifest-location'
-          amazon.aws.ec2_ami_info:
-            access_key: "{{cluster_vars[buildenv].aws_access_key | default(omit)}}"
-            secret_key: "{{cluster_vars[buildenv].aws_secret_key | default(omit)}}"
-            session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
-            region: "{{ item__ec2_ami_info__by_location.region }}"
-            filters:
-              manifest-location: "{{ item__ec2_ami_info__by_location.base_image }}"
-              architecture: "{{ item__ec2_ami_info__by_location.derived_architecture | default('x86_64') }}"
-          loop: "{{ _cluster_hosts_targets__derived_arch }}"
-          loop_control: {loop_var: item__ec2_ami_info__by_location}
+        - name: get_cluster_hosts_target/aws | Get the AMI per hosttype
+          block:
+            - name: get_cluster_hosts_target/aws | debug _cluster_hosts_targets__derived_arch
+              debug: msg={{_cluster_hosts_targets__derived_arch}}
+
+            - name: get_cluster_hosts_target/aws | Assert architecture was derived for each non-AMI image lookup
+              assert:
+                that:
+                  - item__assert_derived_architecture.derived_architecture is defined
+                  - item__assert_derived_architecture.derived_architecture | length > 0
+                fail_msg: "Unable to derive architecture for host '{{ item__assert_derived_architecture.hostname }}' using flavor '{{ item__assert_derived_architecture.flavor }}' in region '{{ item__assert_derived_architecture.region }}'"
+              loop: "{{ _cluster_hosts_targets__derived_arch }}"
+              loop_control: {loop_var: item__assert_derived_architecture}
+
+            - name: get_cluster_hosts_target/aws | Get the AMI per hosttype and filtered on 'manifest-location'
+              amazon.aws.ec2_ami_info:
+                access_key: "{{cluster_vars[buildenv].aws_access_key | default(omit)}}"
+                secret_key: "{{cluster_vars[buildenv].aws_secret_key | default(omit)}}"
+                session_token: "{{cluster_vars[buildenv].aws_session_token | default(omit)}}"
+                region: "{{ item__ec2_ami_info__by_location.region }}"
+                filters:
+                  manifest-location: "{{ item__ec2_ami_info__by_location.base_image }}"
+                  architecture: "{{ item__ec2_ami_info__by_location.derived_architecture | default('x86_64') }}"
+              loop: "{{ _cluster_hosts_targets__derived_arch }}"
+              loop_control: {loop_var: item__ec2_ami_info__by_location}
+              register: r__ec2_ami_info__by_location
           vars:
             _cluster_hosts_targets__derived_arch: |-
               {%- set ns = namespace(res=[]) -%}
-              {%- set _cluster_hosts_targets__derived_arch = _cluster_hosts_targets__no_ami -%}
-              {%- for cht_host in _cluster_hosts_targets__derived_arch -%}
-                {%- set hosttype_archs_ec2_instance_type_info = r__ec2_instance_type_info.results | json_query('[?instance_types[?instance_type==\'' + cht_host.flavor + '\'] && item[0]==\'' + cht_host.region + '\'].instance_types[].processor_info.supported_architectures[]') -%}
-                {%- set ns_updated_host = namespace(host=cht_host) -%}
-                {%- if hosttype_archs_ec2_instance_type_info | length == 1 -%}
-                  {%- set ns_updated_host.host = cht_host | combine({'derived_architecture': hosttype_archs_ec2_instance_type_info[0]}) -%}
-                {%- elif hosttype_archs_ec2_instance_type_info | symmetric_difference(['i386','x86_64']) | length == 0 -%}
-                  {%- set ns_updated_host.host = cht_host | combine({'derived_architecture': 'x86_64'}) -%}
+              {%- for cht_host in _cluster_hosts_targets__no_ami -%}
+                {%- set host_architectures = r__ec2_instance_type_info.results | json_query('[?item[0]==`' + cht_host.region + '`].instance_types[] | [?instance_type==`' + cht_host.flavor + '`].processor_info.supported_architectures[]') | unique | list -%}
+                {%- if host_architectures | length == 1 -%}
+                  {%- set ns.res = ns.res + [cht_host | combine({'derived_architecture': host_architectures[0]})] -%}
+                {%- elif host_architectures | symmetric_difference(['i386','x86_64']) | length == 0 -%}
+                  {%- set ns.res = ns.res + [cht_host | combine({'derived_architecture': 'x86_64'})] -%}
+                {%- else -%}
+                  {%- set ns.res = ns.res + [cht_host] -%}
                 {%- endif -%}
-                {%- set ns.res = ns.res + [ns_updated_host.host] -%}
               {%- endfor -%}
               {{ ns.res }}
-          register: r__ec2_ami_info__by_location
-          delegate_to: localhost
-          run_once: true
 
-#        - name: debug r__ec2_ami_info__by_location
+#        - name: get_cluster_hosts_target/aws | debug r__ec2_ami_info__by_location
 #          debug: var=r__ec2_ami_info__by_location
 
         - name: get_cluster_hosts_target/aws | Replace base_image with the latest AMI found at 'manifest-location'
@@ -211,15 +229,6 @@
                 {%- set ns.res = ns.res + [ns_updated_host.host] -%}
               {%- endfor -%}
               {{ ns.res }}
-      vars:
-        _cluster_hosts_targets__no_ami: |
-          {%- set ns = namespace(res=[]) -%}
-          {%- for host in r__ec2_ami_info__by_imageid.results -%}
-            {%- if 'images' in host and host.images | length == 0 -%}
-              {%- set ns.res = ns.res + [host[host.ansible_loop_var]] -%}
-            {%- endif -%}
-          {%- endfor -%}
-          {{ ns.res }}
 
 #    - name: get_cluster_hosts_target/aws | Ensure base_image is set for every host (explicit AMI id or previously resolved filter)
 #      ansible.builtin.set_fact:
